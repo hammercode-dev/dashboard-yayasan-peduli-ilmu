@@ -7,7 +7,7 @@ export default [
     route("/donation", "routes/donation.tsx"),
 
     // Auth
-    route("sign-in", "auth/signIn.tsx"),
-    route("sign-up", "auth/signUp.tsx"),
+    route("sign-in", "routes/auth/signIn.tsx"),
+    route("sign-up", "routes/auth/signUp.tsx"),
   ]),
 ] satisfies RouteConfig;

@@ -1,4 +1,4 @@
-import SignInPage from "pages/auth/SignInPage";
+import SignInPage from "~/pages/auth/SignInPage";
 
 const SignIn = () => {
   return <SignInPage />;

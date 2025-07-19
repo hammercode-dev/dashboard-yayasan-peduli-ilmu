@@ -83,7 +83,7 @@ const SignInPage = () => {
           </div>
 
           <div className="text-center">
-            <Link to="/sign-up" className="text-yellow-600 hover:text-yellow-500">
+            <Link to="/auth/sign-up" className="text-yellow-600 hover:text-yellow-500">
               Don't have an account? Sign up
             </Link>
           </div>

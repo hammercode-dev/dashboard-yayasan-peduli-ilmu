@@ -81,7 +81,7 @@ export function DashboardSidebar() {
       <SidebarHeader>
         <Link to="/" className="flex items-center space-x-3 focus-ring rounded-lg p-2">
           <img src="/logo.png" alt="Yayasan Peduli Ilmu" className="h-8 w-auto" />
-          <div className="hidden sm:block">
+          <div>
             <h2 className="text-sm font-bold text-accent-800">Yayasan Peduli Ilmu</h2>
             <p className="text-xs text-gray-600">Sulawesi Tengah</p>
           </div>

@@ -111,7 +111,7 @@ const SignUpPage = () => {
           </div>
 
           <div className="text-center">
-            <Link to="/sign-in" className="text-yellow-600 hover:text-yellow-500">
+            <Link to="/auth/sign-in" className="text-yellow-600 hover:text-yellow-500">
               Already have an account? Sign in
             </Link>
           </div>

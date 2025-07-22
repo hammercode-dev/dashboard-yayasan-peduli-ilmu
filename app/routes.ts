@@ -1,13 +1,15 @@
 import { type RouteConfig, index, layout, route } from "@react-router/dev/routes";
 
+const layoutPaths = (path: string) => {
+  return `components/layout/${path}.tsx`;
+};
+
 // list routing
 export default [
-  layout("routes/layout.tsx", [
-    index("routes/home.tsx"),
-    route("/donation", "routes/donation.tsx"),
-
+  layout(layoutPaths("BaseLayout"), [
+    layout(layoutPaths("DashboardLayout"), [index("routes/home.tsx"), route("/donation", "routes/donation.tsx")]),
     // Auth
-    route("sign-in", "auth/signIn.tsx"),
-    route("sign-up", "auth/signUp.tsx"),
+    route("/auth/sign-in", "routes/auth/signIn.tsx"),
+    route("/auth/sign-up", "routes/auth/signUp.tsx"),
   ]),
 ] satisfies RouteConfig;

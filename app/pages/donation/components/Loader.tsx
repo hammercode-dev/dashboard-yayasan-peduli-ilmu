@@ -1,16 +1,12 @@
+import type { Route } from "../../../routes/+types/donation";
 import { supabase } from "~/lib/supabase";
-import ListDonation from "~/pages/donation/ListDonation";
-
-import type { Route } from "../routes/+types/donation";
-
-export type DonationLoaderData = Awaited<ReturnType<typeof loader>>;
 
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
 
   // Pagination
   const page = parseInt(url.searchParams.get("page") || "1");
-  const pageSize = 3;
+  const pageSize = 10;
   const offset = (page - 1) * pageSize;
 
   // Search / Filter / Sort
@@ -41,13 +37,14 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const { data, count, error } = await query;
 
+  console.log({ query });
+
   if (error) {
-    console.error("error:", error);
-    // throw new Response("Failed to fetch data", { status: 500 });
+    throw new Response("Failed to fetch data", { status: 500 });
   }
 
   return {
-    data: data ?? [],
+    data,
     total: count ?? 0,
     page,
     pageSize,
@@ -55,8 +52,4 @@ export async function loader({ request }: Route.LoaderArgs) {
     status,
     sort,
   };
-}
-
-export default function Donation({ loaderData }: Route.ComponentProps) {
-  return <ListDonation list={loaderData} />;
 }

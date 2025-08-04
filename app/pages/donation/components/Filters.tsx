@@ -1,16 +1,12 @@
-import { useState, useEffect } from "react";
-import { Input } from "~/components/ui/input";
 import { SimpleSelect } from "~/components/ui/select";
-import useDebounce from "~/hooks/use-debounce";
 
-function Filters({ search, status, sort, handleChange }) {
-  const [searchValue, setSearchValue] = useState(search || "");
-  const debouncedSearch = useDebounce(searchValue, 500);
+type FiltersProps = {
+  status: string;
+  sort: string;
+  handleChange: (key: "status" | "sort" | "search", value: string) => void;
+};
 
-  useEffect(() => {
-    handleChange("search", debouncedSearch);
-  }, [debouncedSearch]);
-
+function Filters({ status, sort, handleChange }: FiltersProps) {
   const statusOptions = [
     { label: "Semua Status", value: "" },
     { label: "Active", value: "active" },
@@ -27,14 +23,6 @@ function Filters({ search, status, sort, handleChange }) {
 
   return (
     <div className="flex flex-col sm:flex-row flex-wrap gap-4 mb-6">
-      <Input
-        type="text"
-        placeholder="Cari judul program..."
-        defaultValue={search}
-        onChange={(e) => setSearchValue(e.target.value)}
-        className="w-full sm:w-82"
-      />
-
       <SimpleSelect
         options={statusOptions}
         value={status}

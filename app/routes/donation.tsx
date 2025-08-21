@@ -9,7 +9,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
 
   const page = parseInt(url.searchParams.get("page") || "1");
-  const pageSize = 3;
+  const pageSize = 10;
   const offset = (page - 1) * pageSize;
 
   const search = url.searchParams.get("search") || "";

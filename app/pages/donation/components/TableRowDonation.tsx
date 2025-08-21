@@ -36,13 +36,14 @@ export default function TableRowDonation({ item, index }: TableRowDonationProps)
         <div className="flex justify-center gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Link
-                to={`/donation/${item.slug}`}
+              <a
+                href={`https://www.peduliilmu.org/id/donation/${item.slug}`}
+                target="_blank"
                 className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md border border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100 transition"
               >
                 <Eye className="w-4 h-4" />
                 Detail
-              </Link>
+              </a>
             </TooltipTrigger>
             <TooltipContent side="bottom">Lihat Detail</TooltipContent>
           </Tooltip>

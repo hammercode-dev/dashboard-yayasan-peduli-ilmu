@@ -54,8 +54,6 @@ export default function TableDonation({ data, isLoading, page, pageSize, totalPa
         </div>
       </TooltipProvider>
 
-      {/* <Pagination totalPages={totalPages} currentPage={page} /> */}
-
       <Pagination totalPages={totalPages} currentPage={page} onPageChange={handlePageChange} />
     </Card>
   );

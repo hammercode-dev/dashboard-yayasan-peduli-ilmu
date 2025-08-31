@@ -22,8 +22,8 @@ interface AdditionalInfoProps {
 
 const FormAdditionalInfoSection = ({ register, errors, setValue, control }: AdditionalInfoProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const title = useWatch({ control, name: "title" });
 
+  const title = useWatch({ control, name: "title" });
   const imageUrl = useWatch({ control, name: "image_url" });
 
   const [imagePreview, setImagePreview] = useState<string | null>(imageUrl || null);
@@ -44,8 +44,8 @@ const FormAdditionalInfoSection = ({ register, errors, setValue, control }: Addi
       setImagePreview(previewUrl);
 
       // Store renamed file instead of just base64
-      setValue("image_url", renamedFile.name); // store just the name in form
-      setValue("image_file", renamedFile); // store the actual file (for backend)
+      setValue("image_url", renamedFile.name);
+      setValue("image_file", renamedFile);
     };
     reader.readAsDataURL(renamedFile);
   };

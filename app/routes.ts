@@ -9,7 +9,12 @@ export default [
   layout(layoutPaths("BaseLayout"), [
     layout(layoutPaths("DashboardLayout"), [
       index("routes/home.tsx"),
-      ...prefix("donation", [index("routes/donation.tsx"), route("/create", "routes/donation/create.tsx")]),
+      ...prefix("donation", [
+        index("routes/donation.tsx"),
+        route("/create", "routes/donation/create.tsx"),
+        route("/:id/update", "routes/donation/update.tsx"),
+        route("/:id/delete", "routes/donation/delete.tsx"),
+      ]),
     ]),
     // Auth
     route("/auth/sign-in", "routes/auth/signIn.tsx"),

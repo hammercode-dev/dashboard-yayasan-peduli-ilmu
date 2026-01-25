@@ -1,154 +1,112 @@
 'use client'
 
 import { useState } from 'react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useLogin } from '../auth.hooks'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const { login, isLoading, error } = useLogin()
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-6 sm:p-8">
-        {/* Header */}
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-semibold mb-2">
-            Sign in to your account
-          </h1>
-          <p className="text-gray-600 text-sm">
-            Enter your email and password to continue
-          </p>
-        </div>
+    <main className="min-h-screen flex items-center justify-center bg-background px-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl">Masuk</CardTitle>
+          <CardDescription>
+            Masukkan email dan password untuk melanjutkan
+          </CardDescription>
+        </CardHeader>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
-            {error}
-          </div>
-        )}
-
-        <form
-          action={async (formData) => {
-            const email = formData.get('email') as string
-            const password = formData.get('password') as string
-
-            try {
-              await login({ email, password })
-            } catch (err) {
-              console.error(err)
-            }
-          }}
-          className="space-y-5"
-        >
-          {/* Email */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium mb-1">
-              Email address
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-              placeholder="you@example.com"
-              disabled={isLoading}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-base
-                         focus:border-blue-500 disabled:opacity-50"
-            />
-          </div>
-
-          {/* Password */}
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium mb-1"
-            >
-              Password
-            </label>
-
-            <div className="relative">
-              <input
-                id="password"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                required
-                autoComplete="current-password"
-                placeholder="••••••••"
-                disabled={isLoading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 text-base
-                           focus:border-blue-500 disabled:opacity-50"
-              />
-
-              {/* Eye Button */}
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={isLoading}
-                className="absolute inset-y-0 right-0 flex items-center px-3
-                           text-gray-500 hover:text-gray-700 disabled:opacity-50"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-              </button>
+        <CardContent>
+          {error && (
+            <div className="mb-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
+              {error}
             </div>
-          </div>
+          )}
 
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full rounded-lg bg-blue-600 text-white
-                       py-3 text-base font-medium
-                       hover:bg-blue-700 active:bg-blue-800
-                       disabled:opacity-60 disabled:cursor-not-allowed
-                       transition-colors"
+          <form
+            action={async (formData) => {
+              const email = formData.get('email') as string
+              const password = formData.get('password') as string
+
+              try {
+                await login({ email, password })
+              } catch (err) {
+                console.error(err)
+              }
+            }}
+            className="space-y-4"
           >
-            {isLoading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
-      </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                required
+                autoComplete="email"
+                placeholder="email@example.com"
+                disabled={isLoading}
+                className="h-10"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Kata Sandi</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  autoComplete="current-password"
+                  placeholder="kata sandi"
+                  disabled={isLoading}
+                  className="h-10 pr-10"
+                />
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer p-1 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none"
+                  style={{
+                    pointerEvents: isLoading ? 'none' : undefined,
+                    opacity: isLoading ? 0.5 : 1,
+                  }}
+                >
+                  {showPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
+                </span>
+              </div>
+            </div>
+
+            <Button type="submit" disabled={isLoading} className="w-full h-10">
+              {isLoading ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Memuat...
+                </>
+              ) : (
+                'Masuk'
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </main>
-  )
-}
-
-/* ================= ICONS ================= */
-
-function EyeIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-5 w-5"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-      />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  )
-}
-
-function EyeOffIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-5 w-5"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.956 9.956 0 012.042-3.368M6.223 6.223A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a9.97 9.97 0 01-4.293 5.568M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-      />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18" />
-    </svg>
   )
 }

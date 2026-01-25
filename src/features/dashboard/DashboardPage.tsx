@@ -1,22 +1,13 @@
 'use client'
 
-import { useLogout } from '../auth/auth.hooks'
-
 const DashboardPage = () => {
-  const { logout } = useLogout()
   return (
-    <div>
-      <h1>Dashboard</h1>
-      <p>Welcome to dashboard yayasan!</p>
-
-      <button
-        type="submit"
-        className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-        onClick={logout}
-      >
-        Logout
-      </button>
-    </div>
+    <section className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">Selamat Datang!</h2>
+        <p className="text-muted-foreground">Dashboard Yayasan Peduli Ilmu</p>
+      </div>
+    </section>
   )
 }
 

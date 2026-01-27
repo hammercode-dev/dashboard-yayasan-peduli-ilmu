@@ -1,6 +1,12 @@
-'use client'
+"use client"
+
+import { useAppSelector } from "@/store/hooks"
 
 const DashboardPage = () => {
+  const auth = useAppSelector(state => state.auth)
+
+  console.log("AUTH STATE:", auth)
+
   return (
     <section className="space-y-6">
       <div>

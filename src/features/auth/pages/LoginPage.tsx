@@ -1,22 +1,28 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
-import { useLogin } from '../auth.hooks'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { useState } from "react"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { useAppSelector } from "@/store/hooks"
+
+import { useLogin } from "../auth.hooks"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from "@/components/ui/card"
 
 export default function LoginPage() {
+  const auth = useAppSelector(state => state.auth)
+
   const [showPassword, setShowPassword] = useState(false)
   const { login, isLoading, error } = useLogin()
+
+  console.log("error:", auth)
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-background px-4">
@@ -36,9 +42,9 @@ export default function LoginPage() {
           )}
 
           <form
-            action={async (formData) => {
-              const email = formData.get('email') as string
-              const password = formData.get('password') as string
+            action={async formData => {
+              const email = formData.get("email") as string
+              const password = formData.get("password") as string
 
               try {
                 await login({ email, password })
@@ -68,7 +74,7 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   name="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   required
                   autoComplete="current-password"
                   placeholder="kata sandi"
@@ -81,7 +87,7 @@ export default function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer p-1 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none"
                   style={{
-                    pointerEvents: isLoading ? 'none' : undefined,
+                    pointerEvents: isLoading ? "none" : undefined,
                     opacity: isLoading ? 0.5 : 1,
                   }}
                 >
@@ -101,7 +107,7 @@ export default function LoginPage() {
                   Memuat...
                 </>
               ) : (
-                'Masuk'
+                "Masuk"
               )}
             </Button>
           </form>

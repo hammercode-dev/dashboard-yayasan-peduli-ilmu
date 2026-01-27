@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from "axios"
 
 interface LoginCredentials {
   email: string
@@ -16,7 +16,7 @@ interface LoginResponse {
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    const response = await axios.post('/api/auth/login', credentials, {
+    const response = await axios.post("/api/auth/login", credentials, {
       withCredentials: true,
     })
 
@@ -24,7 +24,7 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
-    const response = await axios.post('/api/auth/logout', {
+    const response = await axios.post("/api/auth/logout", {
       withCredentials: true,
     })
 

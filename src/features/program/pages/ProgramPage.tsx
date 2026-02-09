@@ -7,15 +7,18 @@ import { DonationTableSkeleton } from "../components/TableSkeleton"
 import { Button } from "@/components/ui/button"
 import { Pagination } from "../components/Pagination"
 import StatsCards from "../components/StatsCards"
+import { StatusFilter } from "../components/StatusFilter"
 
 export default async function ProgramPage({
   query,
   currentPage,
   totalData,
+  status,
 }: {
   query?: string
   currentPage?: number
   totalData?: number
+  status?: string
 }) {
   return (
     <div className="min-h-screen bg-background">
@@ -36,7 +39,8 @@ export default async function ProgramPage({
           <CardContent className="">
             <div className="flex flex-col gap-4">
               <div className="flex flex-col md:flex-row gap-4">
-                <SearchInput placeholder="Cari program donasi..." />
+                <SearchInput placeholder="Cari nama program donasi..." />
+                <StatusFilter query={query} />
                 <Button variant="default" className="ml-auto font-bold">
                   Tambah Program Donasi
                 </Button>
@@ -47,7 +51,11 @@ export default async function ProgramPage({
 
         <div className="space-y-4">
           <Suspense fallback={<DonationTableSkeleton />}>
-            <DonationTable query={query || ""} currentPage={currentPage || 1} />
+            <DonationTable
+              query={query || ""}
+              currentPage={currentPage || 1}
+              status={status}
+            />
           </Suspense>
 
           <Pagination totalData={totalData || 1} />

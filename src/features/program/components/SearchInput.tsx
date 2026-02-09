@@ -30,12 +30,12 @@ export function SearchInput({ placeholder = "Search..." }: SearchInputProps) {
     <div className="relative">
       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <Input
-        type="text"
+        type="search"
         placeholder={placeholder}
         onChange={e => {
           handleSearch(e.target.value)
         }}
-        className="pl-10 w-full md:w-70"
+        className="pl-10 w-full md:w-96"
         defaultValue={searchParams.get("query")?.toString()}
       />
     </div>

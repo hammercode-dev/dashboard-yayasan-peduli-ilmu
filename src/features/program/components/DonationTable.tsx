@@ -19,13 +19,19 @@ import { DonationStatus } from "../types/programDonation"
 interface DonationTableProps {
   query: string
   currentPage: number
+  status?: string
 }
 
 export async function DonationTable({
   query,
   currentPage,
+  status,
 }: DonationTableProps) {
-  const data = await fetchProgramDonations(query || "", currentPage || 1)
+  const data = await fetchProgramDonations(
+    query || "",
+    currentPage || 1,
+    status || ""
+  )
 
   const columns: { key: string; label: string }[] = [
     { key: "title", label: "Nama Program" },

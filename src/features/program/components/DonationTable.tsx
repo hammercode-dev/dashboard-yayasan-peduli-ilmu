@@ -1,3 +1,6 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import {
   Table,
   TableBody,
@@ -13,25 +16,38 @@ import {
   formatRupiahCompact,
 } from "@/lib/format"
 import { StatusBadge } from "./StatusBadge"
-import { fetchProgramDonations } from "@/features/program/data"
-import { DonationStatus } from "../types/programDonation"
+
+import { Donation, DonationStatus } from "../types/programDonation"
 
 interface DonationTableProps {
-  query: string
-  currentPage: number
+  query?: string
+  currentPage?: number
   status?: string
 }
 
-export async function DonationTable({
-  query,
-  currentPage,
-  status,
+export function DonationTable({
+  query = "",
+  currentPage = 1,
+  status = "all",
 }: DonationTableProps) {
-  const data = await fetchProgramDonations(
-    query || "",
-    currentPage || 1,
-    status || ""
-  )
+  const [data, setData] = useState<Donation[]>([])
+
+  useEffect(() => {
+    fetch(
+      `/api/donations?query=${encodeURIComponent(query)}&page=${currentPage}&status=${status}`
+    )
+      .then(res => {
+        if (!res.ok) throw new Error("Failed fetch")
+        return res.json()
+      })
+      .then(result => {
+        setData(result.data ?? [])
+      })
+      .catch(err => {
+        console.error("Fetch error:", err)
+        setData([])
+      })
+  }, [query, currentPage, status])
 
   const columns: { key: string; label: string }[] = [
     { key: "title", label: "Nama Program" },
@@ -39,7 +55,7 @@ export async function DonationTable({
     { key: "schedule", label: "Pelaksanaan" },
     { key: "status", label: "Status" },
     { key: "created", label: "Tanggal Dibuat" },
-    // { key: "actions", label: "Aksi" },
+    { key: "actions", label: "Aksi" },
   ]
 
   return (

@@ -45,3 +45,32 @@ export async function GET(req: Request) {
     )
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url)
+    const id = Number(searchParams.get("id"))
+
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { message: "Invalid donation ID" },
+        { status: 400 }
+      )
+    }
+
+    await prisma.program_donation.delete({
+      where: { id },
+    })
+
+    return NextResponse.json(
+      { message: "Donation deleted successfully" },
+      { status: 200 }
+    )
+  } catch (error) {
+    console.error("[DELETE /api/donations]", error)
+    return NextResponse.json(
+      { message: "error deleting donation", error: String(error) },
+      { status: 500 }
+    )
+  }
+}

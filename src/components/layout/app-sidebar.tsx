@@ -69,6 +69,7 @@ export const AppSidebar = () => {
               {MAIN_MENU_ITEMS.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
+                    variant="outline"
                     asChild
                     isActive={pathname === item.url}
                     tooltip={item.title}

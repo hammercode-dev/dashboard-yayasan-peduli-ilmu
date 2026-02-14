@@ -1,0 +1,1 @@
+export const TOTAL_DONATIONS_PER_PAGE = 5

@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
-import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
-import { prisma } from '@/lib/client'
+import { NextRequest, NextResponse } from "next/server"
+import bcrypt from "bcryptjs"
+import jwt from "jsonwebtoken"
+import { prisma } from "@/lib/client"
 
-const JWT_SECRET = process.env.JWT_SECRET || 'secretkeybro'
+const JWT_SECRET = process.env.JWT_SECRET || "secretkeybro"
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,8 +12,8 @@ export async function POST(request: NextRequest) {
 
     if (!email || !password) {
       return NextResponse.json(
-        { error: 'Email and password are required' },
-        { status: 400 },
+        { error: "Email and password are required" },
+        { status: 400 }
       )
     }
 
@@ -29,8 +29,8 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 },
+        { error: "Invalid email or password" },
+        { status: 401 }
       )
     }
 
@@ -38,8 +38,8 @@ export async function POST(request: NextRequest) {
 
     if (!isPasswordValid) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 },
+        { error: "Invalid email or password" },
+        { status: 401 }
       )
     }
 
@@ -50,38 +50,38 @@ export async function POST(request: NextRequest) {
       },
       JWT_SECRET,
       {
-        expiresIn: '1d',
-      },
+        expiresIn: "1d",
+      }
     )
 
     const response = NextResponse.json(
       {
-        message: 'Login successful',
+        message: "Login successful",
         user: {
           id: user.id,
           email: user.email,
           created_at: user.created_at,
         },
       },
-      { status: 200 },
+      { status: 200 }
     )
 
     response.cookies.set({
-      name: 'auth-token',
+      name: "auth-token",
       value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       maxAge: 60 * 60 * 24,
-      path: '/',
+      path: "/",
     })
 
     return response
   } catch (error) {
-    console.error('Login error:', error)
+    console.error("Login error:", error)
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 },
+      { error: "Internal server error" },
+      { status: 500 }
     )
   }
 }

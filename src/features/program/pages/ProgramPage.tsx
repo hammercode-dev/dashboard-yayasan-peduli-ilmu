@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { SearchInput } from "../components/SearchInput"
 
@@ -21,46 +22,43 @@ export default async function ProgramPage({
   status?: string
 }) {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-8 px-4 md:px-6">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-bold tracking-tight">
-              Program Donasi
-            </h1>
-          </div>
-        </div>
-
-        <StatsCards />
-
-        {/* Filters Section */}
-        <Card className="mb-6">
-          <CardContent className="">
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col md:flex-row gap-4">
-                <SearchInput placeholder="Cari nama program donasi..." />
-                <StatusFilter query={query} />
-                <Button variant="default" className="ml-auto font-bold">
-                  Tambah Program Donasi
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="space-y-4">
-          <Suspense fallback={<DonationTableSkeleton />}>
-            <DonationTable
-              query={query || ""}
-              currentPage={currentPage || 1}
-              status={status}
-            />
-          </Suspense>
-
-          <Pagination totalData={totalData || 1} />
-        </div>
+    <section className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col">
+        <h1 className="text-2xl font-bold tracking-tight">Program Donasi</h1>
+        <p>Berikut adalah daftar program donasi yang tersedia</p>
       </div>
-    </div>
+
+      <StatsCards />
+
+      {/* Filters Section */}
+      <Card>
+        <CardContent className="">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <SearchInput placeholder="Cari nama program donasi..." />
+              <StatusFilter query={query} />
+              <Button variant="default" className="font-bold ml-auto">
+                <Link href="/dashboard/program/create">
+                  Tambah Program Donasi
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="space-y-4">
+        <Suspense fallback={<DonationTableSkeleton />}>
+          <DonationTable
+            query={query || ""}
+            currentPage={currentPage || 1}
+            status={status}
+          />
+        </Suspense>
+
+        <Pagination totalData={totalData || 1} />
+      </div>
+    </section>
   )
 }

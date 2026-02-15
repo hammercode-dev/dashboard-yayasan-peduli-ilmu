@@ -1,20 +1,8 @@
-import { NextResponse } from 'next/server'
+import { NextResponse } from "next/server"
+import { deleteSession } from "@/lib/session"
 
 export async function POST() {
-  const response = NextResponse.json(
-    { message: 'Logout successful' },
-    { status: 200 },
-  )
+  await deleteSession()
 
-  response.cookies.set({
-    name: 'auth-token',
-    value: '',
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 0,
-    path: '/',
-  })
-
-  return response
+  return NextResponse.json({ message: "Logout successful" }, { status: 200 })
 }

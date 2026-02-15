@@ -1,6 +1,7 @@
 'use client'
 import { cn } from '@/lib/utils'
 import { useSidebar } from '../ui/sidebar'
+import { Toaster } from '../ui/sonner'
 
 export const AppContent = ({ children }: { children: React.ReactNode }) => {
   const { state } = useSidebar()
@@ -12,6 +13,7 @@ export const AppContent = ({ children }: { children: React.ReactNode }) => {
       )}
     >
       {children}
+      <Toaster />
     </main>
   )
 }

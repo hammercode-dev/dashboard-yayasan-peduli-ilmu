@@ -1,38 +1,27 @@
-import { NextRequest } from 'next/server'
-import jwt from 'jsonwebtoken'
+import { NextRequest } from "next/server"
+import {
+  SESSION_COOKIE_NAME,
+  SessionPayload,
+  verifyToken as verifyTokenFromString,
+} from "@/lib/session"
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
-
-export interface JWTPayload {
-  userId: string
-  email: string
-  iat?: number
-  exp?: number
-}
+export type { SessionPayload as JWTPayload }
 
 /**
- * Verify JWT token from cookies
+ * Verify JWT token from request cookies (used in middleware / edge)
  */
-export function verifyToken(request: NextRequest): JWTPayload | null {
-  try {
-    const token = request.cookies.get('auth-token')?.value
+export function verifyToken(request: NextRequest): SessionPayload | null {
+  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
 
-    if (!token) {
-      return null
-    }
+  if (!token) return null
 
-    const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload
-    return decoded
-  } catch (error) {
-    console.error('Token verification error:', error)
-    return null
-  }
+  return verifyTokenFromString(token)
 }
 
 /**
  * Get current user from JWT token
  */
-export function getCurrentUser(request: NextRequest): JWTPayload | null {
+export function getCurrentUser(request: NextRequest): SessionPayload | null {
   return verifyToken(request)
 }
 

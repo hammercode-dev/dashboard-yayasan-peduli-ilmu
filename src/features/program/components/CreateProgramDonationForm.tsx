@@ -2,8 +2,8 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
 import { useState } from "react"
+import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -14,6 +14,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import RichTextEditor from "@/components/common/rich-text-editor"
+import { CalendarPopover } from "@/components/common/calendar-popover"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Settings,
@@ -23,49 +24,44 @@ import {
   CalendarDays,
   FileText,
 } from "lucide-react"
-
-const programDonationSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  slug: z.string().min(1, "Slug is required"),
-  status: z.string().min(1, "Status is required"),
-  location: z.string().min(1, "Location is required"),
-  image_url: z.string().min(1, "Image URL is required"),
-  target_amount: z.string().min(1, "Target amount is required"),
-  collected_amount: z.string().min(1, "Collected amount is required"),
-  starts_at: z.string().min(1, "Start date is required"),
-  ends_at: z.string().min(1, "End date is required"),
-  short_description: z.string().min(1, "Short description is required"),
-  short_description_en: z
-    .string()
-    .min(1, "Short description (English) is required"),
-  short_description_ar: z
-    .string()
-    .min(1, "Short description (Arabic) is required"),
-  description: z.string().min(1, "Description is required"),
-  description_en: z.string().min(1, "Description (English) is required"),
-  description_ar: z.string().min(1, "Description (Arabic) is required"),
-  title_en: z.string().min(1, "Title (English) is required"),
-  title_ar: z.string().min(1, "Title (Arabic) is required"),
-})
-
-type ProgramDonationFormData = z.infer<typeof programDonationSchema>
+import {
+  ProgramDonationFormData,
+  programDonationSchema,
+} from "../program.schemas"
+import { Separator } from "@/components/ui/separator"
+import { useCreateProgramDonationMutation } from "../program.api"
+import { toast } from "sonner"
 
 export default function CreateProgramDonationForm() {
   const [description, setDescription] = useState("")
   const [descriptionEn, setDescriptionEn] = useState("")
   const [descriptionAr, setDescriptionAr] = useState("")
+  const [createProgramDonation, { isLoading }] =
+    useCreateProgramDonationMutation()
 
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
+    trigger,
     formState: { errors },
   } = useForm<ProgramDonationFormData>({
     resolver: zodResolver(programDonationSchema),
   })
 
-  const onSubmit = (data: ProgramDonationFormData) => {
-    console.log("Form Data:", data)
+  const onSubmit = async (data: ProgramDonationFormData) => {
+    try {
+      await createProgramDonation(data).unwrap()
+      toast.success("Program donation created successfully")
+    } catch (err) {
+      const apiError = err as {
+        status?: number
+        data?: { message?: string; errors?: unknown }
+      }
+      const message = apiError?.data?.message
+      toast.error(message)
+    }
   }
 
   return (
@@ -109,6 +105,7 @@ export default function CreateProgramDonationForm() {
                 <FieldContent>
                   <Input
                     {...register("title")}
+                    aria-invalid={!!errors.title}
                     placeholder="Enter program title"
                   />
                   <FieldError errors={[errors.title]} />
@@ -120,7 +117,11 @@ export default function CreateProgramDonationForm() {
                   Slug <span className="text-red-500">*</span>
                 </FieldLabel>
                 <FieldContent>
-                  <Input {...register("slug")} placeholder="program-slug" />
+                  <Input
+                    {...register("slug")}
+                    aria-invalid={!!errors.slug}
+                    placeholder="program-slug"
+                  />
                   <FieldDescription>
                     URL-friendly version of the title
                   </FieldDescription>
@@ -136,6 +137,7 @@ export default function CreateProgramDonationForm() {
                   <Input
                     {...register("status")}
                     placeholder="active, completed, etc."
+                    aria-invalid={!!errors.status}
                   />
                   <FieldError errors={[errors.status]} />
                 </FieldContent>
@@ -149,6 +151,7 @@ export default function CreateProgramDonationForm() {
                   <Input
                     {...register("location")}
                     placeholder="Enter location"
+                    aria-invalid={!!errors.location}
                   />
                   <FieldError errors={[errors.location]} />
                 </FieldContent>
@@ -159,14 +162,18 @@ export default function CreateProgramDonationForm() {
                   Image URL <span className="text-red-500">*</span>
                 </FieldLabel>
                 <FieldContent>
-                  <Input {...register("image_url")} placeholder="https://..." />
+                  <Input
+                    {...register("image_url")}
+                    aria-invalid={!!errors.image_url}
+                    placeholder="https://..."
+                  />
                   <FieldError errors={[errors.image_url]} />
                 </FieldContent>
               </Field>
             </div>
           </div>
 
-          <div className="border-t" />
+          <Separator className="my-4" />
 
           <div>
             <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
@@ -184,6 +191,7 @@ export default function CreateProgramDonationForm() {
                     step="0.01"
                     {...register("target_amount")}
                     placeholder="0.00"
+                    aria-invalid={!!errors.target_amount}
                   />
                   <FieldError errors={[errors.target_amount]} />
                 </FieldContent>
@@ -199,6 +207,7 @@ export default function CreateProgramDonationForm() {
                     step="0.01"
                     {...register("collected_amount")}
                     placeholder="0.00"
+                    aria-invalid={!!errors.collected_amount}
                   />
                   <FieldError errors={[errors.collected_amount]} />
                 </FieldContent>
@@ -206,9 +215,8 @@ export default function CreateProgramDonationForm() {
             </div>
           </div>
 
-          <div className="border-t" />
+          <Separator className="my-4" />
 
-          {/* Schedule */}
           <div>
             <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
               <CalendarDays className="size-4" />
@@ -220,8 +228,18 @@ export default function CreateProgramDonationForm() {
                   Start Date <span className="text-red-500">*</span>
                 </FieldLabel>
                 <FieldContent>
-                  <Input type="datetime-local" {...register("starts_at")} />
-                  <FieldError errors={[errors.starts_at]} />
+                  <CalendarPopover
+                    value={watch("starts_at")}
+                    onChange={async date => {
+                      setValue(
+                        "starts_at",
+                        date ? format(date, "yyyy-MM-dd") : ""
+                      )
+                      await trigger("starts_at")
+                    }}
+                    placeholder="Pilih tanggal mulai"
+                    error={errors.starts_at}
+                  />
                 </FieldContent>
               </Field>
 
@@ -230,14 +248,24 @@ export default function CreateProgramDonationForm() {
                   End Date <span className="text-red-500">*</span>
                 </FieldLabel>
                 <FieldContent>
-                  <Input type="datetime-local" {...register("ends_at")} />
-                  <FieldError errors={[errors.ends_at]} />
+                  <CalendarPopover
+                    value={watch("ends_at")}
+                    onChange={async date => {
+                      setValue(
+                        "ends_at",
+                        date ? format(date, "yyyy-MM-dd") : ""
+                      )
+                      await trigger("ends_at")
+                    }}
+                    placeholder="Pilih tanggal selesai"
+                    error={errors.ends_at}
+                  />
                 </FieldContent>
               </Field>
             </div>
           </div>
 
-          <div className="border-t" />
+          <Separator className="my-4" />
 
           {/* Content Indonesia */}
           <div>
@@ -254,6 +282,7 @@ export default function CreateProgramDonationForm() {
                   <Input
                     {...register("short_description")}
                     placeholder="Brief summary"
+                    aria-invalid={!!errors.short_description}
                   />
                   <FieldError errors={[errors.short_description]} />
                 </FieldContent>
@@ -266,11 +295,13 @@ export default function CreateProgramDonationForm() {
                 <FieldContent>
                   <RichTextEditor
                     value={description}
-                    onChange={markdown => {
+                    onChange={async markdown => {
                       setDescription(markdown)
                       setValue("description", markdown)
+                      await trigger("description")
                     }}
                     placeholder="Enter detailed description..."
+                    aria-invalid={!!errors.description}
                   />
                   <FieldError errors={[errors.description]} />
                 </FieldContent>
@@ -297,6 +328,7 @@ export default function CreateProgramDonationForm() {
                     <Input
                       {...register("title_en")}
                       placeholder="English title"
+                      aria-invalid={!!errors.title_en}
                     />
                     <FieldError errors={[errors.title_en]} />
                   </FieldContent>
@@ -310,6 +342,7 @@ export default function CreateProgramDonationForm() {
                     <Input
                       {...register("short_description_en")}
                       placeholder="Brief summary in English"
+                      aria-invalid={!!errors.short_description_en}
                     />
                     <FieldError errors={[errors.short_description_en]} />
                   </FieldContent>
@@ -323,11 +356,13 @@ export default function CreateProgramDonationForm() {
                 <FieldContent>
                   <RichTextEditor
                     value={descriptionEn}
-                    onChange={markdown => {
+                    onChange={async markdown => {
                       setDescriptionEn(markdown)
                       setValue("description_en", markdown)
+                      await trigger("description_en")
                     }}
                     placeholder="Enter detailed description in English..."
+                    aria-invalid={!!errors.description_en}
                   />
                   <FieldError errors={[errors.description_en]} />
                 </FieldContent>
@@ -335,7 +370,7 @@ export default function CreateProgramDonationForm() {
             </div>
           </div>
 
-          <div className="border-t" />
+          <Separator className="my-4" />
 
           {/* Arabic */}
           <div>
@@ -354,6 +389,7 @@ export default function CreateProgramDonationForm() {
                       {...register("title_ar")}
                       placeholder="العنوان بالعربية"
                       dir="rtl"
+                      aria-invalid={!!errors.title_ar}
                     />
                     <FieldError errors={[errors.title_ar]} />
                   </FieldContent>
@@ -368,6 +404,7 @@ export default function CreateProgramDonationForm() {
                       {...register("short_description_ar")}
                       placeholder="ملخص موجز بالعربية"
                       dir="rtl"
+                      aria-invalid={!!errors.short_description_ar}
                     />
                     <FieldError errors={[errors.short_description_ar]} />
                   </FieldContent>
@@ -381,9 +418,10 @@ export default function CreateProgramDonationForm() {
                 <FieldContent>
                   <RichTextEditor
                     value={descriptionAr}
-                    onChange={markdown => {
+                    onChange={async markdown => {
                       setDescriptionAr(markdown)
                       setValue("description_ar", markdown)
+                      await trigger("description_ar")
                     }}
                     placeholder="أدخل وصفاً تفصيلياً بالعربية..."
                   />
@@ -395,12 +433,13 @@ export default function CreateProgramDonationForm() {
         </TabsContent>
       </Tabs>
 
-      {/* Footer Actions */}
       <div className="flex justify-end gap-3 py-4">
         <Button type="button" variant="outline">
           Cancel
         </Button>
-        <Button type="submit">Create Program</Button>
+        <Button type="submit" loading={isLoading}>
+          Create Program
+        </Button>
       </div>
     </form>
   )

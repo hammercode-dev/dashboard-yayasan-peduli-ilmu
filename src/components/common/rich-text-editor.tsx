@@ -32,11 +32,13 @@ import { Button } from "../ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
+import { cn } from "@/lib/utils"
 
 interface RichTextEditorProps {
   value?: string
   onChange?: (markdown: string) => void
   placeholder?: string
+  "aria-invalid"?: boolean
 }
 
 const turndownService = new TurndownService({
@@ -342,6 +344,7 @@ const RichTextEditor = ({
   value = "",
   onChange,
   placeholder = "Start typing...",
+  "aria-invalid": ariaInvalid,
 }: RichTextEditorProps) => {
   const editor = useEditor({
     extensions: [
@@ -397,7 +400,15 @@ const RichTextEditor = ({
   }
 
   return (
-    <div className="border border-gray-200 rounded-md overflow-hidden">
+    <div
+      role="textbox"
+      aria-invalid={ariaInvalid}
+      className={cn(
+        "border rounded-md overflow-hidden transition-[border-color] outline-none",
+        "border-input focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
+        "aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40"
+      )}
+    >
       <Toolbar editor={editor} />
       <div className="overflow-y-auto h-[300px] px-4">
         <div className="prose prose-sm max-w-none min-h-[200px] prose-p:my-2 prose-headings:font-semibold prose-headings:mt-2 prose-headings:mb-2 prose-h1:text-2xl prose-h2:text-xl prose-ul:list-disc prose-li:my-1 prose-a:text-blue-500 hover:prose-a:underline [&_*]:focus:outline-none">

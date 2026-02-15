@@ -1,11 +1,38 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import type { ProgramDonationFormData } from "./program.schemas"
 
+const getAllParams = (params: {
+  query?: string
+  page?: number
+  status?: string
+}) => {
+  const searchParams = new URLSearchParams()
+  if (params.query != null) searchParams.set("query", params.query)
+  if (params.page != null) searchParams.set("page", String(params.page))
+  if (params.status != null) searchParams.set("status", params.status)
+  return searchParams.toString()
+}
+
 export const programApi = createApi({
   reducerPath: "programApi",
   baseQuery: fetchBaseQuery({ baseUrl: "/api" }),
   tagTypes: ["ProgramDonation"],
   endpoints: builder => ({
+    getProgramDonations: builder.query({
+      query: (params: { query?: string; page?: number; status?: string }) => {
+        return { url: `/program/program-donation?${getAllParams(params)}` }
+      },
+      providesTags: result =>
+        result?.data
+          ? [
+              ...result.data.map((item: { id: string }) => ({
+                type: "ProgramDonation" as const,
+                id: item.id,
+              })),
+              { type: "ProgramDonation", id: "LIST" },
+            ]
+          : [{ type: "ProgramDonation", id: "LIST" }],
+    }),
     createProgramDonation: builder.mutation({
       query: (body: ProgramDonationFormData) => ({
         url: "/program/program-donation",
@@ -17,4 +44,5 @@ export const programApi = createApi({
   }),
 })
 
-export const { useCreateProgramDonationMutation } = programApi
+export const { useCreateProgramDonationMutation, useGetProgramDonationsQuery } =
+  programApi

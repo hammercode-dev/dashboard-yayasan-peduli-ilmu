@@ -1,3 +1,4 @@
+"use client"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { SearchInput } from "../components/SearchInput"
@@ -9,18 +10,22 @@ import { Button } from "@/components/ui/button"
 import { Pagination } from "../components/Pagination"
 import StatsCards from "../components/StatsCards"
 import { StatusFilter } from "../components/StatusFilter"
+import { useQueryParams } from "@/hooks/use-query-params"
+import { useGetProgramDonationsQuery } from "../program.api"
 
-export default async function ProgramPage({
-  query,
-  currentPage,
-  totalData,
-  status,
-}: {
-  query?: string
-  currentPage?: number
-  totalData?: number
-  status?: string
-}) {
+export default function ProgramPage() {
+  const { getParam, getNumberParam } = useQueryParams()
+  const queryParam = getParam("query")
+  const pageParam = getNumberParam("page", 1)
+  const statusParam = getParam("status", "all")
+
+  const { data, isLoading } = useGetProgramDonationsQuery({
+    query: queryParam,
+    page: pageParam,
+    status: statusParam,
+  })
+
+  console.log("data", data)
   return (
     <section className="space-y-6">
       {/* Header */}
@@ -29,7 +34,7 @@ export default async function ProgramPage({
         <p>Berikut adalah daftar program donasi yang tersedia</p>
       </div>
 
-      <StatsCards />
+      {/* <StatsCards /> */}
 
       {/* Filters Section */}
       <Card>
@@ -37,7 +42,7 @@ export default async function ProgramPage({
           <div className="flex flex-col gap-4">
             <div className="flex flex-col md:flex-row gap-4">
               <SearchInput placeholder="Cari nama program donasi..." />
-              <StatusFilter query={query} />
+              {/* <StatusFilter query={query} /> */}
               <Button variant="default" className="font-bold ml-auto">
                 <Link href="/dashboard/program/create">
                   Tambah Program Donasi
@@ -49,15 +54,15 @@ export default async function ProgramPage({
       </Card>
 
       <div className="space-y-4">
-        <Suspense fallback={<DonationTableSkeleton />}>
-          <DonationTable
-            query={query || ""}
-            currentPage={currentPage || 1}
-            status={status}
-          />
-        </Suspense>
+        {/* <Suspense fallback={<DonationTableSkeleton />}> */}
+        <DonationTable
+          query={queryParam || ""}
+          currentPage={pageParam || 1}
+          status={statusParam}
+        />
+        {/* </Suspense> */}
 
-        <Pagination totalData={totalData || 1} />
+        {/* <Pagination totalData={totalData || 1} /> */}
       </div>
     </section>
   )

@@ -1,4 +1,4 @@
-import CreateProgramDonationForm from "../components/CreateProgramDonationForm"
+import ProgramDonationForm from "../components/ProgramDonationForm"
 
 export default function CreateProgramPage() {
   return (
@@ -11,7 +11,7 @@ export default function CreateProgramPage() {
           Silakan isi form di bawah ini untuk menambahkan program donasi baru
         </p>
       </div>
-      <CreateProgramDonationForm />
+      <ProgramDonationForm />
     </section>
   )
 }

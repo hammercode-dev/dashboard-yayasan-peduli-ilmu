@@ -39,8 +39,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { STATUS_OPTIONS } from "../program.constants"
+import { useRouter } from "next/navigation"
 
-export default function CreateProgramDonationForm() {
+export default function ProgramDonationForm() {
+  const router = useRouter()
   const [description, setDescription] = useState("")
   const [descriptionEn, setDescriptionEn] = useState("")
   const [descriptionAr, setDescriptionAr] = useState("")
@@ -62,6 +64,7 @@ export default function CreateProgramDonationForm() {
     try {
       await createProgramDonation(data).unwrap()
       toast.success("Program donation created successfully")
+      router.push("/dashboard/program")
     } catch (err) {
       const apiError = err as {
         status?: number

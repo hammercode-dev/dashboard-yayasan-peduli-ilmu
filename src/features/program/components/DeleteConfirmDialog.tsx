@@ -8,12 +8,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Loader2 } from "lucide-react"
 
 interface DeleteConfirmDialogProps {
   open: boolean
   title?: string
   onConfirm: () => void
   onCancel: () => void
+  isLoading: boolean
 }
 
 export function DeleteConfirmDialog({
@@ -21,9 +23,15 @@ export function DeleteConfirmDialog({
   title,
   onConfirm,
   onCancel,
+  isLoading,
 }: DeleteConfirmDialogProps) {
   return (
-    <AlertDialog open={open} onOpenChange={isOpen => !isOpen && onCancel()}>
+    <AlertDialog
+      open={open}
+      onOpenChange={isOpen => {
+        if (!isOpen && !isLoading) onCancel()
+      }}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
@@ -36,10 +44,18 @@ export function DeleteConfirmDialog({
         <AlertDialogFooter>
           <AlertDialogCancel>Batal</AlertDialogCancel>
           <AlertDialogAction
-            onClick={onConfirm}
+            disabled={isLoading}
+            onClick={e => {
+              e.preventDefault()
+              onConfirm()
+            }}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Hapus
+            {isLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              "Hapus"
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

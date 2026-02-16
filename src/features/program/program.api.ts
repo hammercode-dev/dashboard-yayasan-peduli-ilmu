@@ -43,8 +43,18 @@ export const programApi = createApi({
       }),
       invalidatesTags: [{ type: "ProgramDonation", id: "LIST" }],
     }),
+    deleteProgramDonation: builder.mutation({
+      query: (id: string) => ({
+        url: `/program/program-donation/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: [{ type: "ProgramDonation", id: "LIST" }],
+    }),
   }),
 })
 
-export const { useCreateProgramDonationMutation, useGetProgramDonationsQuery } =
-  programApi
+export const {
+  useCreateProgramDonationMutation,
+  useGetProgramDonationsQuery,
+  useDeleteProgramDonationMutation,
+} = programApi

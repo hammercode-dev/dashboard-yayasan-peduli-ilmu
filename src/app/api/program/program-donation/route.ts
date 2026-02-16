@@ -8,14 +8,7 @@ import {
 import { programDonationSchema } from "@/features/program/program.schemas"
 import { TOTAL_DONATIONS_PER_PAGE } from "@/constants/data"
 import type { ApiResponse, ApiMeta } from "@/lib/response"
-
-function serializeBigInt<T>(data: T): T {
-  return JSON.parse(
-    JSON.stringify(data, (_, value) =>
-      typeof value === "bigint" ? value.toString() : value
-    )
-  )
-}
+import { serializeBigInt } from "@/lib/serialize"
 
 export async function GET(req: Request) {
   try {

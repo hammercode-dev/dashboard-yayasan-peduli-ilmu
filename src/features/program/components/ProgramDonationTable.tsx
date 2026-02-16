@@ -9,10 +9,7 @@ import { getProgramDonationColumns } from "../columns/program-donation-columns"
 import type { ProgramDonationRow } from "../columns/program-donation-columns"
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog"
 import { DeleteSuccessDialog } from "./DeleteSuccessDialog"
-import { TOTAL_DONATIONS_PER_PAGE } from "@/constants/data"
-import { FolderX } from "lucide-react"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { DonationTableSkeleton } from "./TableSkeleton"
 
 export function ProgramDonationTable() {
   const { getParam, getNumberParam } = useQueryParams()

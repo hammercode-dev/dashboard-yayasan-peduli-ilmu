@@ -31,6 +31,14 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { useCreateProgramDonationMutation } from "../program.api"
 import { toast } from "sonner"
+import {
+  Select,
+  SelectItem,
+  SelectContent,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { STATUS_OPTIONS } from "../program.constants"
 
 export default function CreateProgramDonationForm() {
   const [description, setDescription] = useState("")
@@ -134,11 +142,24 @@ export default function CreateProgramDonationForm() {
                   Status <span className="text-red-500">*</span>
                 </FieldLabel>
                 <FieldContent>
-                  <Input
+                  <Select
                     {...register("status")}
-                    placeholder="active, completed, etc."
-                    aria-invalid={!!errors.status}
-                  />
+                    onValueChange={value => {
+                      setValue("status", value)
+                      trigger("status")
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUS_OPTIONS.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FieldError errors={[errors.status]} />
                 </FieldContent>
               </Field>

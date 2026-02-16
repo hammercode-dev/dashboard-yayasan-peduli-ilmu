@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -75,6 +75,13 @@ export default function ProgramDonationForm() {
     }
   }
 
+  const generateSlug = useCallback(
+    (title: string) => {
+      return title.toLowerCase().replace(/ /g, "-")
+    },
+    []
+  )
+
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Tabs defaultValue="general" orientation={"horizontal"} className="gap-2">
@@ -118,6 +125,9 @@ export default function ProgramDonationForm() {
                     {...register("title")}
                     aria-invalid={!!errors.title}
                     placeholder="Enter program title"
+                    onChange={e => {
+                      setValue("slug", generateSlug(e.target.value))
+                    }}
                   />
                   <FieldError errors={[errors.title]} />
                 </FieldContent>

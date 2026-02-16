@@ -1,8 +1,8 @@
-'use client'
+"use client"
 
-import { usePathname } from 'next/navigation'
-import Link from 'next/link'
-import { LogOut, ChevronUp, User2 } from 'lucide-react'
+import { usePathname } from "next/navigation"
+import Link from "next/link"
+import { LogOut, ChevronUp, User2 } from "lucide-react"
 
 import {
   Sidebar,
@@ -16,20 +16,28 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from '@/components/ui/sidebar'
+} from "@/components/ui/sidebar"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { useLogout } from '@/features/auth/auth.hooks'
-import Image from 'next/image'
-import { MAIN_MENU_ITEMS } from '@/constants/menu'
+} from "@/components/ui/dropdown-menu"
+import { useLogout } from "@/features/auth/auth.hooks"
+import Image from "next/image"
+import { MAIN_MENU_ITEMS } from "@/constants/menu"
 
 export const AppSidebar = () => {
   const pathname = usePathname()
   const { logout } = useLogout()
+
+  const isActive = (url: string) => {
+    if (url === "/dashboard") {
+      return pathname === "/dashboard"
+    }
+
+    return pathname === url || pathname.startsWith(url + "/")
+  }
 
   return (
     <Sidebar collapsible="icon" variant="floating">
@@ -66,12 +74,12 @@ export const AppSidebar = () => {
           <SidebarGroupLabel>Menu Utama</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {MAIN_MENU_ITEMS.map((item) => (
+              {MAIN_MENU_ITEMS.map(item => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     variant="outline"
                     asChild
-                    isActive={pathname === item.url}
+                    isActive={isActive(item.url)}
                     tooltip={item.title}
                   >
                     <Link href={item.url}>

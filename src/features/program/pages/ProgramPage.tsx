@@ -15,8 +15,6 @@ export default function ProgramPage() {
         <p>Berikut adalah daftar program donasi yang tersedia</p>
       </div>
 
-      {/* <StatsCards /> */}
-
       <Card>
         <CardContent className="">
           <div className="flex flex-col gap-4">

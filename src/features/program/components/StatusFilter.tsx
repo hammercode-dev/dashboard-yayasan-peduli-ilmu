@@ -9,17 +9,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { DonationStatus } from "@/features/program/types/programDonation"
+import { useQueryParams } from "@/hooks/use-query-params"
 
-interface StatusFilterProps {
-  query?: string
-}
-
-export function StatusFilter({ query }: StatusFilterProps) {
-  const searchParams = useSearchParams()
-  const pathname = usePathname()
-  const { replace } = useRouter()
-
-  const currentStatus = searchParams.get("status") || "all"
+export function StatusFilter() {
+  const { getParam, setParam } = useQueryParams()
+  const currentStatus = getParam("status", "all")
 
   const statusOptions: { value: DonationStatus | "all"; label: string }[] = [
     { value: "all", label: "Semua Status" },
@@ -30,20 +24,7 @@ export function StatusFilter({ query }: StatusFilterProps) {
   ]
 
   const handleChangeFilter = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set("page", "1")
-
-    if (value === "all") {
-      params.delete("status")
-    } else {
-      params.set("status", value)
-    }
-
-    if (query) {
-      params.set("query", query)
-    }
-
-    replace(`${pathname}?${params.toString()}`)
+    setParam("status", value)
   }
 
   return (

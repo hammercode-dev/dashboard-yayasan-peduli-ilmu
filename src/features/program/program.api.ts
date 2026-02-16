@@ -22,16 +22,18 @@ export const programApi = createApi({
       query: (params: { query?: string; page?: number; status?: string }) => {
         return { url: `/program/program-donation?${getAllParams(params)}` }
       },
-      providesTags: result =>
-        result?.data
+      providesTags: result => {
+        console.log("result", result)
+        return result?.data
           ? [
-              ...result.data.map((item: { id: string }) => ({
+              ...result.data.donations.map((item: { id: string }) => ({
                 type: "ProgramDonation" as const,
                 id: item.id,
               })),
               { type: "ProgramDonation", id: "LIST" },
             ]
-          : [{ type: "ProgramDonation", id: "LIST" }],
+          : [{ type: "ProgramDonation", id: "LIST" }]
+      },
     }),
     createProgramDonation: builder.mutation({
       query: (body: ProgramDonationFormData) => ({

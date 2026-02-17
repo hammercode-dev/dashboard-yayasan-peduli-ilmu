@@ -100,7 +100,7 @@ export async function updateProgramDonation(input: UpdateProgramDonationInput) {
   const { id, ...fields } = input
 
   return prisma.program_donation.update({
-    where: { id },
+    where: { id: BigInt(id) },
     data: {
       ...fields,
       ...(fields.starts_at ? { starts_at: new Date(fields.starts_at) } : {}),

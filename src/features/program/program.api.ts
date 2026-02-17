@@ -1,5 +1,8 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import type { ProgramDonationFormData } from "./program.schemas"
+import { ApiResponse } from "@/lib/response"
+import { getProgramDonationById } from "./program.dal"
+import { Prisma } from "@/generated/prisma"
 
 const getAllParams = (params: {
   query?: string
@@ -50,6 +53,19 @@ export const programApi = createApi({
       }),
       invalidatesTags: [{ type: "ProgramDonation", id: "LIST" }],
     }),
+    getProgramDonationById: builder.query({
+      query: (id: string) => ({
+        url: `/program/program-donation/${id}`,
+        method: "GET",
+      }),
+      transformResponse: (
+        response: ApiResponse<
+          Prisma.PromiseReturnType<typeof getProgramDonationById>
+        >
+      ) => {
+        return response.data
+      },
+    }),
   }),
 })
 
@@ -57,4 +73,5 @@ export const {
   useCreateProgramDonationMutation,
   useGetProgramDonationsQuery,
   useDeleteProgramDonationMutation,
+  useGetProgramDonationByIdQuery,
 } = programApi

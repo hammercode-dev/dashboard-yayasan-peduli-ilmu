@@ -1,8 +1,8 @@
 "use client"
 
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -29,7 +29,10 @@ import {
   programDonationSchema,
 } from "../program.schemas"
 import { Separator } from "@/components/ui/separator"
-import { useCreateProgramDonationMutation } from "../program.api"
+import {
+  useCreateProgramDonationMutation,
+  useGetProgramDonationByIdQuery,
+} from "../program.api"
 import { toast } from "sonner"
 import {
   Select,
@@ -40,14 +43,30 @@ import {
 } from "@/components/ui/select"
 import { STATUS_OPTIONS } from "../program.constants"
 import { useRouter } from "next/navigation"
+import { getProgramDonationById } from "../program.dal"
+import SkeletonDetail from "./SkeletonDetail"
 
-export default function ProgramDonationForm() {
+interface ProgramDonationFormProps {
+  id?: string
+  type: "create" | "edit"
+}
+
+export default function ProgramDonationForm({
+  id,
+  type,
+}: ProgramDonationFormProps) {
   const router = useRouter()
   const [description, setDescription] = useState("")
   const [descriptionEn, setDescriptionEn] = useState("")
   const [descriptionAr, setDescriptionAr] = useState("")
   const [createProgramDonation, { isLoading }] =
     useCreateProgramDonationMutation()
+  const {
+    data: detailProgramDonation,
+    isFetching: isLoadingDetailProgramDonation,
+  } = useGetProgramDonationByIdQuery(id ?? "", {
+    skip: type !== "edit",
+  })
 
   const {
     register,
@@ -55,6 +74,8 @@ export default function ProgramDonationForm() {
     setValue,
     watch,
     trigger,
+    control,
+    reset,
     formState: { errors },
   } = useForm<ProgramDonationFormData>({
     resolver: zodResolver(programDonationSchema),
@@ -75,12 +96,45 @@ export default function ProgramDonationForm() {
     }
   }
 
-  const generateSlug = useCallback(
-    (title: string) => {
-      return title.toLowerCase().replace(/ /g, "-")
-    },
-    []
-  )
+  const generateSlug = useCallback((title: string) => {
+    return title.toLowerCase().replace(/ /g, "-")
+  }, [])
+
+  useEffect(() => {
+    if (detailProgramDonation) {
+      reset({
+        title: detailProgramDonation.title ?? "",
+        title_en: detailProgramDonation.title_en ?? "",
+        title_ar: detailProgramDonation.title_ar ?? "",
+        slug: detailProgramDonation.slug ?? "",
+        status: detailProgramDonation.status ?? "",
+        location: detailProgramDonation.location ?? "",
+        image_url: detailProgramDonation.image_url ?? "",
+        target_amount: detailProgramDonation.target_amount?.toString() ?? "",
+        collected_amount:
+          detailProgramDonation.collected_amount?.toString() ?? "",
+        starts_at: detailProgramDonation.starts_at
+          ? format(new Date(detailProgramDonation.starts_at), "yyyy-MM-dd")
+          : "",
+        ends_at: detailProgramDonation.ends_at
+          ? format(new Date(detailProgramDonation.ends_at), "yyyy-MM-dd")
+          : "",
+        short_description: detailProgramDonation.short_description ?? "",
+        short_description_en: detailProgramDonation.short_description_en ?? "",
+        short_description_ar: detailProgramDonation.short_description_ar ?? "",
+        description: detailProgramDonation.description ?? "",
+        description_en: detailProgramDonation.description_en ?? "",
+        description_ar: detailProgramDonation.description_ar ?? "",
+      })
+      setDescription(detailProgramDonation.description ?? "")
+      setDescriptionEn(detailProgramDonation.description_en ?? "")
+      setDescriptionAr(detailProgramDonation.description_ar ?? "")
+    }
+  }, [detailProgramDonation])
+
+  if (isLoadingDetailProgramDonation) {
+    return <SkeletonDetail />
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -155,24 +209,28 @@ export default function ProgramDonationForm() {
                   Status <span className="text-red-500">*</span>
                 </FieldLabel>
                 <FieldContent>
-                  <Select
-                    {...register("status")}
-                    onValueChange={value => {
-                      setValue("status", value)
-                      trigger("status")
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STATUS_OPTIONS.map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Controller
+                    name="status"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        key={field.value}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger aria-invalid={!!errors.status}>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUS_OPTIONS.map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                   <FieldError errors={[errors.status]} />
                 </FieldContent>
               </Field>
@@ -285,6 +343,7 @@ export default function ProgramDonationForm() {
                   <CalendarPopover
                     value={watch("ends_at")}
                     onChange={async date => {
+                      console.log("dateee", date)
                       setValue(
                         "ends_at",
                         date ? format(date, "yyyy-MM-dd") : ""
@@ -458,6 +517,7 @@ export default function ProgramDonationForm() {
                       await trigger("description_ar")
                     }}
                     placeholder="أدخل وصفاً تفصيلياً بالعربية..."
+                    textAlign="right"
                   />
                   <FieldError errors={[errors.description_ar]} />
                 </FieldContent>

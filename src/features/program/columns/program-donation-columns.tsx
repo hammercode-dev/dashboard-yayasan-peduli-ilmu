@@ -22,6 +22,7 @@ import {
 } from "@/lib/format"
 import { StatusBadge } from "../components/StatusBadge"
 import type { DonationStatus } from "../types/programDonation"
+import Link from "next/link"
 
 export type ProgramDonationRow = {
   id: string
@@ -124,14 +125,12 @@ export function getProgramDonationColumns(options: {
             </TooltipContent>
           </Tooltip>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>
-              <Eye className="mr-2 h-4 w-4" />
-              Lihat Detail
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
+            <Link href={`/dashboard/program/${row.original.id}`}>
+              <DropdownMenuItem>
+                <Eye className="mr-2 h-4 w-4" />
+                Lihat Detail
+              </DropdownMenuItem>
+            </Link>
             {options.onDelete && (
               <DropdownMenuItem
                 onClick={() =>

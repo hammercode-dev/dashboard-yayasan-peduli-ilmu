@@ -39,6 +39,7 @@ interface RichTextEditorProps {
   onChange?: (markdown: string) => void
   placeholder?: string
   "aria-invalid"?: boolean
+  textAlign?: "left" | "center" | "right" | "justify"
 }
 
 const turndownService = new TurndownService({
@@ -345,6 +346,7 @@ const RichTextEditor = ({
   onChange,
   placeholder = "Start typing...",
   "aria-invalid": ariaInvalid,
+  textAlign = "left",
 }: RichTextEditorProps) => {
   const editor = useEditor({
     extensions: [
@@ -362,6 +364,7 @@ const RichTextEditor = ({
       }),
       TextAlign.configure({
         types: ["heading", "paragraph"],
+        defaultAlignment: textAlign || "left",
       }),
       Placeholder.configure({
         placeholder,

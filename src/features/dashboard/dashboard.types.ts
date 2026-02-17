@@ -1,14 +1,6 @@
 import { Prisma } from "@/generated/prisma"
+import { getProgramDonationStats } from "./dashboard.dal"
 
-export interface ProgramDonationStatsDataResponse {
-  active: number
-  draft: number
-  archived: number
-  closed: number
-  fundsCollected: Prisma.GetProgram_donationAggregateType<{
-    _sum: {
-      collected_amount: true
-    }
-  }>
-  totalPrograms: number
-}
+export type ProgramDonationStatsDataResponse = Prisma.PromiseReturnType<
+  typeof getProgramDonationStats
+>

@@ -11,7 +11,7 @@ export default function CreateProgramPage() {
           Silakan isi form di bawah ini untuk menambahkan program donasi baru
         </p>
       </div>
-      <ProgramDonationForm />
+      <ProgramDonationForm type="create" />
     </section>
   )
 }

@@ -1,7 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import type { ProgramDonationFormData } from "./program.schemas"
 import { ApiResponse } from "@/lib/response"
-import { getProgramDonationById } from "./program.dal"
+import {
+  getProgramDonationById,
+  UpdateProgramDonationInput,
+} from "./program.dal"
 import { Prisma } from "@/generated/prisma"
 
 const getAllParams = (params: {
@@ -66,6 +69,14 @@ export const programApi = createApi({
         return response.data
       },
     }),
+    updateProgramDonation: builder.mutation({
+      query: (body: UpdateProgramDonationInput) => ({
+        url: `/program/program-donation/${body.id}`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: [{ type: "ProgramDonation", id: "LIST" }],
+    }),
   }),
 })
 
@@ -74,4 +85,5 @@ export const {
   useGetProgramDonationsQuery,
   useDeleteProgramDonationMutation,
   useGetProgramDonationByIdQuery,
+  useUpdateProgramDonationMutation,
 } = programApi

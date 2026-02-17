@@ -7,7 +7,7 @@ import { DonationStatus } from "./types/programDonation"
 import { ProgramDonationFormData } from "./program.schemas"
 
 export interface UpdateProgramDonationInput extends Partial<ProgramDonationFormData> {
-  id: bigint
+  id: string
 }
 
 export const getProgramDonations = cache(

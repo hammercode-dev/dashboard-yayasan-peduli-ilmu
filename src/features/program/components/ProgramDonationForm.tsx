@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useCallback, useEffect, useState } from "react"
@@ -32,6 +33,7 @@ import { Separator } from "@/components/ui/separator"
 import {
   useCreateProgramDonationMutation,
   useGetProgramDonationByIdQuery,
+  useUpdateProgramDonationMutation,
 } from "../program.api"
 import { toast } from "sonner"
 import {
@@ -42,8 +44,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { STATUS_OPTIONS } from "../program.constants"
-import { useRouter } from "next/navigation"
-import { getProgramDonationById } from "../program.dal"
 import SkeletonDetail from "./SkeletonDetail"
 
 interface ProgramDonationFormProps {
@@ -59,8 +59,10 @@ export default function ProgramDonationForm({
   const [description, setDescription] = useState("")
   const [descriptionEn, setDescriptionEn] = useState("")
   const [descriptionAr, setDescriptionAr] = useState("")
-  const [createProgramDonation, { isLoading }] =
+  const [createProgramDonation, { isLoading: isLoadingCreate }] =
     useCreateProgramDonationMutation()
+  const [updateProgramDonation, { isLoading: isLoadingUpdate }] =
+    useUpdateProgramDonationMutation()
   const {
     data: detailProgramDonation,
     isFetching: isLoadingDetailProgramDonation,
@@ -83,10 +85,17 @@ export default function ProgramDonationForm({
 
   const onSubmit = async (data: ProgramDonationFormData) => {
     try {
-      await createProgramDonation(data).unwrap()
-      toast.success("Program donation created successfully")
+      if (type === "create") {
+        await createProgramDonation(data).unwrap()
+        toast.success("Program donation created successfully")
+      }
+      if (type === "edit") {
+        await updateProgramDonation({ id: id as string, ...data }).unwrap()
+        toast.success("Program donation updated successfully")
+      }
       router.push("/dashboard/program")
     } catch (err) {
+      console.log("err", err)
       const apiError = err as {
         status?: number
         data?: { message?: string; errors?: unknown }
@@ -531,8 +540,8 @@ export default function ProgramDonationForm({
         <Button type="button" variant="outline">
           Cancel
         </Button>
-        <Button type="submit" loading={isLoading}>
-          Create Program
+        <Button type="submit" loading={isLoadingCreate || isLoadingUpdate}>
+          {type === "create" ? "Create Program" : "Update Program"}
         </Button>
       </div>
     </form>

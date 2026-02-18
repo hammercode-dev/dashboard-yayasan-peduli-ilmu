@@ -1,16 +1,21 @@
 import { configureStore } from "@reduxjs/toolkit"
 import authReducer from "../features/auth/authSlice"
+import dashboardReducer from "@/features/dashboard/dashboard.slice"
 import { programApi } from "@/features/program/program.api"
 import { dashboardApi } from "@/features/dashboard/dashboard.api"
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    dashboard: dashboardReducer,
     [programApi.reducerPath]: programApi.reducer,
     [dashboardApi.reducerPath]: dashboardApi.reducer,
   },
   middleware: getDefaultMiddleware =>
-    getDefaultMiddleware().concat(programApi.middleware, dashboardApi.middleware),
+    getDefaultMiddleware().concat(
+      programApi.middleware,
+      dashboardApi.middleware
+    ),
 })
 
 // Infer the `RootState` and `AppDispatch` types from the store itself

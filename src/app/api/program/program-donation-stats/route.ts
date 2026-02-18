@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import type { ApiResponse } from "@/lib/response"
 import { getProgramDonationStats } from "@/features/dashboard/dashboard.dal"
 import { Prisma } from "@/generated/prisma"
-import { ProgramDonationStatsDataResponse } from "@/features/dashboard/dashboard.types"
+import { ProgramDonationStatsDataResponse } from "@/features/dashboard/types/dashboard.types"
 
 export async function GET() {
   try {

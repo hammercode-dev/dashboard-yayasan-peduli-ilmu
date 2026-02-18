@@ -1,13 +1,9 @@
 "use client"
 
-import { useAppSelector } from "@/store/hooks"
-import StatsCards from "./components/StatsCards"
+import StatsCards from "../components/StatsCards"
+import PrayerTimings from "../components/PrayerTimings"
 
 const DashboardPage = () => {
-  const auth = useAppSelector(state => state.auth)
-
-  console.log("AUTH STATE:", auth)
-
   return (
     <section className="space-y-6">
       <div>
@@ -15,7 +11,9 @@ const DashboardPage = () => {
         <p className="text-muted-foreground">Dashboard Yayasan Peduli Ilmu</p>
       </div>
 
-      <StatsCards />    
+      <PrayerTimings />
+
+      <StatsCards />
     </section>
   )
 }

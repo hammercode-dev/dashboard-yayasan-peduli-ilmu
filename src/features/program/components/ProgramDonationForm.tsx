@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/select"
 import { STATUS_OPTIONS } from "../program.constants"
 import SkeletonDetail from "./SkeletonDetail"
+import { formatRupiah } from "@/lib/format"
 
 interface ProgramDonationFormProps {
   id?: string
@@ -144,6 +145,26 @@ export default function ProgramDonationForm({
   if (isLoadingDetailProgramDonation) {
     return <SkeletonDetail />
   }
+
+  const quickAmounts = [
+    "1000000",
+    "5000000",
+    "10000000",
+    "25000000",
+    "50000000",
+    "100000000",
+  ]
+
+  const handleQuickAmount = (amount: string) => {
+    setValue("target_amount", amount, {
+      shouldValidate: true,
+      shouldDirty: true,
+    })
+  }
+
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const target_amount = watch("target_amount")
+  const collected_amount = watch("collected_amount")
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -281,7 +302,22 @@ export default function ProgramDonationForm({
               <DollarSign className="size-4" />
               Financial Information
             </h3>
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <div className="flex flex-wrap gap-2 mb-7">
+              {quickAmounts.map(amount => (
+                <Button
+                  key={amount}
+                  type="button"
+                  variant="outline"
+                  value={amount}
+                  size="sm"
+                  onClick={() => handleQuickAmount(String(amount))}
+                  className="text-xs"
+                >
+                  {formatRupiah(Number(amount))}
+                </Button>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 mb-7">
               <Field>
                 <FieldLabel>
                   Target Amount <span className="text-red-500">*</span>
@@ -294,6 +330,11 @@ export default function ProgramDonationForm({
                     placeholder="0.00"
                     aria-invalid={!!errors.target_amount}
                   />
+                  {target_amount && (
+                    <div className="text-xs text-gray-600 mt-1">
+                      {formatRupiah(Number(target_amount))}
+                    </div>
+                  )}
                   <FieldError errors={[errors.target_amount]} />
                 </FieldContent>
               </Field>
@@ -310,10 +351,23 @@ export default function ProgramDonationForm({
                     placeholder="0.00"
                     aria-invalid={!!errors.collected_amount}
                   />
+                  {collected_amount && (
+                    <div className="text-xs text-gray-600">
+                      {/* {formatRupiah(Number(collected_amount))} */}
+                      {formatRupiah(Number(collected_amount))}
+                    </div>
+                  )}
                   <FieldError errors={[errors.collected_amount]} />
                 </FieldContent>
               </Field>
             </div>
+            {/* Progress Display */}
+            {target_amount && collected_amount && Number(target_amount) > 0 && (
+              <FundingProgress
+                collected_amount={collected_amount}
+                target_amount={target_amount}
+              />
+            )}
           </div>
 
           <Separator className="my-4" />
@@ -545,5 +599,52 @@ export default function ProgramDonationForm({
         </Button>
       </div>
     </form>
+  )
+}
+
+const FundingProgress = ({
+  collected_amount,
+  target_amount,
+}: {
+  collected_amount: number | string
+  target_amount: number | string
+}) => {
+  return (
+    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="font-medium text-green-900">Funding Progress</h4>
+        <span className="text-sm font-medium text-green-700">
+          {Math.round((Number(collected_amount) / Number(target_amount)) * 100)}
+          %
+        </span>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="w-full bg-green-200 rounded-full h-2 mb-3">
+        <div
+          className="bg-green-600 h-2 rounded-full transition-all duration-300"
+          style={{
+            width: `${Math.min((Number(collected_amount) / Number(target_amount)) * 100, 100)}%`,
+          }}
+        ></div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 text-sm">
+        <div>
+          <div className="text-green-700 font-medium">Collected</div>
+          <div className="text-green-900 font-semibold">
+            {formatRupiah(Number(collected_amount))}
+          </div>
+        </div>
+        <div>
+          <div className="text-green-700 font-medium">Remaining</div>
+          <div className="text-green-900 font-semibold">
+            {formatRupiah(
+              Math.max(Number(target_amount) - Number(collected_amount), 0)
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }

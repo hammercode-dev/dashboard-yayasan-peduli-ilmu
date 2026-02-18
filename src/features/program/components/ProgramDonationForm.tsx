@@ -155,6 +155,13 @@ export default function ProgramDonationForm({
     "100000000",
   ]
 
+  const quickDurations = [
+    { label: "3 Months", type: "month", value: 3 },
+    { label: "6 Months", type: "month", value: 6 },
+    { label: "9 Months", type: "month", value: 9 },
+    { label: "1 Year", type: "year", value: 1 },
+  ]
+
   const handleQuickAmount = (amount: string) => {
     setValue("target_amount", amount, {
       shouldValidate: true,
@@ -162,9 +169,27 @@ export default function ProgramDonationForm({
     })
   }
 
+  const handleQuickDuration = (type: "month" | "year", value: number) => {
+    const startDate = new Date()
+    const endDate = new Date()
+
+    if (type === "month") {
+      endDate.setMonth(endDate.getMonth() + value)
+    } else {
+      endDate.setFullYear(endDate.getFullYear() + value)
+    }
+
+    setValue("starts_at", startDate.toISOString())
+    setValue("ends_at", endDate.toISOString())
+
+    trigger(["starts_at", "ends_at"])
+  }
+
   // eslint-disable-next-line react-hooks/incompatible-library
   const target_amount = watch("target_amount")
   const collected_amount = watch("collected_amount")
+  const starts_at = watch("starts_at") ? new Date(watch("starts_at")) : null
+  const ends_at = watch("ends_at") ? new Date(watch("ends_at")) : null
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -353,7 +378,6 @@ export default function ProgramDonationForm({
                   />
                   {collected_amount && (
                     <div className="text-xs text-gray-600">
-                      {/* {formatRupiah(Number(collected_amount))} */}
                       {formatRupiah(Number(collected_amount))}
                     </div>
                   )}
@@ -377,7 +401,30 @@ export default function ProgramDonationForm({
               <CalendarDays className="size-4" />
               Schedule
             </h3>
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <div className="space-y-2 mb-7">
+              <FieldLabel>Quick Duration Selection</FieldLabel>
+              <div className="flex flex-wrap gap-2">
+                {quickDurations.map(option => (
+                  <Button
+                    key={option.label}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      handleQuickDuration(
+                        option.type as "month" | "year",
+                        option.value
+                      )
+                    }
+                    className="text-xs"
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 mb-7">
               <Field>
                 <FieldLabel>
                   Start Date <span className="text-red-500">*</span>
@@ -419,6 +466,10 @@ export default function ProgramDonationForm({
                 </FieldContent>
               </Field>
             </div>
+
+            {starts_at && ends_at && (
+              <CampaignDuration starts_at={starts_at} ends_at={ends_at} />
+            )}
           </div>
 
           <Separator className="my-4" />
@@ -645,6 +696,59 @@ const FundingProgress = ({
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+const CampaignDuration = ({
+  starts_at,
+  ends_at,
+}: {
+  starts_at: Date | null
+  ends_at: Date | null
+}) => {
+  if (!starts_at || !ends_at) {
+    return null
+  }
+
+  const diffTime = Math.abs(ends_at.getTime() - starts_at.getTime())
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  const diffWeeks = Math.floor(diffDays / 7)
+  const diffMonths = Math.floor(diffDays / 30)
+
+  const getReadableDuration = () => {
+    if (diffDays < 7) {
+      return `${diffDays} day${diffDays !== 1 ? "s" : ""}`
+    }
+
+    if (diffDays < 30) {
+      return `${diffWeeks} week${diffWeeks !== 1 ? "s" : ""} (${diffDays} days)`
+    }
+
+    return `${diffMonths} month${diffMonths !== 1 ? "s" : ""} (${diffDays} days)`
+  }
+
+  const isInvalidRange = ends_at <= starts_at
+
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h4 className="font-medium text-blue-900">Campaign Duration</h4>
+          <p className="text-sm text-blue-700 mt-1">{getReadableDuration()}</p>
+        </div>
+
+        <div className="text-right">
+          <div className="text-2xl font-bold text-blue-600">{diffDays}</div>
+          <div className="text-xs text-blue-600 font-medium">DAYS</div>
+        </div>
+      </div>
+
+      {isInvalidRange && (
+        <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+          ⚠️ End date must be after start date
+        </div>
+      )}
     </div>
   )
 }

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
-import jwt from "jsonwebtoken"
 import { prisma } from "@/lib/client"
-
-const JWT_SECRET = process.env.JWT_SECRET || "secretkeybro"
+import { createSession } from "@/lib/session"
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,18 +41,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const token = jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-      },
-      JWT_SECRET,
-      {
-        expiresIn: "1d",
-      }
-    )
+    await createSession(user.id, user.email)
 
-    const response = NextResponse.json(
+    return NextResponse.json(
       {
         message: "Login successful",
         user: {
@@ -65,18 +54,6 @@ export async function POST(request: NextRequest) {
       },
       { status: 200 }
     )
-
-    response.cookies.set({
-      name: "auth-token",
-      value: token,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24,
-      path: "/",
-    })
-
-    return response
   } catch (error) {
     console.error("Login error:", error)
     return NextResponse.json(

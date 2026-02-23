@@ -1,7 +1,8 @@
-import { updateSession } from "@/lib/supabase/proxy";
+import { updateSession } from "@/lib/supabase/proxy"
+import { NextRequest } from "next/server"
 
 export async function proxy(request: NextRequest) {
-  return await updateSession(request);
+  return await updateSession(request)
 }
 
 export const config = {
@@ -15,4 +16,4 @@ export const config = {
      */
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
-};
+}

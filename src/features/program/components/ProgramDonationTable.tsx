@@ -77,8 +77,6 @@ export function ProgramDonationTable() {
     }
   }
 
-  console.log("ini data", data)
-
   return (
     <TooltipProvider>
       <div className="space-y-4">

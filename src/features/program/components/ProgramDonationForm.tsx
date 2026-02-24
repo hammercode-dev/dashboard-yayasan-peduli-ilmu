@@ -453,7 +453,6 @@ export default function ProgramDonationForm({
                   <CalendarPopover
                     value={watch("ends_at")}
                     onChange={async date => {
-                      console.log("dateee", date)
                       setValue(
                         "ends_at",
                         date ? format(date, "yyyy-MM-dd") : ""

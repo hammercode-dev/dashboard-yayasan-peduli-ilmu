@@ -3,6 +3,7 @@ import authReducer from "../features/auth/authSlice"
 import dashboardReducer from "@/features/dashboard/dashboard.slice"
 import { programApi } from "@/features/program/program.api"
 import { dashboardApi } from "@/features/dashboard/dashboard.api"
+import { donationApi } from "@/features/donation/donation.api"
 
 export const store = configureStore({
   reducer: {
@@ -10,11 +11,13 @@ export const store = configureStore({
     dashboard: dashboardReducer,
     [programApi.reducerPath]: programApi.reducer,
     [dashboardApi.reducerPath]: dashboardApi.reducer,
+    [donationApi.reducerPath]: donationApi.reducer,
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware().concat(
       programApi.middleware,
-      dashboardApi.middleware
+      dashboardApi.middleware,
+      donationApi.middleware
     ),
 })
 

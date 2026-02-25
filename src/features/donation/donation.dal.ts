@@ -45,3 +45,9 @@ export const countDonationEvidences = cache(async (query: string) => {
     },
   })
 })
+
+export async function deleteDonationEvidence(id: bigint) {
+  await verifySession()
+
+  return prisma.donation_evidences.delete({ where: { id } })
+}

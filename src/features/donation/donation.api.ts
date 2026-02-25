@@ -29,7 +29,17 @@ export const donationApi = createApi({
           : [{ type: "DonationEvidence", id: "LIST" }]
       },
     }),
+    deleteDonationEvidence: builder.mutation({
+      query: (id: string) => ({
+        url: `/donation/donation-evidence/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: [{ type: "DonationEvidence", id: "LIST" }],
+    }),
   }),
 })
 
-export const { useGetDonationEvidencesQuery } = donationApi
+export const {
+  useGetDonationEvidencesQuery,
+  useDeleteDonationEvidenceMutation,
+} = donationApi

@@ -36,10 +36,19 @@ export const donationApi = createApi({
       }),
       invalidatesTags: [{ type: "DonationEvidence", id: "LIST" }],
     }),
+    createDonation: builder.mutation({
+      query: (body: ProgramDonationFormData) => ({
+        url: "/donation/donation-evidence",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [{ type: "DonationEvidence", id: "LIST" }],
+    }),
   }),
 })
 
 export const {
   useGetDonationEvidencesQuery,
   useDeleteDonationEvidenceMutation,
+  useCreateDonationMutation,
 } = donationApi

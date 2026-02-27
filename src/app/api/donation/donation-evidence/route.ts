@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server"
-
+import { flattenError } from "zod"
 import { serializeBigInt } from "@/lib/serialize"
 import { TOTAL_DONATIONS_PER_PAGE } from "@/constants/data"
 import {
   getDonationEvidences,
   countDonationEvidences,
+  createDonationEvidence,
 } from "@/features/donation/donation.dal"
+import { donationEvidenceSchema } from "@/features/donation/donation.schemas"
 
 export async function GET(req: Request) {
   try {
@@ -39,6 +41,41 @@ export async function GET(req: Request) {
       success: false,
       message: "Error fetching data",
       error: { code: "FETCH_ERROR", details: String(error) },
+    }
+    return NextResponse.json(body, { status: 500 })
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json()
+    const parsed = donationEvidenceSchema.safeParse(body)
+
+    if (!parsed.success) {
+      const body: ApiResponse<never> = {
+        success: false,
+        message: "Validation failed",
+        error: {
+          code: "VALIDATION_ERROR",
+          details: flattenError(parsed.error),
+        },
+      }
+      return NextResponse.json(body, { status: 400 })
+    }
+
+    const result = await createDonationEvidence(parsed.data)
+    const resBody: ApiResponse<unknown> = {
+      success: true,
+      message: "Program donation created",
+      data: serializeBigInt(result),
+    }
+    return NextResponse.json(resBody, { status: 201 })
+  } catch (error) {
+    console.error("[POST /api/program/program-donation]", error)
+    const body: ApiResponse<never> = {
+      success: false,
+      message: "Failed to create program donation",
+      error: { code: "SERVER_ERROR", details: String(error) },
     }
     return NextResponse.json(body, { status: 500 })
   }

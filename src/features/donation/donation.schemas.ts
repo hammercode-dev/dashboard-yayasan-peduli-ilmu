@@ -21,9 +21,11 @@ export const donationEvidenceSchema = z.object({
 
   description: z.string().optional(),
 
+  donation_upload_at: z.string().min(1, "Donation date is required"),
+
   program_id: z
     .string()
-    .min(1, "Program is required")
+    .min(1, "Silakan pilih program tujuan")
     .refine(val => !isNaN(Number(val)), {
       message: "Invalid program ID",
     }),

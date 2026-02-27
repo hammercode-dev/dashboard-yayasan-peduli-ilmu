@@ -72,7 +72,7 @@ export const programApi = createApi({
     updateProgramDonation: builder.mutation({
       query: (body: UpdateProgramDonationInput) => ({
         url: `/program/program-donation/${body.id}`,
-        method: "PUT",
+        method: "PATCH",
         body,
       }),
       invalidatesTags: [{ type: "ProgramDonation", id: "LIST" }],

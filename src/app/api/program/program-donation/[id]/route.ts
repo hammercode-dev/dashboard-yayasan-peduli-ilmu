@@ -3,7 +3,7 @@ import {
   getProgramDonationById,
   updateProgramDonation,
 } from "@/features/program/program.dal"
-import { programDonationSchema } from "@/features/program/program.schemas"
+import { updateProgramDonationSchema } from "@/features/program/program.schemas"
 import { Prisma } from "@/generated/prisma"
 import { ApiResponse } from "@/lib/response"
 import { serializeBigInt } from "@/lib/serialize"
@@ -59,14 +59,14 @@ export async function DELETE(
   }
 }
 
-export async function PUT(
+export async function PATCH(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await context.params
     const body = await req.json()
-    const parsed = programDonationSchema.safeParse(body)
+    const parsed = updateProgramDonationSchema.safeParse(body)
     if (!parsed.success) {
       const body: ApiResponse<never> = {
         success: false,

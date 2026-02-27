@@ -2,11 +2,14 @@ import "server-only"
 import { cache } from "react"
 import { prisma } from "@/lib/client"
 import { verifySession } from "@/lib/session"
-import { TOTAL_DONATIONS_PER_PAGE } from "@/constants/data"
+import { TOTAL_PROGRAMS_PER_PAGE } from "@/constants/data"
 import { DonationStatus } from "./types/programDonation"
-import { ProgramDonationFormData } from "./program.schemas"
+import {
+  ProgramDonationFormData,
+  UpdateProgramDonationFormData,
+} from "./program.schemas"
 
-export interface UpdateProgramDonationInput extends Partial<ProgramDonationFormData> {
+export interface UpdateProgramDonationInput extends Partial<UpdateProgramDonationFormData> {
   id: string
 }
 
@@ -14,7 +17,7 @@ export const getProgramDonations = cache(
   async (query: string, currentPage: number, status: string) => {
     await verifySession()
 
-    const offset = (currentPage - 1) * TOTAL_DONATIONS_PER_PAGE
+    const offset = (currentPage - 1) * TOTAL_PROGRAMS_PER_PAGE
 
     return prisma.program_donation.findMany({
       where: {
@@ -23,7 +26,7 @@ export const getProgramDonations = cache(
           ? { status: status as DonationStatus }
           : {}),
       },
-      take: TOTAL_DONATIONS_PER_PAGE,
+      take: TOTAL_PROGRAMS_PER_PAGE,
       skip: offset,
       orderBy: { created_at: "desc" },
     })

@@ -52,6 +52,18 @@ interface ProgramDonationFormProps {
   type: "create" | "edit"
 }
 
+function getDirtyValues(dirtyFields: any, allValues: any) {
+  const changed: any = {}
+
+  Object.keys(dirtyFields).forEach(key => {
+    if (dirtyFields[key]) {
+      changed[key] = allValues[key]
+    }
+  })
+
+  return changed
+}
+
 export default function ProgramDonationForm({
   id,
   type,
@@ -79,7 +91,7 @@ export default function ProgramDonationForm({
     trigger,
     control,
     reset,
-    formState: { errors },
+    formState: { errors, dirtyFields },
   } = useForm<ProgramDonationFormData>({
     resolver: zodResolver(programDonationSchema),
   })
@@ -91,7 +103,14 @@ export default function ProgramDonationForm({
         toast.success("Program donation created successfully")
       }
       if (type === "edit") {
-        await updateProgramDonation({ id: id as string, ...data }).unwrap()
+        const changedData = getDirtyValues(dirtyFields, data)
+
+        await updateProgramDonation({
+          id: id as string,
+          ...changedData,
+        }).unwrap()
+
+        console.log("data edit = ", { ...data })
         toast.success("Program donation updated successfully")
       }
       router.push("/dashboard/program")

@@ -20,17 +20,19 @@ model users {
 }
 
 model donation_evidences {
-  id               BigInt            @id @unique @default(autoincrement())
-  uploaded_at      DateTime          @default(now()) @db.Timestamptz(6)
-  full_name        String?
-  evidence_url     String?
-  program_id       BigInt?
-  phone_number     String?
-  email            String?
-  amount           Decimal?          @db.Decimal
-  payment_method   String?
-  description      String?
-  program_donation program_donation? @relation(fields: [program_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                 BigInt            @id @unique @default(autoincrement())
+  created_at         DateTime          @default(now()) @db.Timestamptz(6)
+  full_name          String?
+  evidence_url       String?
+  program_id         BigInt?
+  phone_number       String?
+  email              String?
+  amount             Decimal?          @db.Decimal
+  payment_method     String?
+  description        String?
+  updated_at         DateTime?         @db.Timestamptz(6)
+  donation_upload_at DateTime?         @db.Timestamptz(6)
+  program_donation   program_donation? @relation(fields: [program_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@schema("public")
 }
@@ -69,7 +71,6 @@ model program_donation {
   description_ar       String?
   short_description_ar String?
   donation_evidences   donation_evidences[]
-  donations            donations[]
   program_timeline     program_timeline[]
 
   @@schema("public")
@@ -87,22 +88,5 @@ model program_timeline {
   program_id       BigInt?
   program_donation program_donation? @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@schema("public")
-}
-
-model donations {
-  id               BigInt           @id @default(autoincrement())
-  created_at       DateTime         @default(now()) @db.Timestamptz(6)
-  updated_at       DateTime?        @db.Timestamptz(6)
-  name             String
-  phone_number     String
-  payment_method   String
-  amount           Decimal          @db.Decimal
-  evidence_url     String?
-  description      String?
-  program_id       BigInt
-  program_donation program_donation @relation(fields: [program_id], references: [id], onDelete: Cascade)
-
-  @@index([program_id])
   @@schema("public")
 }

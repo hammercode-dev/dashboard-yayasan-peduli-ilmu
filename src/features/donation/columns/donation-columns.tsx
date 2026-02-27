@@ -43,25 +43,26 @@ export function getDonationColumns(options: {
         <span className="font-medium">{row.original.full_name}</span>
       ),
     },
-    {
-      accessorKey: "phone_number",
-      header: "No HP",
-    },
-    {
-      accessorKey: "payment_method",
-      header: "Metode Pembayaran",
-    },
+
     {
       accessorKey: "amount",
       header: "Jumlah Donasi",
       cell: ({ row }) => formatRupiah(Number(row.original.amount)),
     },
     {
+      accessorKey: "payment_method",
+      header: "Metode Pembayaran",
+    },
+    {
       id: "program_title",
-      header: "Program",
+      header: "Program Donasi",
       cell: ({ row }) => {
         return row.original.program_donation?.title ?? "-"
       },
+    },
+    {
+      accessorKey: "phone_number",
+      header: "No HP",
     },
     {
       accessorKey: "created_at",

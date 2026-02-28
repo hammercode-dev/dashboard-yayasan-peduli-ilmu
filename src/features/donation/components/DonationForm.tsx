@@ -1,5 +1,6 @@
 "use client"
-import { useState } from "react"
+
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -27,9 +28,20 @@ import {
   donationEvidenceSchema,
 } from "../donation.schemas"
 
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card"
+
 import { useUpdateProgramDonationMutation } from "@/features/program/program.api"
 
-import { useCreateDonationMutation } from "../donation.api"
+import {
+  useCreateDonationMutation,
+  useGetDonationByIdQuery,
+} from "../donation.api"
 import { CalendarPopover } from "@/components/common/calendar-popover"
 
 import { useGetProgramDonationsQuery } from "@/features/program/program.api"
@@ -39,17 +51,23 @@ import { formatRupiah } from "@/lib/format"
 import { SearchProgram } from "./SearchProgram"
 import { useDebouncedCallback } from "use-debounce"
 
+import { SkeletonDetail } from "@/features/donation/components/SkeletonDetail"
+
 interface DonationFormProps {
   id?: string
   type: "create" | "edit"
 }
 
-export default function DonationForm({ type }: DonationFormProps) {
+export default function DonationForm({ id, type }: DonationFormProps) {
   const router = useRouter()
   const [search, setSearch] = useState("")
   const [createDonationEvidence, { isLoading: isLoadingCreate }] =
     useCreateDonationMutation()
   const [updateProgramDonation] = useUpdateProgramDonationMutation()
+  const { data: detailDonation, isFetching: isLoadingDetailDonation } =
+    useGetDonationByIdQuery(id ?? "", {
+      skip: type !== "edit",
+    })
 
   const debouncedSearch = useDebouncedCallback((value: string) => {
     setSearch(value)
@@ -72,6 +90,7 @@ export default function DonationForm({ type }: DonationFormProps) {
     handleSubmit,
     watch,
     control,
+    reset,
     formState: { errors },
   } = useForm<DonationEvidenceFormData>({
     resolver: zodResolver(donationEvidenceSchema),
@@ -87,6 +106,23 @@ export default function DonationForm({ type }: DonationFormProps) {
   })
 
   const amount = watch("amount")
+
+  useEffect(() => {
+    if (detailDonation) {
+      reset({
+        full_name: detailDonation.full_name ?? "",
+        amount: detailDonation.amount?.toString() ?? "",
+        phone_number: detailDonation.phone_number ?? "",
+        payment_method: detailDonation.payment_method ?? "",
+        program_id: detailDonation.program_id ?? "",
+        donation_upload_at: detailDonation.donation_upload_at
+          ? format(new Date(detailDonation.donation_upload_at), "yyyy-MM-dd")
+          : "",
+        evidence_url: detailDonation.evidence_url ?? "",
+        description: detailDonation.description ?? "",
+      })
+    }
+  }, [detailDonation])
 
   const onSubmit = async (formData: DonationEvidenceFormData) => {
     try {
@@ -121,155 +157,214 @@ export default function DonationForm({ type }: DonationFormProps) {
     }
   }
 
+  if (isLoadingDetailDonation) {
+    return <SkeletonDetail />
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        {/* Nama */}
-        <Field className="md:col-span-2">
-          <FieldLabel>Nama Donatur *</FieldLabel>
-          <FieldContent>
-            <Input {...register("full_name")} />
-            <FieldError errors={[errors.full_name]} />
-          </FieldContent>
-        </Field>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle>Informasi Donatur</CardTitle>
+          <CardDescription>
+            Data dasar donatur yang melakukan pembayaran
+          </CardDescription>
+        </CardHeader>
 
-        <Field className="md:col-span-2">
-          <FieldLabel>Program Tujuan *</FieldLabel>
-
-          <FieldContent>
-            <Controller
-              name="program_id"
-              control={control}
-              render={({ field }) => (
-                <SearchProgram
-                  programs={programOptions}
-                  value={field.value}
-                  onChange={field.onChange}
-                  onSearch={debouncedSearch}
-                  isFetching={isFetching}
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <Field className="md:col-span-2">
+              <FieldLabel>Nama Donatur *</FieldLabel>
+              <FieldContent>
+                <Input
+                  placeholder="Nama lengkap donatur"
+                  {...register("full_name")}
                 />
-              )}
-            />
+                <FieldError errors={[errors.full_name]} />
+              </FieldContent>
+            </Field>
 
-            <FieldError errors={[errors.program_id]} />
-          </FieldContent>
-        </Field>
-
-        <Field>
-          <FieldLabel>Jumlah Donasi *</FieldLabel>
-          <FieldContent>
-            <Input type="number" {...register("amount")} />
-
-            {amount && (
-              <p className="text-xs mt-1 text-gray-600">
-                {formatRupiah(Number(amount))}
-              </p>
-            )}
-
-            <FieldError errors={[errors.amount]} />
-          </FieldContent>
-        </Field>
-
-        {/* Payment */}
-        <Field>
-          <FieldLabel>Metode Pembayaran *</FieldLabel>
-          <FieldContent>
-            <Controller
-              name="payment_method"
-              control={control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih metode" />
-                  </SelectTrigger>
-
-                  <SelectContent>
-                    {PAYMENT_METHODS.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-
-            <FieldError errors={[errors.payment_method]} />
-          </FieldContent>
-        </Field>
-
-        <Field>
-          <FieldLabel>No Hp *</FieldLabel>
-          <FieldContent>
-            <Input
-              type="number"
-              {...register("phone_number")}
-              placeholder="087844073870"
-            />
-
-            <FieldError errors={[errors.phone_number]} />
-          </FieldContent>
-        </Field>
-
-        <Field>
-          <FieldLabel>
-            Tanggal Donasi <span className="text-red-500">*</span>
-          </FieldLabel>
-
-          <FieldContent>
-            <Controller
-              name="donation_upload_at"
-              control={control}
-              render={({ field }) => (
-                <CalendarPopover
-                  value={field.value}
-                  onChange={date =>
-                    field.onChange(date ? format(date, "yyyy-MM-dd") : "")
-                  }
-                  placeholder="Pilih tanggal mulai"
-                  error={errors.donation_upload_at}
+            <Field>
+              <FieldLabel>No HP *</FieldLabel>
+              <FieldContent>
+                <Input
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="08xxxxxxxxxx"
+                  {...register("phone_number")}
                 />
-              )}
-            />
-          </FieldContent>
-        </Field>
+                <FieldError errors={[errors.phone_number]} />
+              </FieldContent>
+            </Field>
+          </div>
+        </CardContent>
+      </Card>
 
-        <Field>
-          <FieldLabel>
-            Bukti Donasi URL <span className="text-red-500">*</span>
-          </FieldLabel>
-          <FieldContent>
-            <Input
-              {...register("evidence_url")}
-              aria-invalid={!!errors.evidence_url}
-              placeholder="https://..."
-            />
-            <FieldError errors={[errors.evidence_url]} />
-          </FieldContent>
-        </Field>
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle>💳 Detail Donasi</CardTitle>
+          <CardDescription>
+            Pilih program dan metode pembayaran donasi
+          </CardDescription>
+        </CardHeader>
 
-        <Field>
-          <FieldLabel>
-            Catatan <span className="text-red-500">*</span>
-          </FieldLabel>
-          <FieldContent>
-            <Input
-              {...register("evidence_url")}
-              aria-invalid={!!errors.evidence_url}
-              placeholder=""
-            />
-            <FieldError errors={[errors.evidence_url]} />
-          </FieldContent>
-        </Field>
-      </div>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <Field className="md:col-span-2">
+              <FieldLabel>Program Tujuan *</FieldLabel>
 
-      <div className="flex justify-end gap-3 mt-7">
+              <FieldContent>
+                <Controller
+                  name="program_id"
+                  control={control}
+                  render={({ field }) => (
+                    <SearchProgram
+                      programs={programOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                      onSearch={debouncedSearch}
+                      isFetching={isFetching}
+                    />
+                  )}
+                />
+
+                <FieldError errors={[errors.program_id]} />
+              </FieldContent>
+            </Field>
+
+            <Field>
+              <FieldLabel>Jumlah Donasi *</FieldLabel>
+
+              <FieldContent>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">
+                    Rp
+                  </span>
+
+                  <Input
+                    type="number"
+                    className="pl-10"
+                    {...register("amount")}
+                  />
+                </div>
+
+                {amount && (
+                  <p className="text-xs mt-1 text-muted-foreground">
+                    {formatRupiah(Number(amount))}
+                  </p>
+                )}
+
+                <FieldError errors={[errors.amount]} />
+              </FieldContent>
+            </Field>
+
+            <Field>
+              <FieldLabel>Metode Pembayaran *</FieldLabel>
+
+              <FieldContent>
+                <Controller
+                  name="payment_method"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih metode pembayaran" />
+                      </SelectTrigger>
+
+                      <SelectContent>
+                        {PAYMENT_METHODS.map(opt => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+
+                <FieldError errors={[errors.payment_method]} />
+              </FieldContent>
+            </Field>
+
+            <Field>
+              <FieldLabel>Tanggal Donasi *</FieldLabel>
+
+              <FieldContent>
+                <Controller
+                  name="donation_upload_at"
+                  control={control}
+                  render={({ field }) => (
+                    <CalendarPopover
+                      value={field.value}
+                      onChange={date =>
+                        field.onChange(date ? format(date, "yyyy-MM-dd") : "")
+                      }
+                      placeholder="Pilih tanggal donasi"
+                      error={errors.donation_upload_at}
+                    />
+                  )}
+                />
+              </FieldContent>
+            </Field>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle>📎 Bukti Donasi</CardTitle>
+          <CardDescription>Lampirkan bukti transfer donasi</CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          <div className="grid grid-cols-1 gap-5">
+            <Field>
+              <FieldLabel>Bukti Donasi URL *</FieldLabel>
+
+              <FieldContent>
+                <Input
+                  placeholder="https://drive.google.com/..."
+                  {...register("evidence_url")}
+                  aria-invalid={!!errors.evidence_url}
+                />
+
+                <p className="text-xs text-muted-foreground mt-1">
+                  Link Google Drive / WhatsApp / Storage bukti transfer
+                </p>
+
+                <FieldError errors={[errors.evidence_url]} />
+              </FieldContent>
+            </Field>
+
+            <Field>
+              <FieldLabel>Catatan</FieldLabel>
+
+              <FieldContent>
+                <textarea
+                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  rows={3}
+                  placeholder="Tambahkan catatan jika ada"
+                  {...register("description")}
+                />
+
+                <FieldError errors={[errors.description]} />
+              </FieldContent>
+            </Field>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="sticky bottom-0 bg-background pt-6 flex justify-end gap-3">
         <Button type="button" variant="outline" onClick={() => router.back()}>
           Cancel
         </Button>
 
-        <Button type="submit" loading={isLoadingCreate}>
-          {type === "create" ? "Create Program" : "Update Program"}
+        <Button
+          type="submit"
+          loading={isLoadingCreate}
+          disabled={isLoadingCreate}
+        >
+          {type === "create" ? "Simpan Donasi" : "Update Donasi"}
         </Button>
       </div>
     </form>

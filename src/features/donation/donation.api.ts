@@ -1,5 +1,8 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 
+import { ApiResponse } from "@/lib/response"
+import { getDonationById } from "./donation.dal"
+
 const getAllParams = (params: { query?: string; page?: number }) => {
   const searchParams = new URLSearchParams()
   if (params.query != null) searchParams.set("query", params.query)
@@ -44,6 +47,17 @@ export const donationApi = createApi({
       }),
       invalidatesTags: [{ type: "DonationEvidence", id: "LIST" }],
     }),
+    getDonationById: builder.query({
+      query: (id: string) => ({
+        url: `/donation/donation-evidence/${id}`,
+        method: "GET",
+      }),
+      transformResponse: (
+        response: ApiResponse<Prisma.PromiseReturnType<typeof getDonationById>>
+      ) => {
+        return response.data
+      },
+    }),
   }),
 })
 
@@ -51,4 +65,5 @@ export const {
   useGetDonationEvidencesQuery,
   useDeleteDonationEvidenceMutation,
   useCreateDonationMutation,
+  useGetDonationByIdQuery,
 } = donationApi

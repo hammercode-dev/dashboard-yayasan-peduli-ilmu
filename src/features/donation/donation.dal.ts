@@ -69,3 +69,9 @@ export async function createDonationEvidence(input: DonationEvidenceFormData) {
     },
   })
 }
+
+export const getDonationById = cache(async (id: bigint) => {
+  await verifySession()
+
+  return prisma.donation_evidences.findUnique({ where: { id } })
+})

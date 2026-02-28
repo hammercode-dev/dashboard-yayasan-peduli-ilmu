@@ -89,6 +89,13 @@ export function getDonationColumns(options: {
           </Tooltip>
 
           <DropdownMenuContent align="end">
+            <Link href={`/dashboard/donation/${row.original.id}`}>
+              <DropdownMenuItem>
+                <Eye className="mr-2 h-4 w-4" />
+                Lihat Detail
+              </DropdownMenuItem>
+            </Link>
+
             {row.original.evidence_url && (
               <Link href={row.original.evidence_url} target="_blank">
                 <DropdownMenuItem>

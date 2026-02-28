@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/tooltip"
 import { Eye, Trash2, MoreHorizontal } from "lucide-react"
 import { formatDate, formatRupiah } from "@/lib/format"
+import { BankBadge } from "../components/BankBadge"
 
 export type DonationEvidenceRow = {
   id: string
@@ -38,36 +39,64 @@ export function getDonationColumns(options: {
   return [
     {
       accessorKey: "full_name",
-      header: "Nama Lengkap Donatur",
+      header: "Donatur",
       cell: ({ row }) => (
-        <span className="font-medium">{row.original.full_name}</span>
+        <div>
+          <div className="font-bold">{row.original.full_name}</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            <span>{row.original.phone_number}</span>
+          </div>
+        </div>
       ),
     },
-
     {
       accessorKey: "amount",
       header: "Jumlah Donasi",
-      cell: ({ row }) => formatRupiah(Number(row.original.amount)),
+      cell: ({ row }) => {
+        return (
+          <span className="font-bold ">
+            {formatRupiah(row.original.amount)}
+          </span>
+        )
+      },
     },
     {
       accessorKey: "payment_method",
       header: "Metode Pembayaran",
+      cell: ({ row }) => {
+        return (
+          <div className="">
+            <BankBadge channel={row.original.payment_method} className="" />
+          </div>
+        )
+      },
     },
     {
       id: "program_title",
       header: "Program Donasi",
       cell: ({ row }) => {
-        return row.original.program_donation?.title ?? "-"
+        return (
+          <div>
+            <Link
+              href={`/dashboard/program/${row.original.program_donation?.id}`}
+              className="inline-flex items-center gap-2 rounded-md px-2 py-1 font-medium transition-colors hover:bg-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-muted"
+            >
+              {row.original.program_donation?.title ?? "-"}
+            </Link>
+          </div>
+        )
       },
-    },
-    {
-      accessorKey: "phone_number",
-      header: "No HP",
     },
     {
       accessorKey: "created_at",
       header: "Tanggal Donasi",
-      cell: ({ row }) => formatDate(row.original.created_at),
+      cell: ({ row }) => {
+        return (
+          <div className="text-muted-foreground">
+            {formatDate(row.original.created_at)}
+          </div>
+        )
+      },
     },
     {
       id: "actions",

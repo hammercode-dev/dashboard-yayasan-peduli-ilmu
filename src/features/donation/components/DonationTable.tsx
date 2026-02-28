@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { DataTable } from "@/components/common/data-table"
 import { ConfirmDialog } from "@/components/common/confirm-dialog"
 import { CustomAlertDialog } from "@/components/common/custom-alert-dialog"
+import { Pagination } from "@/components/common/pagination"
 
 import {
   useDeleteDonationEvidenceMutation,
@@ -34,6 +35,7 @@ export function DonationTable() {
     query,
     page,
   })
+  const totalPages = data?.meta?.totalPages ?? 0
 
   const columns = useMemo(
     () =>
@@ -69,6 +71,7 @@ export function DonationTable() {
           data={data?.data.donations || []}
           isLoading={isFetching}
         />
+        <Pagination totalPages={totalPages} />
       </div>
 
       <ConfirmDialog

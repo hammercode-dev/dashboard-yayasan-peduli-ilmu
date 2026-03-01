@@ -1,20 +1,21 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { format } from "date-fns"
+import { useDebouncedCallback } from "use-debounce"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { toast } from "sonner"
-import { format } from "date-fns"
-import { Button } from "@/components/ui/button"
+
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import {
   Field,
   FieldContent,
   FieldError,
   FieldLabel,
 } from "@/components/ui/field"
-
 import {
   Select,
   SelectItem,
@@ -22,12 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-
-import {
-  DonationEvidenceFormData,
-  donationEvidenceSchema,
-} from "../donation.schemas"
-
 import {
   Card,
   CardHeader,
@@ -35,23 +30,27 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card"
+import { CalendarPopover } from "@/components/common/calendar-popover"
 
-import { useUpdateProgramDonationMutation } from "@/features/program/program.api"
-
+import {
+  DonationEvidenceFormData,
+  donationEvidenceSchema,
+} from "../donation.schemas"
 import {
   useCreateDonationMutation,
   useGetDonationByIdQuery,
+  useUpdateDonationMutation,
 } from "../donation.api"
-import { CalendarPopover } from "@/components/common/calendar-popover"
+import { PAYMENT_METHODS } from "../donation.constants"
 
 import { useGetProgramDonationsQuery } from "@/features/program/program.api"
+import { SkeletonEdit } from "@/features/donation/components/SkeletonEdit"
+import { useUpdateProgramDonationMutation } from "@/features/program/program.api"
 
-import { PAYMENT_METHODS } from "../donation.constants"
-import { formatRupiah } from "@/lib/format"
 import { SearchProgram } from "./SearchProgram"
-import { useDebouncedCallback } from "use-debounce"
 
-import { SkeletonDetail } from "@/features/donation/components/SkeletonDetail"
+import { formatRupiah } from "@/lib/format"
+import { getDirtyValues } from "@/lib/utils"
 
 interface DonationFormProps {
   id?: string
@@ -61,13 +60,19 @@ interface DonationFormProps {
 export default function DonationForm({ id, type }: DonationFormProps) {
   const router = useRouter()
   const [search, setSearch] = useState("")
+
   const [createDonationEvidence, { isLoading: isLoadingCreate }] =
     useCreateDonationMutation()
+
   const [updateProgramDonation] = useUpdateProgramDonationMutation()
+
   const { data: detailDonation, isFetching: isLoadingDetailDonation } =
     useGetDonationByIdQuery(id ?? "", {
       skip: type !== "edit",
     })
+
+  const [updateDonationEvidence, { isLoading: isLoadingUpdate }] =
+    useUpdateDonationMutation()
 
   const debouncedSearch = useDebouncedCallback((value: string) => {
     setSearch(value)
@@ -91,18 +96,9 @@ export default function DonationForm({ id, type }: DonationFormProps) {
     watch,
     control,
     reset,
-    formState: { errors },
+    formState: { errors, dirtyFields },
   } = useForm<DonationEvidenceFormData>({
     resolver: zodResolver(donationEvidenceSchema),
-    defaultValues: {
-      full_name: "",
-      amount: "",
-      phone_number: "",
-      payment_method: "",
-      program_id: "",
-      donation_upload_at: "",
-      evidence_url: "",
-    },
   })
 
   const amount = watch("amount")
@@ -138,12 +134,24 @@ export default function DonationForm({ id, type }: DonationFormProps) {
           Number(formData.amount)
 
         await updateProgramDonation({
-          id: formData.program_id,
+          id: String(formData.program_id),
           collected_amount: String(newCollectedAmount),
         }).unwrap()
 
         toast.success("Donation created successfully")
       }
+
+      if (type === "edit" && id) {
+        const changedData = getDirtyValues(dirtyFields, formData)
+
+        await updateDonationEvidence({
+          id: id as string,
+          ...changedData,
+        }).unwrap()
+
+        toast.success("Donation evidence updated successfully")
+      }
+
       console.log("formData", formData)
       router.push("/dashboard/donation")
     } catch (err) {
@@ -158,7 +166,7 @@ export default function DonationForm({ id, type }: DonationFormProps) {
   }
 
   if (isLoadingDetailDonation) {
-    return <SkeletonDetail />
+    return <SkeletonEdit />
   }
 
   return (
@@ -176,10 +184,7 @@ export default function DonationForm({ id, type }: DonationFormProps) {
             <Field className="md:col-span-2">
               <FieldLabel>Nama Donatur *</FieldLabel>
               <FieldContent>
-                <Input
-                  placeholder="Nama lengkap donatur"
-                  {...register("full_name")}
-                />
+                <Input placeholder="Nama donatur" {...register("full_name")} />
                 <FieldError errors={[errors.full_name]} />
               </FieldContent>
             </Field>
@@ -243,8 +248,9 @@ export default function DonationForm({ id, type }: DonationFormProps) {
 
                   <Input
                     type="number"
-                    className="pl-10"
+                    className="pl-10 disabled:cursor-not-allowed disabled:pointer-events-auto"
                     {...register("amount")}
+                    disabled={type === "edit"}
                   />
                 </div>
 
@@ -259,29 +265,32 @@ export default function DonationForm({ id, type }: DonationFormProps) {
             </Field>
 
             <Field>
-              <FieldLabel>Metode Pembayaran *</FieldLabel>
-
+              <FieldLabel>
+                Metode Pembayaran <span className="text-red-500">*</span>
+              </FieldLabel>
               <FieldContent>
                 <Controller
                   name="payment_method"
                   control={control}
                   render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih metode pembayaran" />
+                    <Select
+                      key={field.value}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger aria-invalid={!!errors.payment_method}>
+                        <SelectValue placeholder="Select payment method" />
                       </SelectTrigger>
-
                       <SelectContent>
-                        {PAYMENT_METHODS.map(opt => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            {opt.label}
+                        {PAYMENT_METHODS.map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   )}
                 />
-
                 <FieldError errors={[errors.payment_method]} />
               </FieldContent>
             </Field>
@@ -361,8 +370,8 @@ export default function DonationForm({ id, type }: DonationFormProps) {
 
         <Button
           type="submit"
-          loading={isLoadingCreate}
-          disabled={isLoadingCreate}
+          loading={isLoadingCreate || isLoadingUpdate}
+          disabled={isLoadingCreate || isLoadingUpdate}
         >
           {type === "create" ? "Simpan Donasi" : "Update Donasi"}
         </Button>

@@ -1,63 +1,89 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-
-function SkeletonField({ full = false }: { full?: boolean }) {
-  return (
-    <div className={full ? "md:col-span-2 space-y-2" : "space-y-2"}>
-      <Skeleton className="h-4 w-32" />
-      <Skeleton className="h-10 w-full rounded-md" />
-    </div>
-  )
-}
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 export function SkeletonDetail() {
   return (
-    <div className="space-y-6 animate-pulse">
-      <Card className="shadow-sm">
-        <CardHeader className="space-y-2">
-          <Skeleton className="h-5 w-48" />
-          <Skeleton className="h-4 w-72" />
-        </CardHeader>
+    <div className="grid gap-6 lg:grid-cols-3 lg:mt-6">
+      {/* Left Column - Details */}
+      <div className="lg:col-span-2 space-y-6">
+        {/* Card Informasi Donatur */}
+        <Card className="shadow-sm">
+          <CardHeader>
+            <Skeleton className="h-6 w-40" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-6 w-48" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <SkeletonField full />
-            <SkeletonField />
-          </div>
-        </CardContent>
-      </Card>
+        {/* Card Detail Donasi */}
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-32" />
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-8 w-40" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-8 w-24 rounded-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-6 w-36" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-6 w-44 rounded-full" />
+              </div>
+            </div>
+            <div className="pt-4 border-t border-gray-200 space-y-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          </CardContent>
+        </Card>
 
-      <Card className="shadow-sm">
-        <CardHeader className="space-y-2">
-          <Skeleton className="h-5 w-40" />
-          <Skeleton className="h-4 w-64" />
-        </CardHeader>
+        {/* Card Gambar Bukti */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-5 rounded-md" />
+              <Skeleton className="h-6 w-48" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <Skeleton className="h-64 w-full rounded-lg" />
+              <Skeleton className="h-4 w-24 mt-4" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <SkeletonField full />
-            <SkeletonField />
-            <SkeletonField />
-            <SkeletonField />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-sm">
-        <CardHeader className="space-y-2">
-          <Skeleton className="h-5 w-44" />
-          <Skeleton className="h-4 w-60" />
-        </CardHeader>
-
-        <CardContent className="space-y-5">
-          <SkeletonField full />
-
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-24 w-full rounded-md" />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Right Column - Aksi */}
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-5 w-16" />
+          </CardHeader>
+          <CardContent className="gap-3 flex flex-col">
+            <Skeleton className="h-9 w-full rounded-md" />
+            <Skeleton className="h-9 w-full rounded-md" />
+            <Skeleton className="h-9 w-full rounded-md" />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

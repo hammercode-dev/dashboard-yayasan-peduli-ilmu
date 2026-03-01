@@ -1,12 +1,17 @@
 import "server-only"
 import { cache } from "react"
+
 import { prisma } from "@/lib/client"
 import { verifySession } from "@/lib/session"
+
 import { TOTAL_DONATIONS_PER_PAGE } from "@/constants/data"
 
-import { DonationEvidenceFormData } from "./donation.schemas"
+import {
+  DonationEvidenceFormData,
+  UpdateDonationFormData,
+} from "./donation.schemas"
 
-export interface UpdateDonationEvidenceInput extends Partial<DonationEvidenceFormData> {
+export interface UpdateDonationEvidenceInput extends Partial<UpdateDonationFormData> {
   id: string
 }
 
@@ -73,5 +78,36 @@ export async function createDonationEvidence(input: DonationEvidenceFormData) {
 export const getDonationById = cache(async (id: bigint) => {
   await verifySession()
 
-  return prisma.donation_evidences.findUnique({ where: { id } })
+  return prisma.donation_evidences.findUnique({
+    where: { id },
+    include: {
+      program_donation: {
+        select: {
+          id: true,
+          title: true,
+          collected_amount: true,
+        },
+      },
+    },
+  })
 })
+
+export async function updateDonationEvidence(
+  input: UpdateDonationEvidenceInput
+) {
+  await verifySession()
+
+  const { id, ...fields } = input
+
+  return prisma.donation_evidences.update({
+    where: { id: BigInt(id) },
+    data: {
+      ...fields,
+      ...(fields.program_id ? { program_id: Number(fields.program_id) } : {}),
+      ...(fields.donation_upload_at
+        ? { donation_upload_at: new Date(fields.donation_upload_at) }
+        : {}),
+      updated_at: new Date(),
+    },
+  })
+}

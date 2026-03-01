@@ -1,4 +1,4 @@
-import DetailDonationPage from "@/features/donation/pages/DetailDonation"
+import DetailDonationPage from "@/features/donation/pages/DetailDonationPage"
 
 export default async function DonationDetailPage({
   params,

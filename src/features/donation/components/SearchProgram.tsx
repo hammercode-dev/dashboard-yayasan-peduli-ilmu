@@ -98,7 +98,7 @@ export function SearchProgram({
                 onChange={e => {
                   const val = e.target.value
                   setSearchQuery(val)
-                  onSearch?.(val) // Memicu useDebouncedCallback dari parent
+                  onSearch?.(val)
                 }}
                 autoFocus
                 className="h-9 pl-9 pr-8 focus-visible:ring-1"

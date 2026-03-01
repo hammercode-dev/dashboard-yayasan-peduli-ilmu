@@ -1,7 +1,14 @@
 "use client"
 
-import { ColumnDef } from "@tanstack/react-table"
 import Link from "next/link"
+import { ColumnDef } from "@tanstack/react-table"
+import { Eye, Trash2, MoreHorizontal, Pencil } from "lucide-react"
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,14 +16,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { Eye, Trash2, MoreHorizontal } from "lucide-react"
-import { formatDate, formatRupiah } from "@/lib/format"
+
 import { BankBadge } from "../components/BankBadge"
+
+import { formatDate, formatRupiah } from "@/lib/format"
 
 export type DonationEvidenceRow = {
   id: string
@@ -133,6 +136,13 @@ export function getDonationColumns(options: {
                 </DropdownMenuItem>
               </Link>
             )}
+
+            <Link href={`/dashboard/donation/${row.original.id}/edit`}>
+              <DropdownMenuItem>
+                <Pencil className="mr-2 h-4 w-4" />
+                Ubah
+              </DropdownMenuItem>
+            </Link>
 
             {options.onDelete && (
               <DropdownMenuItem

@@ -46,22 +46,11 @@ import {
 import { STATUS_OPTIONS } from "../program.constants"
 import SkeletonDetail from "./SkeletonDetail"
 import { formatRupiah } from "@/lib/format"
+import { getDirtyValues } from "@/lib/utils"
 
 interface ProgramDonationFormProps {
   id?: string
   type: "create" | "edit"
-}
-
-function getDirtyValues(dirtyFields: any, allValues: any) {
-  const changed: any = {}
-
-  Object.keys(dirtyFields).forEach(key => {
-    if (dirtyFields[key]) {
-      changed[key] = allValues[key]
-    }
-  })
-
-  return changed
 }
 
 export default function ProgramDonationForm({

@@ -20,7 +20,6 @@ export const donationApi = createApi({
         return { url: `/donation/donation-evidence?${getAllParams(params)}` }
       },
       providesTags: result => {
-        console.log("result", result)
         return result?.data
           ? [
               ...result.data.donations.map((item: { id: string }) => ({

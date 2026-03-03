@@ -16,6 +16,8 @@ import {
   useGetDonationEvidencesQuery,
 } from "../donation.api"
 
+import { useGetProgramDonationsQuery } from "@/features/program/program.api"
+
 import { getDonationColumns } from "../columns/donation-columns"
 
 export function DonationTable() {
@@ -27,11 +29,24 @@ export function DonationTable() {
   const [lastDeletedDonation, setLastDeletedDonation] = useState("")
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string
-    title: string
+    fullName: string
   } | null>(null)
 
   const [deleteProgramDonation, { isLoading: isDeleting }] =
     useDeleteDonationEvidenceMutation()
+
+  const params = useMemo(
+    () => ({
+      query: "",
+      page: 1,
+      status: "all",
+    }),
+    []
+  )
+
+  const { refetch } = useGetProgramDonationsQuery(params, {
+    refetchOnMountOrArgChange: true,
+  })
 
   const { data, isFetching } = useGetDonationEvidencesQuery({
     query,
@@ -42,7 +57,11 @@ export function DonationTable() {
   const columns = useMemo(
     () =>
       getDonationColumns({
-        onDelete: (id, title) => setDeleteTarget({ id, title }),
+        onDelete: (id, fullName) =>
+          setDeleteTarget({
+            id,
+            fullName,
+          }),
       }),
     []
   )
@@ -51,7 +70,8 @@ export function DonationTable() {
     if (!deleteTarget) return
     try {
       await deleteProgramDonation(deleteTarget.id).unwrap()
-      setLastDeletedDonation(deleteTarget.title)
+      setLastDeletedDonation(deleteTarget.fullName)
+      await refetch()
       setShowSuccess(true)
     } catch (err) {
       const apiError = err as {
@@ -87,7 +107,7 @@ export function DonationTable() {
         description={
           <>
             Apakah Anda yakin ingin menghapus donasi dari{" "}
-            <span className="font-semibold">{deleteTarget?.title}</span>?
+            <span className="font-semibold">{deleteTarget?.fullName}</span>?
             Tindakan ini tidak dapat dibatalkan.
           </>
         }

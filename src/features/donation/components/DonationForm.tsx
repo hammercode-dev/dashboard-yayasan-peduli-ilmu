@@ -64,8 +64,6 @@ export default function DonationForm({ id, type }: DonationFormProps) {
   const [createDonationEvidence, { isLoading: isLoadingCreate }] =
     useCreateDonationMutation()
 
-  const [updateProgramDonation] = useUpdateProgramDonationMutation()
-
   const { data: detailDonation, isFetching: isLoadingDetailDonation } =
     useGetDonationByIdQuery(id ?? "", {
       skip: type !== "edit",
@@ -107,7 +105,7 @@ export default function DonationForm({ id, type }: DonationFormProps) {
     if (detailDonation) {
       reset({
         full_name: detailDonation.full_name ?? "",
-        amount: detailDonation.amount?.toString() ?? "",
+        amount: detailDonation.amount ?? 0,
         phone_number: detailDonation.phone_number ?? "",
         payment_method: detailDonation.payment_method ?? "",
         program_id: detailDonation.program_id ?? "",
@@ -124,19 +122,6 @@ export default function DonationForm({ id, type }: DonationFormProps) {
     try {
       if (type === "create") {
         await createDonationEvidence(formData).unwrap()
-
-        const selectedProgram = programOptions?.find(
-          p => p.id === formData.program_id
-        )
-
-        const newCollectedAmount =
-          Number(selectedProgram?.collectedAmount || 0) +
-          Number(formData.amount)
-
-        await updateProgramDonation({
-          id: String(formData.program_id),
-          collected_amount: String(newCollectedAmount),
-        }).unwrap()
 
         toast.success("Donation created successfully")
       }
@@ -249,7 +234,7 @@ export default function DonationForm({ id, type }: DonationFormProps) {
                   <Input
                     type="number"
                     className="pl-10 disabled:cursor-not-allowed disabled:pointer-events-auto"
-                    {...register("amount")}
+                    {...register("amount", { valueAsNumber: true })}
                     disabled={type === "edit"}
                   />
                 </div>

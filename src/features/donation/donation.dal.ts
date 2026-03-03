@@ -55,23 +55,76 @@ export const countDonationEvidences = cache(async (query: string) => {
 export async function deleteDonationEvidence(id: bigint) {
   await verifySession()
 
-  return prisma.donation_evidences.delete({ where: { id } })
+  return await prisma.$transaction(async tx => {
+    const donation = await tx.donation_evidences.findUnique({
+      where: { id },
+    })
+
+    if (!donation) {
+      throw new Error("Donation evidence not found")
+    }
+
+    await tx.donation_evidences.delete({
+      where: { id },
+    })
+
+    if (donation.program_id !== null && donation.amount !== null) {
+      await tx.program_donation.update({
+        where: { id: donation.program_id },
+        data: {
+          collected_amount: {
+            decrement: donation.amount,
+          },
+        },
+      })
+    }
+
+    return { success: true }
+  })
 }
 
 export async function createDonationEvidence(input: DonationEvidenceFormData) {
   await verifySession()
 
-  return prisma.donation_evidences.create({
-    data: {
-      full_name: input.full_name,
-      phone_number: input.phone_number,
-      payment_method: input.payment_method,
-      amount: input.amount,
-      donation_upload_at: new Date(input.donation_upload_at),
-      program_id: Number(input.program_id),
-      evidence_url: input.evidence_url,
-      description: input.description,
-    },
+  return await prisma.$transaction(async tx => {
+    const programId = Number(input.program_id)
+    const amount = Number(input.amount)
+
+    if (amount <= 0) {
+      throw new Error("Amount must be greater than 0")
+    }
+
+    const program = await tx.program_donation.findUnique({
+      where: { id: programId },
+    })
+
+    if (!program) {
+      throw new Error("Program not found")
+    }
+
+    await tx.program_donation.update({
+      where: { id: programId },
+      data: {
+        collected_amount: {
+          increment: amount,
+        },
+      },
+    })
+
+    const donation = await tx.donation_evidences.create({
+      data: {
+        full_name: input.full_name,
+        phone_number: input.phone_number,
+        payment_method: input.payment_method,
+        amount: amount,
+        donation_upload_at: new Date(input.donation_upload_at),
+        program_id: programId,
+        evidence_url: input.evidence_url,
+        description: input.description,
+      },
+    })
+
+    return donation
   })
 }
 

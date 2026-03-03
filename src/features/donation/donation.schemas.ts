@@ -8,12 +8,7 @@ export const donationEvidenceSchema = z.object({
     .regex(/^[0-9+]+$/, "Invalid phone number"),
   payment_method: z.string().min(1, "Payment method is required"),
 
-  amount: z
-    .string()
-    .min(1, "Amount is required")
-    .refine(val => !isNaN(Number(val)), {
-      message: "Amount must be a valid number",
-    }),
+  amount: z.coerce.number().min(1, "Amount must be greater than 0"),
 
   evidence_url: z.string().url("Invalid URL").optional().or(z.literal("")),
   description: z.string().optional(),

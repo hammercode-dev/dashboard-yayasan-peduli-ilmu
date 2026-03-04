@@ -1,6 +1,13 @@
 "use client"
 
-import { Banknote, PlayCircle, Files, PersonStandingIcon } from "lucide-react"
+import {
+  Wallet,
+  Users,
+  LayoutGrid,
+  CheckCircle2,
+  UserPlus,
+  HandCoins,
+} from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -13,30 +20,42 @@ export default function StatsCards() {
 
   const STATS_CARDS = [
     {
-      Icon: Banknote,
+      Icon: Wallet,
       title: "Total Dana Terkumpul",
-      value: formatRupiah(
-        Number(data?.totalRevenues._sum.collected_amount || 0)
-      ),
+      value: formatRupiah(data?.totalRevenues ?? 0),
       iconColor: "bg-green-700",
     },
     {
-      Icon: PersonStandingIcon,
+      Icon: Users, // Simbol komunitas donatur
       title: "Total Donatur",
-      value: data?.totalDonatur,
-      iconColor: "bg-blue-500",
+      value: data?.totalDonatur ? `${data.totalDonatur} Orang` : "0 Orang",
+      iconColor: "bg-blue-600",
     },
     {
-      Icon: Files,
+      Icon: LayoutGrid,
       title: "Total Program",
-      value: data?.totalPrograms,
+      value: `${data?.totalPrograms ?? 0} Program`,
       iconColor: "bg-purple-500",
     },
     {
-      Icon: PlayCircle,
-      title: "Aktif Program",
-      value: data?.activePrograms,
+      Icon: CheckCircle2,
+      title: "Program Aktif",
+      value: `${data?.activePrograms ?? 0} Berjalan`,
       iconColor: "bg-emerald-500",
+    },
+    {
+      Icon: HandCoins,
+      title: "Donasi Hari Ini",
+      value: formatRupiah(data?.todayCollectedAmount ?? 0),
+      iconColor: "bg-orange-500",
+    },
+    {
+      Icon: UserPlus,
+      title: "Donatur Hari Ini",
+      value: data?.todayDonorsCount
+        ? `${data.todayDonorsCount} Orang`
+        : "0 Orang",
+      iconColor: "bg-indigo-500",
     },
   ]
 

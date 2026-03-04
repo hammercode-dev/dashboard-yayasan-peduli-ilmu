@@ -164,3 +164,23 @@ export async function updateDonationEvidence(
     },
   })
 }
+
+export const getDonationEvidenceStats = cache(async () => {
+  await verifySession()
+
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+
+  const statsToday = await prisma.donation_evidences.aggregate({
+    where: {
+      donation_upload_at: { gte: startOfToday },
+    },
+    _sum: { amount: true },
+    _count: { id: true },
+  })
+
+  return {
+    todayDonorsCount: statsToday._count.id,
+    todayCollectedAmount: Number(statsToday._sum.amount ?? 0),
+  }
+})

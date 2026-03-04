@@ -5,15 +5,31 @@ import { verifySession } from "@/lib/session"
 export const getProgramDonationStats = cache(async () => {
   await verifySession()
 
-  const [totalRevenues, activePrograms, totalPrograms, totalDonatur] =
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+
+  const [revenueAgg, activePrograms, totalPrograms, totalDonors, todayStats] =
     await Promise.all([
       prisma.program_donation.aggregate({ _sum: { collected_amount: true } }),
       prisma.program_donation.count({ where: { status: "active" } }),
       prisma.program_donation.count(),
       prisma.donation_evidences.count(),
+
+      prisma.donation_evidences.aggregate({
+        where: { donation_upload_at: { gte: startOfToday } },
+        _count: { id: true },
+        _sum: { amount: true },
+      }),
     ])
 
-  return { totalRevenues, activePrograms, totalPrograms, totalDonatur }
+  return {
+    totalRevenues: Number(revenueAgg._sum.collected_amount ?? 0),
+    activePrograms,
+    totalPrograms,
+    totalDonatur: totalDonors,
+    todayDonorsCount: todayStats._count.id,
+    todayCollectedAmount: Number(todayStats._sum.amount ?? 0),
+  }
 })
 
 export const getProgramTrendings = cache(async () => {

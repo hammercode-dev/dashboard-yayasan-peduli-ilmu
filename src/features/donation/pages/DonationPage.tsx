@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { SearchInput } from "@/components/common/search-input"
 
 import { DonationTable } from "../components/DonationTable"
+import StatsCards from "../components/StatsCards"
 
 export default function DonationPage() {
   return (
@@ -15,7 +16,7 @@ export default function DonationPage() {
         <h1 className="text-2xl font-bold tracking-tight">Daftar Donasi</h1>
         <p>Berikut adalah daftar donasi yang tersedia</p>
       </div>
-
+      <StatsCards />
       <Card>
         <CardContent className="">
           <div className="flex flex-col gap-4">

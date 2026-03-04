@@ -2,6 +2,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 
 import { ApiResponse } from "@/lib/response"
 import { getDonationById, UpdateDonationEvidenceInput } from "./donation.dal"
+import { DonationStatsDataResponse } from "./donation.types"
 
 const getAllParams = (params: { query?: string; page?: number }) => {
   const searchParams = new URLSearchParams()
@@ -65,6 +66,12 @@ export const donationApi = createApi({
       }),
       invalidatesTags: [{ type: "DonationEvidence", id: "LIST" }],
     }),
+    getDonationStats: builder.query({
+      query: () => "/donation/donation-evidence-stats",
+      transformResponse: (response: ApiResponse<DonationStatsDataResponse>) => {
+        return response.data
+      },
+    }),
   }),
 })
 
@@ -74,4 +81,5 @@ export const {
   useCreateDonationMutation,
   useGetDonationByIdQuery,
   useUpdateDonationMutation,
+  useGetDonationStatsQuery,
 } = donationApi

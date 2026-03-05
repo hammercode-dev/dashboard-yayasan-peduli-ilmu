@@ -26,7 +26,7 @@ export default function StatsCards() {
       iconColor: "bg-green-700",
     },
     {
-      Icon: Users, // Simbol komunitas donatur
+      Icon: Users,
       title: "Total Donatur",
       value: data?.totalDonatur ? `${data.totalDonatur} Orang` : "0 Orang",
       iconColor: "bg-blue-600",
@@ -64,7 +64,7 @@ export default function StatsCards() {
       {isFetching ? (
         <SkeletonCards />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {STATS_CARDS.map((stat, idx) => (
             <Card key={idx} className="">
               <CardHeader className="flex flex-row items-center justify-between">

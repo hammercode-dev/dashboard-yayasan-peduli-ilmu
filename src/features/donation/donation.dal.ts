@@ -184,3 +184,69 @@ export const getDonationEvidenceStats = cache(async () => {
     todayCollectedAmount: Number(statsToday._sum.amount ?? 0),
   }
 })
+
+export async function bulkCreateDonationEvidence(rows: ParsedDonation[]) {
+  if (rows.length === 0) throw new Error("File kosong")
+
+  const donationsData = rows.map((row, index) => {
+    const amount = Number(row.amount)
+    if (isNaN(amount) || amount <= 0) {
+      throw new Error(`Baris ${index + 1}: amount tidak valid`)
+    }
+    return {
+      full_name: row.full_name,
+      phone_number: row.phone_number,
+      payment_method: row.payment_method,
+      amount,
+      donation_upload_at: new Date(),
+      program_id: Number(row.program_id),
+      evidence_url: row.evidence_url,
+      description: row.description,
+    }
+  })
+
+  return await prisma.$transaction(
+    async tx => {
+      // check if program IDs exist
+      const uniqueProgramIds = [
+        ...new Set(donationsData.map(d => d.program_id)),
+      ]
+      const programs = await tx.program_donation.findMany({
+        where: { id: { in: uniqueProgramIds } },
+        select: { id: true },
+      })
+
+      if (programs.length !== uniqueProgramIds.length) {
+        throw new Error("Beberapa Program ID tidak ditemukan di database")
+      }
+
+      // calculate total amount per program
+      const programTotals = donationsData.reduce(
+        (acc, curr) => {
+          acc[curr.program_id] = (acc[curr.program_id] || 0) + curr.amount
+          return acc
+        },
+        {} as Record<number, number>
+      )
+
+      // update collected_amount untuk setiap program
+      const sortedIds = uniqueProgramIds.sort((a, b) => a - b)
+      for (const id of sortedIds) {
+        await tx.program_donation.update({
+          where: { id },
+          data: { collected_amount: { increment: programTotals[id] } },
+        })
+      }
+
+      // bulk insert donation evidences
+      const result = await tx.donation_evidences.createMany({
+        data: donationsData,
+      })
+
+      return { inserted: result.count }
+    },
+    {
+      timeout: 10000, // set timeout might be needed for large files
+    }
+  )
+}

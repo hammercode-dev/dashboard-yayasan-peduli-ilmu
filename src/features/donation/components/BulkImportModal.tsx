@@ -143,27 +143,27 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
     URL.revokeObjectURL(url)
   }
 
+  const STEP_TITLE = {
+    upload: "Impor Donasi",
+    confirm: "Konfirmasi Impor",
+    processing: "Sedang Diproses...",
+    success: "Impor Berhasil",
+  }
+
+  const STEP_DESCRIPTION = {
+    upload: "Unggah file CSV untuk mengimpor data donasi secara massal.",
+    confirm: "Pastikan file yang dipilih sudah benar sebelum memulai impor.",
+    processing: "Mohon tunggu sementara sistem memproses data Anda.",
+    success: "Data donasi berhasil diimpor ke dalam sistem.",
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {step === "upload" && "Impor Donasi"}
-            {step === "confirm" && "Konfirmasi Impor"}
-            {step === "processing" && "Sedang Diproses..."}
-            {step === "success" && "Impor Berhasil"}
-          </DialogTitle>
+          <DialogTitle>{STEP_TITLE[step]}</DialogTitle>
 
-          <DialogDescription>
-            {step === "upload" &&
-              "Unggah file CSV untuk mengimpor data donasi secara massal."}
-            {step === "confirm" &&
-              "Pastikan file yang dipilih sudah benar sebelum memulai impor."}
-            {step === "processing" &&
-              "Mohon tunggu sementara sistem memproses data Anda."}
-            {step === "success" &&
-              "Data donasi berhasil diimpor ke dalam sistem."}
-          </DialogDescription>
+          <DialogDescription>{STEP_DESCRIPTION[step]}</DialogDescription>
         </DialogHeader>
 
         <div className="py-4 space-y-4">

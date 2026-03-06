@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ArrowRight } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 
 import DonationDetail from "../components/DonationDetail"
 
@@ -15,21 +15,14 @@ export default function DetailDonationPage({ id }: { id: string }) {
               Kembali
             </Button>
           </Link>
-
-          {/* <Link href={`/dashboard/donation/${id}/edit`}>
-            <Button variant="link" className="p-0! mb-2 cursor-pointer">
-              Ubah Bukti Donasi
-              <ArrowRight className="size-4" />
-            </Button>
-          </Link> */}
         </div>
 
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">
-            Detail Bukti Donasi
+            Detail Donasi
           </h1>
           <p className="text-sm text-gray-500">
-            Berikut adalah detail bukti donasi yang telah dibuat
+            Berikut adalah detail donasi yang telah dibuat
           </p>
         </div>
 

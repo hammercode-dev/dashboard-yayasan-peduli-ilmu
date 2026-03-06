@@ -2,14 +2,14 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { format } from "date-fns"
+
 import { FileText } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 import { BankBadge } from "./BankBadge"
-import { formatRupiah } from "@/lib/format"
+import { formatRupiah, formatDate } from "@/lib/format"
 import { useGetDonationByIdQuery } from "../donation.api"
 import { SkeletonDetail } from "../components/SkeletonDetail"
 
@@ -72,7 +72,7 @@ export default function DonationDetail({ id }: { id: string }) {
                 <p className="text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
                   Jumlah Donasi
                 </p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-2xl font-bold ">
                   {detailDonation ? formatRupiah(detailDonation.amount) : "-"}
                 </p>
               </div>
@@ -91,10 +91,7 @@ export default function DonationDetail({ id }: { id: string }) {
                 </p>
                 <p className="text-gray-900">
                   {detailDonation?.donation_upload_at
-                    ? format(
-                        new Date(detailDonation.donation_upload_at),
-                        "yyyy-MM-dd"
-                      )
+                    ? formatDate(detailDonation.donation_upload_at)
                     : "-"}
                 </p>
               </div>
@@ -120,7 +117,7 @@ export default function DonationDetail({ id }: { id: string }) {
             {/* Deskripsi */}
             <div className="pt-4 border-t border-gray-200">
               <p className="text-sm font-medium text-gray-600 mb-2">Catatan</p>
-              <p className="text-gray-900">
+              <p className="text-sm text-gray-900">
                 {detailDonation?.description || "-"}
               </p>
             </div>
@@ -176,7 +173,7 @@ export default function DonationDetail({ id }: { id: string }) {
                 variant="outline"
                 size="sm"
               >
-                Ubah Bukti Donasi
+                Ubah Data Donasi
               </Button>
             </Link>
 
@@ -191,15 +188,6 @@ export default function DonationDetail({ id }: { id: string }) {
                 Lihat Detail Program
               </Button>
             </Link>
-
-            <Button
-              className="w-full disabled:cursor-not-allowed disabled:pointer-events-auto"
-              variant="outline"
-              size="sm"
-              disabled
-            >
-              Cetak Detail Bukti Donasi
-            </Button>
           </CardContent>
         </Card>
       </div>

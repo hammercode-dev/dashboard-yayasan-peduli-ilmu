@@ -102,3 +102,15 @@ export async function deleteProgramDonation(id: bigint) {
 
   return prisma.program_donation.delete({ where: { id } })
 }
+
+export const getAllProgramDonations = cache(async (query: string) => {
+  await verifySession()
+
+  return prisma.program_donation.findMany({
+    where: {
+      title: { contains: query || "", mode: "insensitive" },
+    },
+    take: 10,
+    orderBy: { created_at: "desc" },
+  })
+})

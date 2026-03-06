@@ -43,7 +43,7 @@ import {
 } from "../donation.api"
 import { PAYMENT_METHODS } from "../donation.constants"
 
-import { useGetProgramDonationsQuery } from "@/features/program/program.api"
+import { useGetAllProgramDonationsQuery } from "@/features/program/program.api"
 import { SkeletonEdit } from "@/features/donation/components/SkeletonEdit"
 
 import { SearchProgram } from "./SearchProgram"
@@ -75,9 +75,7 @@ export default function DonationForm({ id, type }: DonationFormProps) {
     setSearch(value)
   }, 300)
 
-  const { data, isFetching } = useGetProgramDonationsQuery({
-    page: 1,
-    status: "all",
+  const { data, isFetching } = useGetAllProgramDonationsQuery({
     query: search,
   })
 
@@ -106,6 +104,7 @@ export default function DonationForm({ id, type }: DonationFormProps) {
         full_name: detailDonation.full_name ?? "",
         amount: detailDonation.amount ?? 0,
         phone_number: detailDonation.phone_number ?? "",
+        email: detailDonation.email ?? "",
         payment_method: detailDonation.payment_method ?? "",
         program_id: detailDonation.program_id ?? "",
         donation_upload_at: detailDonation.donation_upload_at
@@ -166,7 +165,9 @@ export default function DonationForm({ id, type }: DonationFormProps) {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <Field className="md:col-span-2">
-              <FieldLabel>Nama Donatur *</FieldLabel>
+              <FieldLabel>
+                Nama Donatur <span className="text-red-500">*</span>
+              </FieldLabel>
               <FieldContent>
                 <Input placeholder="Nama donatur" {...register("full_name")} />
                 <FieldError errors={[errors.full_name]} />
@@ -174,7 +175,9 @@ export default function DonationForm({ id, type }: DonationFormProps) {
             </Field>
 
             <Field>
-              <FieldLabel>No HP *</FieldLabel>
+              <FieldLabel>
+                No HP <span className="text-red-500">*</span>
+              </FieldLabel>
               <FieldContent>
                 <Input
                   type="tel"
@@ -185,13 +188,26 @@ export default function DonationForm({ id, type }: DonationFormProps) {
                 <FieldError errors={[errors.phone_number]} />
               </FieldContent>
             </Field>
+
+            <Field>
+              <FieldLabel>Email</FieldLabel>
+              <FieldContent>
+                <Input
+                  type="email"
+                  inputMode="email"
+                  placeholder="email@example.com"
+                  {...register("email")}
+                />
+                <FieldError errors={[errors.email]} />
+              </FieldContent>
+            </Field>
           </div>
         </CardContent>
       </Card>
 
       <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle>💳 Detail Donasi</CardTitle>
+          <CardTitle>Detail Donasi</CardTitle>
           <CardDescription>
             Pilih program dan metode pembayaran donasi
           </CardDescription>
@@ -199,8 +215,10 @@ export default function DonationForm({ id, type }: DonationFormProps) {
 
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Field className="md:col-span-2">
-              <FieldLabel>Program Tujuan *</FieldLabel>
+            <Field className="">
+              <FieldLabel>
+                Program Tujuan <span className="text-red-500">*</span>
+              </FieldLabel>
 
               <FieldContent>
                 <Controller
@@ -222,7 +240,32 @@ export default function DonationForm({ id, type }: DonationFormProps) {
             </Field>
 
             <Field>
-              <FieldLabel>Jumlah Donasi *</FieldLabel>
+              <FieldLabel>
+                Tanggal Donasi <span className="text-red-500">*</span>
+              </FieldLabel>
+
+              <FieldContent>
+                <Controller
+                  name="donation_upload_at"
+                  control={control}
+                  render={({ field }) => (
+                    <CalendarPopover
+                      value={field.value}
+                      onChange={date =>
+                        field.onChange(date ? format(date, "yyyy-MM-dd") : "")
+                      }
+                      placeholder="Pilih tanggal donasi"
+                      error={errors.donation_upload_at}
+                    />
+                  )}
+                />
+              </FieldContent>
+            </Field>
+
+            <Field>
+              <FieldLabel>
+                Jumlah Donasi <span className="text-red-500">*</span>
+              </FieldLabel>
 
               <FieldContent>
                 <div className="relative">
@@ -238,7 +281,7 @@ export default function DonationForm({ id, type }: DonationFormProps) {
                   />
                 </div>
 
-                {amount && (
+                {amount > 0 && (
                   <p className="text-xs mt-1 text-muted-foreground">
                     {formatRupiah(Number(amount))}
                   </p>
@@ -278,41 +321,20 @@ export default function DonationForm({ id, type }: DonationFormProps) {
                 <FieldError errors={[errors.payment_method]} />
               </FieldContent>
             </Field>
-
-            <Field>
-              <FieldLabel>Tanggal Donasi *</FieldLabel>
-
-              <FieldContent>
-                <Controller
-                  name="donation_upload_at"
-                  control={control}
-                  render={({ field }) => (
-                    <CalendarPopover
-                      value={field.value}
-                      onChange={date =>
-                        field.onChange(date ? format(date, "yyyy-MM-dd") : "")
-                      }
-                      placeholder="Pilih tanggal donasi"
-                      error={errors.donation_upload_at}
-                    />
-                  )}
-                />
-              </FieldContent>
-            </Field>
           </div>
         </CardContent>
       </Card>
 
       <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle>📎 Bukti Donasi</CardTitle>
+          <CardTitle>Bukti Donasi</CardTitle>
           <CardDescription>Lampirkan bukti transfer donasi</CardDescription>
         </CardHeader>
 
         <CardContent>
           <div className="grid grid-cols-1 gap-5">
             <Field>
-              <FieldLabel>Bukti Donasi URL *</FieldLabel>
+              <FieldLabel>Bukti Donasi URL </FieldLabel>
 
               <FieldContent>
                 <Input
@@ -322,7 +344,7 @@ export default function DonationForm({ id, type }: DonationFormProps) {
                 />
 
                 <p className="text-xs text-muted-foreground mt-1">
-                  Link Google Drive / WhatsApp / Storage bukti transfer
+                  Link Supabase Storage yang berisi bukti transfer donasi.
                 </p>
 
                 <FieldError errors={[errors.evidence_url]} />

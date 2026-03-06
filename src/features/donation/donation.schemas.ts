@@ -6,6 +6,7 @@ export const donationEvidenceSchema = z.object({
     .string()
     .min(1, "Phone number is required")
     .regex(/^[0-9+]+$/, "Invalid phone number"),
+  email: z.string().optional(),
   payment_method: z.string().min(1, "Payment method is required"),
   amount: z.coerce.number().min(1, "Amount must be greater than 0"),
   evidence_url: z.string().url("Invalid URL").optional().or(z.literal("")),

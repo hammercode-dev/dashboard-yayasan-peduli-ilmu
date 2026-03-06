@@ -72,10 +72,30 @@ export const programApi = createApi({
     updateProgramDonation: builder.mutation({
       query: (body: UpdateProgramDonationInput) => ({
         url: `/program/program-donation/${body.id}`,
-        method: "PUT",
+        method: "PATCH",
         body,
       }),
       invalidatesTags: [{ type: "ProgramDonation", id: "LIST" }],
+    }),
+
+    getAllProgramDonations: builder.query({
+      query: (params: { query?: string }) => {
+        return {
+          url: `/program/program-donation-all?${getAllParams(params)}`,
+        }
+      },
+      providesTags: result => {
+        console.log("result", result)
+        return result?.data
+          ? [
+              ...result.data.donations.map((item: { id: string }) => ({
+                type: "ProgramDonation" as const,
+                id: item.id,
+              })),
+              { type: "ProgramDonation", id: "LIST" },
+            ]
+          : [{ type: "ProgramDonation", id: "LIST" }]
+      },
     }),
   }),
 })
@@ -86,4 +106,5 @@ export const {
   useDeleteProgramDonationMutation,
   useGetProgramDonationByIdQuery,
   useUpdateProgramDonationMutation,
+  useGetAllProgramDonationsQuery,
 } = programApi

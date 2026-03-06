@@ -1,6 +1,9 @@
 import { ApiResponse } from "@/lib/response"
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
-import { ProgramDonationStatsDataResponse } from "./types/dashboard.types"
+import {
+  ProgramDonationStatsDataResponse,
+  ProgramTrendingsDataResponse,
+} from "./types/dashboard.types"
 import type {
   AladhanTimingsData,
   AladhanTimingsResponse,
@@ -37,8 +40,19 @@ export const dashboardApi = createApi({
         return response.data
       },
     }),
+    getProgramTrendings: builder.query({
+      query: () => "/program/program-trendings",
+      transformResponse: (
+        response: ApiResponse<ProgramTrendingsDataResponse>
+      ) => {
+        return response.data
+      },
+    }),
   }),
 })
 
-export const { useGetProgramDonationStatsQuery, useGetPrayerTimingsQuery } =
-  dashboardApi
+export const {
+  useGetProgramDonationStatsQuery,
+  useGetPrayerTimingsQuery,
+  useGetProgramTrendingsQuery,
+} = dashboardApi

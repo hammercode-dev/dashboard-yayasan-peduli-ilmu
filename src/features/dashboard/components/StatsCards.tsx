@@ -1,12 +1,14 @@
 "use client"
+
 import {
-  Banknote,
-  PlayCircle,
-  FileEdit,
-  Archive,
-  CheckCircle,
-  Files,
+  Wallet,
+  Users,
+  LayoutGrid,
+  CheckCircle2,
+  UserPlus,
+  HandCoins,
 } from "lucide-react"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 import { formatRupiah } from "@/lib/format"
@@ -18,43 +20,42 @@ export default function StatsCards() {
 
   const STATS_CARDS = [
     {
-      Icon: Files,
-      title: "Total Programs",
-      value: data?.totalPrograms,
+      Icon: Wallet,
+      title: "Total Dana Terkumpul",
+      value: formatRupiah(data?.totalRevenues ?? 0),
+      iconColor: "bg-green-700",
+    },
+    {
+      Icon: Users,
+      title: "Total Donatur",
+      value: data?.totalDonatur ? `${data.totalDonatur} Orang` : "0 Orang",
+      iconColor: "bg-blue-600",
+    },
+    {
+      Icon: LayoutGrid,
+      title: "Total Program",
+      value: `${data?.totalPrograms ?? 0} Program`,
       iconColor: "bg-purple-500",
     },
     {
-      Icon: Banknote,
-      title: "Dana Terkumpul",
-      value: formatRupiah(
-        Number(data?.fundsCollected._sum.collected_amount || 0)
-      ),
-      iconColor: "bg-green-500",
-    },
-    {
-      Icon: PlayCircle,
-      title: "Active Programs",
-      value: data?.active,
+      Icon: CheckCircle2,
+      title: "Program Aktif",
+      value: `${data?.activePrograms ?? 0} Berjalan`,
       iconColor: "bg-emerald-500",
     },
     {
-      Icon: FileEdit,
-      title: "Draft Programs",
-
-      value: data?.draft,
-      iconColor: "bg-gray-400",
-    },
-    {
-      Icon: Archive,
-      title: "Archived Programs",
-      value: data?.archived,
+      Icon: HandCoins,
+      title: "Donasi Hari Ini",
+      value: formatRupiah(data?.todayCollectedAmount ?? 0),
       iconColor: "bg-orange-500",
     },
     {
-      Icon: CheckCircle,
-      title: "Completed Programs",
-      value: data?.closed,
-      iconColor: "bg-blue-500",
+      Icon: UserPlus,
+      title: "Donatur Hari Ini",
+      value: data?.todayDonorsCount
+        ? `${data.todayDonorsCount} Orang`
+        : "0 Orang",
+      iconColor: "bg-indigo-500",
     },
   ]
 
@@ -65,8 +66,8 @@ export default function StatsCards() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {STATS_CARDS.map((stat, idx) => (
-            <Card key={idx}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <Card key={idx} className="">
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-sm font-medium">
                   {stat.title}
                 </CardTitle>
@@ -76,7 +77,7 @@ export default function StatsCards() {
                   <stat.Icon className="h-4 w-4 text-white" />
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className=" mt-[-20px]">
                 <div className="text-2xl font-bold text-foreground">
                   {String(stat.value)}
                 </div>

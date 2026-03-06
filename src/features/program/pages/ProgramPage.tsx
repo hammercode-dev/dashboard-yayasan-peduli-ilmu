@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
-import { SearchInput } from "../components/SearchInput"
+import { SearchInput } from "@/components/common/search-input"
 
 import { Button } from "@/components/ui/button"
 import { ProgramDonationTable } from "../components/ProgramDonationTable"

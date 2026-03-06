@@ -2,11 +2,14 @@ import "server-only"
 import { cache } from "react"
 import { prisma } from "@/lib/client"
 import { verifySession } from "@/lib/session"
-import { TOTAL_DONATIONS_PER_PAGE } from "@/constants/data"
+import { TOTAL_PROGRAMS_PER_PAGE } from "@/constants/data"
 import { DonationStatus } from "./types/programDonation"
-import { ProgramDonationFormData } from "./program.schemas"
+import {
+  ProgramDonationFormData,
+  UpdateProgramDonationFormData,
+} from "./program.schemas"
 
-export interface UpdateProgramDonationInput extends Partial<ProgramDonationFormData> {
+export interface UpdateProgramDonationInput extends Partial<UpdateProgramDonationFormData> {
   id: string
 }
 
@@ -14,7 +17,7 @@ export const getProgramDonations = cache(
   async (query: string, currentPage: number, status: string) => {
     await verifySession()
 
-    const offset = (currentPage - 1) * TOTAL_DONATIONS_PER_PAGE
+    const offset = (currentPage - 1) * TOTAL_PROGRAMS_PER_PAGE
 
     return prisma.program_donation.findMany({
       where: {
@@ -23,7 +26,7 @@ export const getProgramDonations = cache(
           ? { status: status as DonationStatus }
           : {}),
       },
-      take: TOTAL_DONATIONS_PER_PAGE,
+      take: TOTAL_PROGRAMS_PER_PAGE,
       skip: offset,
       orderBy: { created_at: "desc" },
     })
@@ -34,22 +37,6 @@ export const getProgramDonationById = cache(async (id: bigint) => {
   await verifySession()
 
   return prisma.program_donation.findUnique({ where: { id } })
-})
-
-export const getProgramDonationStats = cache(async () => {
-  await verifySession()
-
-  const [active, draft, archived, closed, fundsCollected, totalPrograms] =
-    await Promise.all([
-      prisma.program_donation.count({ where: { status: "active" } }),
-      prisma.program_donation.count({ where: { status: "draft" } }),
-      prisma.program_donation.count({ where: { status: "archived" } }),
-      prisma.program_donation.count({ where: { status: "closed" } }),
-      prisma.program_donation.aggregate({ _sum: { collected_amount: true } }),
-      prisma.program_donation.count(),
-    ])
-
-  return { active, draft, archived, closed, fundsCollected, totalPrograms }
 })
 
 export const countProgramDonations = cache(
@@ -115,3 +102,15 @@ export async function deleteProgramDonation(id: bigint) {
 
   return prisma.program_donation.delete({ where: { id } })
 }
+
+export const getAllProgramDonations = cache(async (query: string) => {
+  await verifySession()
+
+  return prisma.program_donation.findMany({
+    where: {
+      title: { contains: query || "", mode: "insensitive" },
+    },
+    take: 10,
+    orderBy: { created_at: "desc" },
+  })
+})

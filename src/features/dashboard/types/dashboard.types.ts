@@ -1,6 +1,9 @@
 import { Prisma } from "@/generated/prisma"
-import { getProgramDonationStats } from "../dashboard.dal"
+import { getProgramDonationStats, getProgramTrendings } from "../dashboard.dal"
 
 export type ProgramDonationStatsDataResponse = Prisma.PromiseReturnType<
   typeof getProgramDonationStats
+>
+export type ProgramTrendingsDataResponse = Prisma.PromiseReturnType<
+  typeof getProgramTrendings
 >

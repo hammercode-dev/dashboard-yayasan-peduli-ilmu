@@ -46,6 +46,7 @@ import {
 import { STATUS_OPTIONS } from "../program.constants"
 import SkeletonDetail from "./SkeletonDetail"
 import { formatRupiah } from "@/lib/format"
+import { getDirtyValues } from "@/lib/utils"
 
 interface ProgramDonationFormProps {
   id?: string
@@ -79,7 +80,7 @@ export default function ProgramDonationForm({
     trigger,
     control,
     reset,
-    formState: { errors },
+    formState: { errors, dirtyFields },
   } = useForm<ProgramDonationFormData>({
     resolver: zodResolver(programDonationSchema),
   })
@@ -91,7 +92,14 @@ export default function ProgramDonationForm({
         toast.success("Program donation created successfully")
       }
       if (type === "edit") {
-        await updateProgramDonation({ id: id as string, ...data }).unwrap()
+        const changedData = getDirtyValues(dirtyFields, data)
+
+        await updateProgramDonation({
+          id: id as string,
+          ...changedData,
+        }).unwrap()
+
+        console.log("data edit = ", { ...data })
         toast.success("Program donation updated successfully")
       }
       router.push("/dashboard/program")
@@ -453,7 +461,6 @@ export default function ProgramDonationForm({
                   <CalendarPopover
                     value={watch("ends_at")}
                     onChange={async date => {
-                      console.log("dateee", date)
                       setValue(
                         "ends_at",
                         date ? format(date, "yyyy-MM-dd") : ""

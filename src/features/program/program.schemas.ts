@@ -24,4 +24,10 @@ export const programDonationSchema = z.object({
   title_ar: z.string().min(1, "Title (Arabic) is required"),
 })
 
+export const updateProgramDonationSchema = programDonationSchema.partial()
+
 export type ProgramDonationFormData = z.infer<typeof programDonationSchema>
+
+export type UpdateProgramDonationFormData = z.infer<
+  typeof updateProgramDonationSchema
+>

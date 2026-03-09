@@ -43,7 +43,7 @@ export function getProgramDonationColumns(options: {
       accessorKey: "title",
       header: "Nama Program",
       cell: ({ row }) => (
-        <span className="font-medium">{row.original.title}</span>
+        <span className="font-bold">{row.original.title}</span>
       ),
     },
     {
@@ -129,6 +129,12 @@ export function getProgramDonationColumns(options: {
               <DropdownMenuItem>
                 <Eye className="mr-2 h-4 w-4" />
                 Lihat Detail
+              </DropdownMenuItem>
+            </Link>
+            <Link href={`/dashboard/program/${row.original.id}/edit`}>
+              <DropdownMenuItem>
+                <Pencil className="mr-2 h-4 w-4" />
+                Ubah
               </DropdownMenuItem>
             </Link>
             {options.onDelete && (

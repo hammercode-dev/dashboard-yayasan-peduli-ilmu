@@ -1,7 +1,8 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
-import ProgramDonationForm from "../components/ProgramDonationForm"
+
+import ProgramDonationDetail from "../components/ProgramDonationDetail"
 
 export default function DetailProgramPage({ id }: { id: string }) {
   return (
@@ -18,7 +19,8 @@ export default function DetailProgramPage({ id }: { id: string }) {
         </h1>
         <p>Berikut adalah detail program donasi yang telah dibuat</p>
       </div>
-      <ProgramDonationForm id={id} type="edit" />
+
+      <ProgramDonationDetail id={id} />
     </section>
   )
 }

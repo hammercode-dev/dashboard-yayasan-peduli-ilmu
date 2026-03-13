@@ -623,11 +623,20 @@ export default function ProgramDonationForm({
       </div>
 
       <div className="flex justify-end gap-3 py-4">
-        <Button type="button" variant="outline">
-          Cancel
+        <Button
+          type="button"
+          variant="outline"
+          className="hover:cursor-pointer"
+          onClick={() => router.back()}
+        >
+          Batal
         </Button>
-        <Button type="submit" loading={isLoadingCreate || isLoadingUpdate}>
-          {type === "create" ? "Create Program" : "Update Program"}
+        <Button
+          type="submit"
+          loading={isLoadingCreate || isLoadingUpdate}
+          className="hover:cursor-pointer font-bold"
+        >
+          {type === "create" ? "Buat Program" : "Perbarui Program"}
         </Button>
       </div>
     </form>

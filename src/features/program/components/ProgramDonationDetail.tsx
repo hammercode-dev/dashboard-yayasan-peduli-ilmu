@@ -33,9 +33,10 @@ import { DonationStatus } from "../types/programDonation"
 import { formatRupiah } from "@/lib/format"
 import { useGetProgramDonationByIdQuery } from "../program.api"
 
+import LogoImage from "@/images/logo.png"
+
 export default function ProgramDonationDetail({ id }: { id: string }) {
   const { data, isFetching } = useGetProgramDonationByIdQuery(id)
-
   const [animatedProgress, setAnimatedProgress] = useState(0)
 
   const target = Number(data?.target_amount || 0)
@@ -88,12 +89,12 @@ export default function ProgramDonationDetail({ id }: { id: string }) {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* LEFT */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="relative aspect-video w-full overflow-hidden rounded-xl border">
+            <div className="relative aspect-video w-full overflow-hidden rounded-xl border-2 border-zinc-100 ">
               <Image
-                src={data?.image_url || "/placeholder.jpg"}
-                alt="cover"
+                src={data?.image_url || LogoImage}
+                alt={data?.title || "Program Donation Image"}
+                className={`object-contain bg-gray-300/20 p-2`}
                 fill
-                className="object-cover"
               />
             </div>
 

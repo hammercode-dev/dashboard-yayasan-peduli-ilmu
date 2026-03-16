@@ -1,19 +1,22 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { toast } from "sonner"
 import { useQueryParams } from "@/hooks/use-query-params"
+
 import {
   useDeleteProgramDonationMutation,
   useGetProgramDonationsQuery,
 } from "../program.api"
+
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { DataTable } from "@/components/common/data-table"
 import { Pagination } from "@/components/common/pagination"
+import { ConfirmDialog } from "@/components/common/confirm-dialog"
+import { CustomAlertDialog } from "@/components/common/custom-alert-dialog"
+
 import { getProgramDonationColumns } from "../columns/program-donation-columns"
 import type { ProgramDonationRow } from "../columns/program-donation-columns"
-import { DeleteConfirmDialog } from "./DeleteConfirmDialog"
-import { DeleteSuccessDialog } from "./DeleteSuccessDialog"
-import { TooltipProvider } from "@/components/ui/tooltip"
-import { toast } from "sonner"
 
 export function ProgramDonationTable() {
   const { getParam, getNumberParam } = useQueryParams()
@@ -84,17 +87,33 @@ export function ProgramDonationTable() {
         <Pagination totalPages={totalPages} />
       </div>
 
-      <DeleteConfirmDialog
+      <ConfirmDialog
         open={!!deleteTarget}
-        title={deleteTarget?.title}
-        onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
         isLoading={isDeleting}
+        variant="destructive"
+        title="Konfirmasi Hapus"
+        confirmText="Hapus"
+        description={
+          <>
+            Apakah Anda yakin ingin menghapus program{" "}
+            <span className="font-semibold">{deleteTarget?.title}</span> ?
+            Tindakan ini tidak dapat dibatalkan.
+          </>
+        }
       />
-      <DeleteSuccessDialog
+
+      <CustomAlertDialog
         open={showSuccess}
-        title={lastDeletedTitle}
         onClose={() => setShowSuccess(false)}
+        title="Data Terhapus"
+        description={
+          <>
+            Program <span className="font-semibold">{lastDeletedTitle}</span>{" "}
+            telah berhasil dihapus.
+          </>
+        }
       />
     </TooltipProvider>
   )

@@ -1,8 +1,9 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { DonationStatus } from "@/features/program/types/programDonation"
+import { Badge } from "@/components/ui/badge"
 
-interface StatusBadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+interface StatusBadgeProps extends React.ComponentProps<typeof Badge> {
   status: DonationStatus
 }
 
@@ -12,19 +13,23 @@ const statusConfig: Record<
 > = {
   active: {
     label: "Active",
-    className: "bg-status-active text-status-active-foreground",
+    className:
+      "bg-status-active text-status-active-foreground hover:bg-status-active/80",
   },
   closed: {
     label: "Closed",
-    className: "bg-status-closed text-status-closed-foreground",
+    className:
+      "bg-status-closed text-status-closed-foreground hover:bg-status-closed/80",
   },
   draft: {
     label: "Draft",
-    className: "bg-status-draft text-status-draft-foreground",
+    className:
+      "bg-status-draft text-status-draft-foreground hover:bg-status-draft/80",
   },
   archived: {
     label: "Archived",
-    className: "bg-status-archived text-status-archived-foreground",
+    className:
+      "bg-status-archived text-status-archived-foreground hover:bg-status-archived/80",
   },
 }
 
@@ -32,15 +37,11 @@ export function StatusBadge({ status, className, ...props }: StatusBadgeProps) {
   const config = statusConfig[status]
 
   return (
-    <div
-      className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
-        config.className,
-        className
-      )}
+    <Badge
+      className={cn("border-transparent", config.className, className)}
       {...props}
     >
       {config.label}
-    </div>
+    </Badge>
   )
 }

@@ -23,7 +23,14 @@ export const getDonationEvidences = cache(
 
     return prisma.donation_evidences.findMany({
       where: {
-        full_name: { contains: query || "", mode: "insensitive" },
+        OR: [
+          { full_name: { contains: query || "", mode: "insensitive" } },
+          {
+            program_donation: {
+              title: { contains: query || "", mode: "insensitive" },
+            },
+          },
+        ],
       },
       include: {
         program_donation: {

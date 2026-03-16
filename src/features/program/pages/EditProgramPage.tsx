@@ -1,10 +1,9 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
+import ProgramDonationForm from "../components/ProgramDonationForm"
 
-import ProgramDonationDetail from "../components/ProgramDonationDetail"
-
-export default function DetailProgramPage({ id }: { id: string }) {
+export default function EditProgramPage({ id }: { id: string }) {
   return (
     <section className="space-y-4">
       <Link href="/dashboard/program">
@@ -15,12 +14,11 @@ export default function DetailProgramPage({ id }: { id: string }) {
       </Link>
       <div className="flex flex-col">
         <h1 className="text-2xl font-bold tracking-tight">
-          Detail Program Donasi
+          Ubah Program Donasi
         </h1>
-        <p>Berikut adalah detail program donasi yang telah dibuat</p>
+        <p>Silakan ubah form di bawah ini untuk mengubah program donasi</p>
       </div>
-
-      <ProgramDonationDetail id={id} />
+      <ProgramDonationForm id={id} type="edit" />
     </section>
   )
 }

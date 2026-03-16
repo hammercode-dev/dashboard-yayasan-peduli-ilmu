@@ -25,7 +25,7 @@ export default function DonationPage() {
         <CardContent className="">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col md:flex-row gap-4 ">
-              <SearchInput placeholder="Cari nama donatur..." />
+              <SearchInput placeholder="Cari nama donatur atau nama program" />
 
               <Button
                 variant="outline"

@@ -39,7 +39,7 @@ import {
 } from "../program.api"
 
 import { STATUS_OPTIONS } from "../program.constants"
-import SkeletonDetail from "./SkeletonDetail"
+import { SkeletonForm } from "./SkeletonForm"
 
 import { formatRupiah } from "@/lib/format"
 import { getDirtyValues } from "@/lib/utils"
@@ -191,7 +191,7 @@ export default function ProgramDonationForm({
   }
 
   if (isLoadingDetailProgramDonation) {
-    return <SkeletonDetail />
+    return <SkeletonForm />
   }
 
   return (

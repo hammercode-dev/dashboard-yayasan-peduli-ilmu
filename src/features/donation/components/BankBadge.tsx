@@ -1,19 +1,21 @@
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 
 type BankChannel = "bsi" | "swift"
 
-interface BankBadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+interface BankBadgeProps extends React.ComponentProps<typeof Badge> {
   channel?: string | null
 }
 
-const bankConfig = {
+const bankConfig: Record<BankChannel, { label: string; className: string }> = {
   bsi: {
     label: "Bank BSI",
-    className: "bg-status-active text-status-active-foreground",
+    className:
+      "bg-status-active text-status-active-foreground hover:bg-status-active/80",
   },
   swift: {
     label: "SWIFT",
-    className: "bg-primary text-primary-foreground",
+    className: "bg-primary text-primary-foreground hover:bg-primary/80",
   },
 } as const
 
@@ -26,15 +28,11 @@ export function BankBadge({ channel, className, ...props }: BankBadgeProps) {
   }
 
   return (
-    <div
-      className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
-        config.className,
-        className
-      )}
+    <Badge
+      className={cn("border-transparent", config.className, className)}
       {...props}
     >
       {config.label}
-    </div>
+    </Badge>
   )
 }

@@ -116,6 +116,7 @@ export default function ProgramDonationDetail({ id }: { id: string }) {
                 <TabsContent value="id">
                   <ScrollArea className="h-[420px] px-6 py-6">
                     <ContentBody
+                      title={data?.title || ""}
                       short={data?.short_description || ""}
                       desc={data?.description || ""}
                     />
@@ -125,6 +126,7 @@ export default function ProgramDonationDetail({ id }: { id: string }) {
                 <TabsContent value="en">
                   <ScrollArea className="h-[420px] px-6 py-6">
                     <ContentBody
+                      title={data?.title_en || ""}
                       short={data?.short_description_en || ""}
                       desc={data?.description_en || ""}
                     />
@@ -134,6 +136,7 @@ export default function ProgramDonationDetail({ id }: { id: string }) {
                 <TabsContent value="ar">
                   <ScrollArea dir="rtl" className="h-[420px] px-6 py-6">
                     <ContentBody
+                      title={data?.title_ar || ""}
                       short={data?.short_description_ar || ""}
                       desc={data?.description_ar || ""}
                     />
@@ -358,9 +361,18 @@ function StatItem({
   )
 }
 
-function ContentBody({ short, desc }: { short?: string; desc?: string }) {
+function ContentBody({
+  title,
+  short,
+  desc,
+}: {
+  title?: string
+  short?: string
+  desc?: string
+}) {
   return (
     <div className="space-y-4">
+      {title && <h2 className="text-xl font-bold text-zinc-800">{title}</h2>}
       {short && (
         <div className="rounded-lg border border-zinc-100 bg-zinc-50 px-4 py-3">
           <p className="text-sm text-zinc-500 leading-relaxed">{short}</p>

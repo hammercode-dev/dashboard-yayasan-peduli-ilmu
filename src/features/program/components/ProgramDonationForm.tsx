@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { format } from "date-fns"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, FormProvider, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
 import { Button } from "@/components/ui/button"
@@ -43,6 +43,7 @@ import { SkeletonForm } from "./SkeletonForm"
 
 import { formatRupiah } from "@/lib/format"
 import { getDirtyValues } from "@/lib/utils"
+import ProgramTimelineEditor from "./ProgramTimelineEditor"
 
 interface ProgramDonationFormProps {
   id?: string
@@ -66,6 +67,15 @@ export default function ProgramDonationForm({
     isFetching: isLoadingDetailProgramDonation,
   } = useGetProgramDonationByIdQuery(id ?? "", {
     skip: type !== "edit",
+    refetchOnFocus: true,
+    refetchOnMountOrArgChange: true,
+  })
+
+  const methods = useForm<ProgramDonationFormData>({
+    resolver: zodResolver(programDonationSchema),
+    defaultValues: {
+      program_timeline: [],
+    },
   })
 
   const {
@@ -77,9 +87,7 @@ export default function ProgramDonationForm({
     control,
     reset,
     formState: { errors, dirtyFields },
-  } = useForm<ProgramDonationFormData>({
-    resolver: zodResolver(programDonationSchema),
-  })
+  } = methods
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const target_amount = watch("target_amount")
@@ -132,6 +140,31 @@ export default function ProgramDonationForm({
 
   useEffect(() => {
     if (detailProgramDonation) {
+      const rawTimeline =
+        (
+          detailProgramDonation as {
+            program_timeline?: Array<{
+              id?: string | number | bigint
+              date?: string | Date | null
+              activity?: string | null
+              activity_en?: string | null
+              activity_ar?: string | null
+              cost?: string | number | { toString: () => string } | null
+              description?: string | null
+            }>
+          }
+        ).program_timeline ?? []
+
+      const timelineRows = rawTimeline.map(row => ({
+        id: row.id != null ? String(row.id) : undefined,
+        date: row.date ? format(new Date(row.date), "yyyy-MM-dd") : "",
+        activity: row.activity ?? "",
+        activity_en: row.activity_en ?? "",
+        activity_ar: row.activity_ar ?? "",
+        cost: row.cost != null ? String(row.cost) : "",
+        description: row.description ?? "",
+      }))
+
       reset({
         title: detailProgramDonation.title ?? "",
         title_en: detailProgramDonation.title_en ?? "",
@@ -155,6 +188,7 @@ export default function ProgramDonationForm({
         description: detailProgramDonation.description ?? "",
         description_en: detailProgramDonation.description_en ?? "",
         description_ar: detailProgramDonation.description_ar ?? "",
+        program_timeline: timelineRows,
       })
       setDescription(detailProgramDonation.description ?? "")
       setDescriptionEn(detailProgramDonation.description_en ?? "")
@@ -170,6 +204,9 @@ export default function ProgramDonationForm({
       }
       if (type === "edit" && id) {
         const changedData = getDirtyValues(dirtyFields, data)
+        if (dirtyFields.program_timeline) {
+          changedData.program_timeline = data.program_timeline
+        }
 
         await updateProgramDonation({
           id: id as string,
@@ -195,451 +232,473 @@ export default function ProgramDonationForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <div className="space-y-6">
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle>Judul Program</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <Field className="md:col-span-2">
-                <FieldLabel>
-                  Judul (Bahasa Indonesia){" "}
-                  <span className="text-red-500">*</span>
-                </FieldLabel>
-                <FieldContent>
-                  <Input
-                    {...register("title")}
-                    aria-invalid={!!errors.title}
-                    placeholder="Masukkan judul program"
-                    onChange={e => {
-                      register("title").onChange(e)
+    <FormProvider {...methods}>
+      <form
+        onSubmit={handleSubmit(
+          data => onSubmit(data as ProgramDonationFormData),
+          () => toast.error("Periksa field yang wajib diisi")
+        )}
+      >
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-8">
+            <div className="space-y-6">
+              <Card className="shadow-sm">
+                <CardHeader>
+                  <CardTitle>Judul Program</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <Field className="md:col-span-2">
+                      <FieldLabel>
+                        Judul (Bahasa Indonesia){" "}
+                        <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Input
+                          {...register("title")}
+                          aria-invalid={!!errors.title}
+                          placeholder="Masukkan judul program"
+                          onChange={e => {
+                            register("title").onChange(e)
 
-                      const newTitle = e.target.value
-                      setValue("slug", generateSlug(newTitle), {
-                        shouldDirty: true,
-                        shouldValidate: true,
-                      })
-                    }}
-                  />
-                  <FieldError errors={[errors.title]} />
-                </FieldContent>
-              </Field>
+                            const newTitle = e.target.value
+                            setValue("slug", generateSlug(newTitle), {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            })
+                          }}
+                        />
+                        <FieldError errors={[errors.title]} />
+                      </FieldContent>
+                    </Field>
 
-              <Field className="md:col-span-2">
-                <FieldLabel>
-                  Judul (Bahasa Inggris) <span className="text-red-500">*</span>
-                </FieldLabel>
-                <FieldContent>
-                  <Input
-                    {...register("title_en")}
-                    placeholder="Judul dalam Bahasa Inggris"
-                    aria-invalid={!!errors.title_en}
-                  />
-                  <FieldError errors={[errors.title_en]} />
-                </FieldContent>
-              </Field>
+                    <Field className="md:col-span-2">
+                      <FieldLabel>
+                        Judul (Bahasa Inggris){" "}
+                        <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Input
+                          {...register("title_en")}
+                          placeholder="Judul dalam Bahasa Inggris"
+                          aria-invalid={!!errors.title_en}
+                        />
+                        <FieldError errors={[errors.title_en]} />
+                      </FieldContent>
+                    </Field>
 
-              <Field className="md:col-span-2">
-                <FieldLabel>
-                  Judul (Bahasa Arab) <span className="text-red-500">*</span>
-                </FieldLabel>
-                <FieldContent>
-                  <Input
-                    {...register("title_ar")}
-                    placeholder="العنوان بالعربية"
-                    dir="rtl"
-                    aria-invalid={!!errors.title_ar}
-                  />
-                  <FieldError errors={[errors.title_ar]} />
-                </FieldContent>
-              </Field>
-            </div>
-          </CardContent>
-        </Card>
+                    <Field className="md:col-span-2">
+                      <FieldLabel>
+                        Judul (Bahasa Arab){" "}
+                        <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Input
+                          {...register("title_ar")}
+                          placeholder="العنوان بالعربية"
+                          dir="rtl"
+                          aria-invalid={!!errors.title_ar}
+                        />
+                        <FieldError errors={[errors.title_ar]} />
+                      </FieldContent>
+                    </Field>
+                  </div>
+                </CardContent>
+              </Card>
 
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle>Deskripsi Singkat</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-5">
-              <Field>
-                <FieldLabel>
-                  Deskripsi Singkat (Bahasa Indonesia){" "}
-                  <span className="text-red-500">*</span>
-                </FieldLabel>
-                <FieldContent>
-                  <Input
-                    {...register("short_description")}
-                    placeholder="Ringkasan singkat dalam Bahasa Indonesia"
-                    aria-invalid={!!errors.short_description}
-                  />
-                  <FieldError errors={[errors.short_description]} />
-                </FieldContent>
-              </Field>
+              <Card className="shadow-sm">
+                <CardHeader>
+                  <CardTitle>Deskripsi Singkat</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col gap-5">
+                    <Field>
+                      <FieldLabel>
+                        Deskripsi Singkat (Bahasa Indonesia){" "}
+                        <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Input
+                          {...register("short_description")}
+                          placeholder="Ringkasan singkat dalam Bahasa Indonesia"
+                          aria-invalid={!!errors.short_description}
+                        />
+                        <FieldError errors={[errors.short_description]} />
+                      </FieldContent>
+                    </Field>
 
-              <Field>
-                <FieldLabel>
-                  Deskripsi Singkat (Bahasa Inggris){" "}
-                  <span className="text-red-500">*</span>
-                </FieldLabel>
-                <FieldContent>
-                  <Input
-                    {...register("short_description_en")}
-                    placeholder="Ringkasan singkat dalam Bahasa Inggris"
-                    aria-invalid={!!errors.short_description_en}
-                  />
-                  <FieldError errors={[errors.short_description_en]} />
-                </FieldContent>
-              </Field>
+                    <Field>
+                      <FieldLabel>
+                        Deskripsi Singkat (Bahasa Inggris){" "}
+                        <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Input
+                          {...register("short_description_en")}
+                          placeholder="Ringkasan singkat dalam Bahasa Inggris"
+                          aria-invalid={!!errors.short_description_en}
+                        />
+                        <FieldError errors={[errors.short_description_en]} />
+                      </FieldContent>
+                    </Field>
 
-              <Field>
-                <FieldLabel>
-                  Deskripsi Singkat (Bahasa Arab){" "}
-                  <span className="text-red-500">*</span>
-                </FieldLabel>
-                <FieldContent>
-                  <Input
-                    {...register("short_description_ar")}
-                    dir="rtl"
-                    placeholder="ملخص مختصر بالعربية"
-                    aria-invalid={!!errors.short_description_ar}
-                  />
-                  <FieldError errors={[errors.short_description_ar]} />
-                </FieldContent>
-              </Field>
-            </div>
-          </CardContent>
-        </Card>
+                    <Field>
+                      <FieldLabel>
+                        Deskripsi Singkat (Bahasa Arab){" "}
+                        <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Input
+                          {...register("short_description_ar")}
+                          dir="rtl"
+                          placeholder="ملخص مختصر بالعربية"
+                          aria-invalid={!!errors.short_description_ar}
+                        />
+                        <FieldError errors={[errors.short_description_ar]} />
+                      </FieldContent>
+                    </Field>
+                  </div>
+                </CardContent>
+              </Card>
 
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle>Deskripsi Lengkap</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-5">
-              <Field>
-                <FieldLabel>
-                  Deskripsi Lengkap (Bahasa Indonesia){" "}
-                  <span className="text-red-500">*</span>
-                </FieldLabel>
-                <FieldContent>
-                  <RichTextEditor
-                    value={description}
-                    onChange={async markdown => {
-                      setDescription(markdown)
-                      setValue("description", markdown)
-                      await trigger("description")
-                    }}
-                    placeholder="Masukkan deskripsi lengkap..."
-                    aria-invalid={!!errors.description}
-                  />
-                  <FieldError errors={[errors.description]} />
-                </FieldContent>
-              </Field>
+              <Card className="shadow-sm">
+                <CardHeader>
+                  <CardTitle>Deskripsi Lengkap</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col gap-5">
+                    <Field>
+                      <FieldLabel>
+                        Deskripsi Lengkap (Bahasa Indonesia){" "}
+                        <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <RichTextEditor
+                          value={description}
+                          onChange={async markdown => {
+                            setDescription(markdown)
+                            setValue("description", markdown)
+                            await trigger("description")
+                          }}
+                          placeholder="Masukkan deskripsi lengkap..."
+                          aria-invalid={!!errors.description}
+                        />
+                        <FieldError errors={[errors.description]} />
+                      </FieldContent>
+                    </Field>
 
-              <Field>
-                <FieldLabel>
-                  Deskripsi Lengkap (Bahasa Inggris){" "}
-                  <span className="text-red-500">*</span>
-                </FieldLabel>
-                <FieldContent>
-                  <RichTextEditor
-                    value={descriptionEn}
-                    onChange={async markdown => {
-                      setDescriptionEn(markdown)
-                      setValue("description_en", markdown)
-                      await trigger("description_en")
-                    }}
-                    placeholder="Masukkan deskripsi lengkap dalam Bahasa Inggris..."
-                    aria-invalid={!!errors.description_en}
-                  />
-                  <FieldError errors={[errors.description_en]} />
-                </FieldContent>
-              </Field>
+                    <Field>
+                      <FieldLabel>
+                        Deskripsi Lengkap (Bahasa Inggris){" "}
+                        <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <RichTextEditor
+                          value={descriptionEn}
+                          onChange={async markdown => {
+                            setDescriptionEn(markdown)
+                            setValue("description_en", markdown)
+                            await trigger("description_en")
+                          }}
+                          placeholder="Masukkan deskripsi lengkap dalam Bahasa Inggris..."
+                          aria-invalid={!!errors.description_en}
+                        />
+                        <FieldError errors={[errors.description_en]} />
+                      </FieldContent>
+                    </Field>
 
-              <Field>
-                <FieldLabel>
-                  Deskripsi Lengkap (Bahasa Arab){" "}
-                  <span className="text-red-500">*</span>
-                </FieldLabel>
-                <FieldContent>
-                  <RichTextEditor
-                    value={descriptionAr}
-                    onChange={async markdown => {
-                      setDescriptionAr(markdown)
-                      setValue("description_ar", markdown)
-                      await trigger("description_ar")
-                    }}
-                    placeholder="Masukkan deskripsi lengkap dalam Bahasa Arab..."
-                    aria-invalid={!!errors.description_ar}
-                  />
-                  <FieldError errors={[errors.description_ar]} />
-                </FieldContent>
-              </Field>
-            </div>
-          </CardContent>
-        </Card>
+                    <Field>
+                      <FieldLabel>
+                        Deskripsi Lengkap (Bahasa Arab){" "}
+                        <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <RichTextEditor
+                          value={descriptionAr}
+                          onChange={async markdown => {
+                            setDescriptionAr(markdown)
+                            setValue("description_ar", markdown)
+                            await trigger("description_ar")
+                          }}
+                          placeholder="Masukkan deskripsi lengkap dalam Bahasa Arab..."
+                          aria-invalid={!!errors.description_ar}
+                        />
+                        <FieldError errors={[errors.description_ar]} />
+                      </FieldContent>
+                    </Field>
+                  </div>
+                </CardContent>
+              </Card>
 
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle>Informasi Keuangan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 mb-7">
-              <FieldLabel>Pilihan Cepat Nominal</FieldLabel>
+              <Card className="shadow-sm">
+                <CardHeader>
+                  <CardTitle>Informasi Keuangan</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 mb-7">
+                    <FieldLabel>Pilihan Cepat Nominal</FieldLabel>
 
-              <div className="flex flex-wrap gap-2 mb-7">
-                {quickAmounts.map(amount => (
-                  <Button
-                    key={amount}
-                    type="button"
-                    variant="outline"
-                    value={amount}
-                    size="sm"
-                    onClick={() => handleQuickAmount(String(amount))}
-                    className="text-xs"
-                  >
-                    {formatRupiah(Number(amount))}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 mb-7">
-              <Field>
-                <FieldLabel>
-                  Target Dana <span className="text-red-500">*</span>
-                </FieldLabel>
-                <FieldContent>
-                  <Input
-                    type="number"
-                    {...register("target_amount")}
-                    placeholder="Rp."
-                    aria-invalid={!!errors.target_amount}
-                  />
-                  {target_amount && (
-                    <div className="text-xs text-gray-600 mt-1">
-                      {formatRupiah(Number(target_amount))}
+                    <div className="flex flex-wrap gap-2 mb-7">
+                      {quickAmounts.map(amount => (
+                        <Button
+                          key={amount}
+                          type="button"
+                          variant="outline"
+                          value={amount}
+                          size="sm"
+                          onClick={() => handleQuickAmount(String(amount))}
+                          className="text-xs"
+                        >
+                          {formatRupiah(Number(amount))}
+                        </Button>
+                      ))}
                     </div>
-                  )}
-                  <FieldError errors={[errors.target_amount]} />
-                </FieldContent>
-              </Field>
+                  </div>
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2 mb-7">
+                    <Field>
+                      <FieldLabel>
+                        Target Dana <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Input
+                          type="number"
+                          {...register("target_amount")}
+                          placeholder="Rp."
+                          aria-invalid={!!errors.target_amount}
+                        />
+                        {target_amount && (
+                          <div className="text-xs text-gray-600 mt-1">
+                            {formatRupiah(Number(target_amount))}
+                          </div>
+                        )}
+                        <FieldError errors={[errors.target_amount]} />
+                      </FieldContent>
+                    </Field>
 
-              <Field>
-                <FieldLabel>
-                  Dana Terkumpul <span className="text-red-500">*</span>
-                </FieldLabel>
-                <FieldContent>
-                  <Input
-                    type="number"
-                    {...register("collected_amount")}
-                    placeholder="Rp. "
-                    aria-invalid={!!errors.collected_amount}
-                  />
-                  {collected_amount && (
-                    <div className="text-xs text-gray-600">
-                      {formatRupiah(Number(collected_amount))}
-                    </div>
-                  )}
-                  <FieldError errors={[errors.collected_amount]} />
-                </FieldContent>
-              </Field>
-            </div>
-            {/* Progress Display */}
-            {target_amount && collected_amount && Number(target_amount) > 0 && (
-              <FundingProgress
-                collected_amount={collected_amount}
-                target_amount={target_amount}
-              />
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle>Jadwal Pelaksanaan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 mb-7">
-              <FieldLabel>Pilihan Cepat Durasi</FieldLabel>
-              <div className="flex flex-wrap gap-2">
-                {quickDurations.map(option => (
-                  <Button
-                    key={option.label}
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      handleQuickDuration(
-                        option.type as "month" | "year",
-                        option.value
-                      )
-                    }
-                    className="text-xs"
-                  >
-                    {option.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 mb-7">
-              <Field>
-                <FieldLabel>
-                  Tanggal Mulai <span className="text-red-500">*</span>
-                </FieldLabel>
-                <FieldContent>
-                  <CalendarPopover
-                    value={watch("starts_at")}
-                    onChange={async date => {
-                      setValue(
-                        "starts_at",
-                        date ? format(date, "yyyy-MM-dd") : "",
-                        { shouldDirty: true }
-                      )
-                      await trigger("starts_at")
-                    }}
-                    placeholder="Pilih tanggal mulai"
-                    error={errors.starts_at}
-                  />
-                </FieldContent>
-              </Field>
-
-              <Field>
-                <FieldLabel>
-                  Tanggal Selesai <span className="text-red-500">*</span>
-                </FieldLabel>
-                <FieldContent>
-                  <CalendarPopover
-                    value={watch("ends_at")}
-                    onChange={async date => {
-                      setValue(
-                        "ends_at",
-                        date ? format(date, "yyyy-MM-dd") : "",
-                        { shouldDirty: true }
-                      )
-                      await trigger("ends_at")
-                    }}
-                    placeholder="Pilih tanggal selesai"
-                    error={errors.ends_at}
-                  />
-                </FieldContent>
-              </Field>
-            </div>
-
-            {starts_at && ends_at && (
-              <CampaignDuration starts_at={starts_at} ends_at={ends_at} />
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle>Informasi Lainnya</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <Field>
-                <FieldLabel>
-                  Slug <span className="text-red-500">*</span>
-                </FieldLabel>
-                <FieldContent>
-                  <Input
-                    {...register("slug")}
-                    aria-invalid={!!errors.slug}
-                    placeholder="slug-program"
-                  />
-                  <FieldDescription>
-                    Versi judul yang ramah untuk URL
-                  </FieldDescription>
-                  <FieldError errors={[errors.slug]} />
-                </FieldContent>
-              </Field>
-
-              <Field>
-                <FieldLabel>
-                  Status <span className="text-red-500">*</span>
-                </FieldLabel>
-                <FieldContent>
-                  <Controller
-                    name="status"
-                    control={control}
-                    render={({ field }) => (
-                      <Select
-                        key={field.value}
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger aria-invalid={!!errors.status}>
-                          <SelectValue placeholder="Pilih status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {STATUS_OPTIONS.map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    <Field>
+                      <FieldLabel>
+                        Dana Terkumpul <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Input
+                          type="number"
+                          {...register("collected_amount")}
+                          placeholder="Rp. "
+                          aria-invalid={!!errors.collected_amount}
+                        />
+                        {collected_amount && (
+                          <div className="text-xs text-gray-600">
+                            {formatRupiah(Number(collected_amount))}
+                          </div>
+                        )}
+                        <FieldError errors={[errors.collected_amount]} />
+                      </FieldContent>
+                    </Field>
+                  </div>
+                  {/* Progress Display */}
+                  {target_amount &&
+                    collected_amount &&
+                    Number(target_amount) > 0 && (
+                      <FundingProgress
+                        collected_amount={collected_amount}
+                        target_amount={target_amount}
+                      />
                     )}
-                  />
-                  <FieldError errors={[errors.status]} />
-                </FieldContent>
-              </Field>
+                </CardContent>
+              </Card>
 
-              <Field>
-                <FieldLabel>
-                  Lokasi <span className="text-red-500">*</span>
-                </FieldLabel>
-                <FieldContent>
-                  <Input
-                    {...register("location")}
-                    placeholder="Masukkan lokasi"
-                    aria-invalid={!!errors.location}
-                  />
-                  <FieldError errors={[errors.location]} />
-                </FieldContent>
-              </Field>
+              <Card className="shadow-sm">
+                <CardHeader>
+                  <CardTitle>Jadwal Pelaksanaan</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 mb-7">
+                    <FieldLabel>Pilihan Cepat Durasi</FieldLabel>
+                    <div className="flex flex-wrap gap-2">
+                      {quickDurations.map(option => (
+                        <Button
+                          key={option.label}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handleQuickDuration(
+                              option.type as "month" | "year",
+                              option.value
+                            )
+                          }
+                          className="text-xs"
+                        >
+                          {option.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
 
-              <Field>
-                <FieldLabel>
-                  URL Gambar Sampul <span className="text-red-500">*</span>
-                </FieldLabel>
-                <FieldContent>
-                  <Input
-                    {...register("image_url")}
-                    aria-invalid={!!errors.image_url}
-                    placeholder="https://..."
-                  />
-                  <FieldError errors={[errors.image_url]} />
-                </FieldContent>
-              </Field>
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2 mb-7">
+                    <Field>
+                      <FieldLabel>
+                        Tanggal Mulai <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <CalendarPopover
+                          value={watch("starts_at")}
+                          onChange={async date => {
+                            setValue(
+                              "starts_at",
+                              date ? format(date, "yyyy-MM-dd") : "",
+                              { shouldDirty: true }
+                            )
+                            await trigger("starts_at")
+                          }}
+                          placeholder="Pilih tanggal mulai"
+                          error={errors.starts_at}
+                        />
+                      </FieldContent>
+                    </Field>
+
+                    <Field>
+                      <FieldLabel>
+                        Tanggal Selesai <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <CalendarPopover
+                          value={watch("ends_at")}
+                          onChange={async date => {
+                            setValue(
+                              "ends_at",
+                              date ? format(date, "yyyy-MM-dd") : "",
+                              { shouldDirty: true }
+                            )
+                            await trigger("ends_at")
+                          }}
+                          placeholder="Pilih tanggal selesai"
+                          error={errors.ends_at}
+                        />
+                      </FieldContent>
+                    </Field>
+                  </div>
+
+                  {starts_at && ends_at && (
+                    <CampaignDuration starts_at={starts_at} ends_at={ends_at} />
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-sm">
+                <CardHeader>
+                  <CardTitle>Informasi Lainnya</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <Field>
+                      <FieldLabel>
+                        Slug <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Input
+                          {...register("slug")}
+                          aria-invalid={!!errors.slug}
+                          placeholder="slug-program"
+                        />
+                        <FieldDescription>
+                          Versi judul yang ramah untuk URL
+                        </FieldDescription>
+                        <FieldError errors={[errors.slug]} />
+                      </FieldContent>
+                    </Field>
+
+                    <Field>
+                      <FieldLabel>
+                        Status <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Controller
+                          name="status"
+                          control={control}
+                          render={({ field }) => (
+                            <Select
+                              key={field.value}
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <SelectTrigger aria-invalid={!!errors.status}>
+                                <SelectValue placeholder="Pilih status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {STATUS_OPTIONS.map(option => (
+                                  <SelectItem
+                                    key={option.value}
+                                    value={option.value}
+                                  >
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                        <FieldError errors={[errors.status]} />
+                      </FieldContent>
+                    </Field>
+
+                    <Field>
+                      <FieldLabel>
+                        Lokasi <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Input
+                          {...register("location")}
+                          placeholder="Masukkan lokasi"
+                          aria-invalid={!!errors.location}
+                        />
+                        <FieldError errors={[errors.location]} />
+                      </FieldContent>
+                    </Field>
+
+                    <Field>
+                      <FieldLabel>
+                        URL Gambar Sampul{" "}
+                        <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Input
+                          {...register("image_url")}
+                          aria-invalid={!!errors.image_url}
+                          placeholder="https://..."
+                        />
+                        <FieldError errors={[errors.image_url]} />
+                      </FieldContent>
+                    </Field>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+          <div className="col-span-4 sticky top-12 self-start">
+            <ProgramTimelineEditor />
+          </div>
+        </div>
 
-      <div className="flex justify-end gap-3 py-4">
-        <Button
-          type="button"
-          variant="outline"
-          className="hover:cursor-pointer"
-          onClick={() => router.back()}
-        >
-          Batal
-        </Button>
-        <Button
-          type="submit"
-          loading={isLoadingCreate || isLoadingUpdate}
-          className="hover:cursor-pointer font-bold"
-        >
-          {type === "create" ? "Buat Program" : "Perbarui Program"}
-        </Button>
-      </div>
-    </form>
+        <div className="flex justify-end gap-3 py-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="hover:cursor-pointer"
+            onClick={() => router.back()}
+          >
+            Batal
+          </Button>
+          <Button
+            type="submit"
+            loading={isLoadingCreate || isLoadingUpdate}
+            className="hover:cursor-pointer font-bold"
+          >
+            {type === "create" ? "Buat Program" : "Perbarui Program"}
+          </Button>
+        </div>
+      </form>
+    </FormProvider>
   )
 }
 

@@ -30,6 +30,14 @@ import { StatusBadge } from "./StatusBadge"
 import SkeletonDetail from "./SkeletonDetail"
 import { DonationStatus } from "../types/programDonation"
 
+import {
+  Timeline,
+  TimelineConnector,
+  TimelineContent,
+  TimelineItem,
+  TimelineTime,
+  TimelineTitle,
+} from "@/components/common/timeline"
 import { formatRupiah } from "@/lib/format"
 import { useGetProgramDonationByIdQuery } from "../program.api"
 
@@ -147,7 +155,7 @@ export default function ProgramDonationDetail({ id }: { id: string }) {
 
             <div className="rounded-xl border bg-white">
               <Tabs defaultValue="timeline">
-                <TabsList className=" px-auto w-max">
+                <TabsList className=" px-auto w-max mx-4 mt-4">
                   <TabsTrigger value="timeline">
                     <History className="size-4 mr-1" />
                     Timeline
@@ -161,50 +169,44 @@ export default function ProgramDonationDetail({ id }: { id: string }) {
 
                 <TabsContent value="timeline" className="p-5">
                   {data?.program_timeline?.length ? (
-                    data.program_timeline.map((item: any, i: number) => (
-                      <div key={i} className="flex gap-4 pb-6">
-                        <div className="size-2 rounded-full bg-zinc-900 mt-2" />
-
-                        <div>
-                          <time className="text-xs text-zinc-400">
-                            {format(new Date(item.date), "dd MMM yyyy")}
-                          </time>
-
-                          <p className="font-semibold">{item.title}</p>
-
-                          <p className="text-sm text-zinc-500">
-                            {item.description}
-                          </p>
-                        </div>
+                    <Tabs defaultValue="id" className="w-full">
+                      <div className="flex items-center justify-between border-b pb-3 mb-4">
+                        <span className="text-sm font-medium text-zinc-500">
+                          Bahasa
+                        </span>
+                        <TabsList>
+                          <TabsTrigger value="id">ID</TabsTrigger>
+                          <TabsTrigger value="en">EN</TabsTrigger>
+                          <TabsTrigger value="ar">AR</TabsTrigger>
+                        </TabsList>
                       </div>
-                    ))
+                      <TabsContent value="id">
+                        <ProgramTimelineView
+                          items={data.program_timeline}
+                          activityKey="activity"
+                        />
+                      </TabsContent>
+                      <TabsContent value="en">
+                        <ProgramTimelineView
+                          items={data.program_timeline}
+                          activityKey="activity_en"
+                        />
+                      </TabsContent>
+                      <TabsContent value="ar">
+                        <ProgramTimelineView
+                          items={data.program_timeline}
+                          activityKey="activity_ar"
+                          dir="rtl"
+                        />
+                      </TabsContent>
+                    </Tabs>
                   ) : (
                     <EmptyState label="Belum ada timeline" />
                   )}
                 </TabsContent>
 
                 <TabsContent value="donatur" className="p-5">
-                  {data?.program_timeline?.length ? (
-                    data.program_timeline.map((item: any, i: number) => (
-                      <div key={i} className="flex gap-4 pb-6">
-                        <div className="size-2 rounded-full bg-zinc-900 mt-2" />
-
-                        <div>
-                          <time className="text-xs text-zinc-400">
-                            {format(new Date(item.date), "dd MMM yyyy")}
-                          </time>
-
-                          <p className="font-semibold">{item.title}</p>
-
-                          <p className="text-sm text-zinc-500">
-                            {item.description}
-                          </p>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <EmptyState label="Belum ada donatur" />
-                  )}
+                  <EmptyState label="Belum ada donatur" />
                 </TabsContent>
               </Tabs>
             </div>
@@ -258,7 +260,9 @@ export default function ProgramDonationDetail({ id }: { id: string }) {
                 <StatItem
                   icon={Users}
                   label="Donatur"
-                  value={String(data?.donors?.length ?? 0)}
+                  value={String(
+                    (data as { donors?: unknown[] })?.donors?.length ?? 0
+                  )}
                 />
 
                 <StatItem
@@ -357,6 +361,61 @@ function StatItem({
       <p className={`text-sm font-bold tabular-nums ${valueClassName}`}>
         {value}
       </p>
+    </div>
+  )
+}
+
+type ProgramTimelineItemType = {
+  date?: string | Date | null
+  activity?: string | null
+  activity_en?: string | null
+  activity_ar?: string | null
+  cost?: string | number | { toString: () => string } | null
+  description?: string | null
+}
+
+function ProgramTimelineView({
+  items,
+  activityKey,
+  dir,
+}: {
+  items: ProgramTimelineItemType[]
+  activityKey: "activity" | "activity_en" | "activity_ar"
+  dir?: "rtl"
+}) {
+  return (
+    <div dir={dir}>
+      <Timeline>
+        {items.map((item, i) => (
+          <TimelineItem key={i} last={i === items.length - 1} status="upcoming">
+            <TimelineConnector status="upcoming">
+              <span className="text-xs font-medium">{i + 1}</span>
+            </TimelineConnector>
+            <TimelineContent>
+              <TimelineTime>
+                {item.date ? format(new Date(item.date), "dd MMM yyyy") : "—"}
+              </TimelineTime>
+              <TimelineTitle>
+                {item[activityKey] || "(Tidak ada judul)"}
+              </TimelineTitle>
+              {item.cost != null && Number(item.cost) > 0 && (
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  Biaya: {formatRupiah(Number(item.cost))}
+                </p>
+              )}
+              {item.description ? (
+                <div className="mt-2">
+                  <article className="prose prose-sm prose-zinc max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {item.description}
+                    </ReactMarkdown>
+                  </article>
+                </div>
+              ) : null}
+            </TimelineContent>
+          </TimelineItem>
+        ))}
+      </Timeline>
     </div>
   )
 }

@@ -240,7 +240,7 @@ export default function ProgramDonationForm({
         )}
       >
         <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-8">
+          <div className="col-span-12 lg:col-span-8">
             <div className="space-y-6">
               <Card className="shadow-sm">
                 <CardHeader>
@@ -675,7 +675,7 @@ export default function ProgramDonationForm({
               </Card>
             </div>
           </div>
-          <div className="col-span-4 sticky top-12 self-start">
+          <div className="col-span-12 lg:col-span-4 sticky top-12 self-start">
             <ProgramTimelineEditor />
           </div>
         </div>

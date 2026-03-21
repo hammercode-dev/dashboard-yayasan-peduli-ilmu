@@ -1,36 +1,111 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dashboard Yayasan Peduli Ilmu
 
-## Getting Started
+Dashboard manajemen donasi dan program yayasan. Dibangun dengan Next.js, Prisma, dan Supabase.
 
-First, run the development server:
+## Prerequisites
+
+- [Node.js](https://nodejs.org/) (v20+)
+- [pnpm](https://pnpm.io/)
+- [Docker](https://www.docker.com/) & Docker Compose (untuk database lokal)
+
+## Menjalankan Development Lokal
+
+### 1. Clone & Install Dependencies
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd dashboard-yayasan-peduli-ilmu
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Jalankan PostgreSQL (Docker)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+docker compose up -d
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Database PostgreSQL akan berjalan di `localhost:5432`.
 
-## Learn More
+| Config   | Value             |
+| -------- | ----------------- |
+| Host     | localhost         |
+| Port     | 5432              |
+| User     | postgres          |
+| Password | postgres          |
+| Database | dashboard_yayasan |
 
-To learn more about Next.js, take a look at the following resources:
+### 3. Setup Environment Variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Salin `.env.example` ke `.env.local`:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+cp .env.example .env.local
+```
 
-## Deploy on Vercel
+Edit `.env.local` untuk development:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your_supabase_key
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Local PostgreSQL (Docker)
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/dashboard_yayasan"
+DIRECT_URL="postgresql://postgres:postgres@localhost:5432/dashboard_yayasan"
+
+JWT_SECRET="secretkeybro"
+```
+
+> **Catatan:** `.env.local` memiliki prioritas lebih tinggi dari `.env`. Gunakan `.env.local` untuk konfigurasi local agar tidak menimpa pengaturan production.
+
+### 4. Generate Prisma Client & Run Migrations
+
+```bash
+pnpm db:generate
+pnpm db:migrate
+```
+
+### 5. Seed Database (Opsional)
+
+```bash
+pnpm db:seed
+```
+
+Akun default yang dibuat:
+
+| Email                       | Password |
+| --------------------------- | -------- |
+| admin@yayasanpeduliilmu.com | admin123 |
+
+### 6. Jalankan Development Server
+
+```bash
+pnpm dev
+```
+
+Buka [http://localhost:3000](http://localhost:3000) di browser.
+
+---
+
+## Database Commands
+
+| Command           | Deskripsi                          |
+| ----------------- | ---------------------------------- |
+| `pnpm db:generate` | Regenerasi Prisma Client           |
+| `pnpm db:migrate`  | Jalankan migration ke database     |
+| `pnpm db:seed`     | Isi data awal (users, programs, dll) |
+| `pnpm db:studio`   | Buka Prisma Studio di browser     |
+
+---
+
+## Quick Start (Ringkasan)
+
+```bash
+pnpm install
+docker compose up -d
+cp .env.example .env.local
+# (edit .env.local dengan nilai yang sesuai)
+pnpm db:generate
+pnpm db:migrate
+pnpm db:seed
+pnpm dev
+```

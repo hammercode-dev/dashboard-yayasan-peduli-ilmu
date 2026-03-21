@@ -62,7 +62,7 @@ export const countProgramDonations = cache(
 
 function mapTimelineRowToCreate(row: ProgramDonationFormData["program_timeline"][number]) {
   return {
-    date: row.date ? new Date(row.date + "T00:00:00") : null,
+    date: row.date ? new Date(row.date + "T12:00:00.000Z") : null,
     activity: row.activity ?? null,
     activity_en: row.activity_en ?? null,
     activity_ar: row.activity_ar ?? null,

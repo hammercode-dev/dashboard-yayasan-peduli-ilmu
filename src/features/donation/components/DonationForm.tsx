@@ -94,6 +94,10 @@ export default function DonationForm({ id, type }: DonationFormProps) {
     formState: { errors, dirtyFields },
   } = useForm<DonationEvidenceFormData>({
     resolver: zodResolver(donationEvidenceSchema),
+    defaultValues: {
+      amount: "",
+      program_id: "",
+    },
   })
 
   const amount = watch("amount")
@@ -102,11 +106,15 @@ export default function DonationForm({ id, type }: DonationFormProps) {
     if (detailDonation) {
       reset({
         full_name: detailDonation.full_name ?? "",
-        amount: detailDonation.amount ?? 0,
+        amount:
+          detailDonation.amount != null ? String(detailDonation.amount) : "",
         phone_number: detailDonation.phone_number ?? "",
         email: detailDonation.email ?? "",
         payment_method: detailDonation.payment_method ?? "",
-        program_id: detailDonation.program_id ?? "",
+        program_id:
+          detailDonation.program_id != null
+            ? String(detailDonation.program_id)
+            : "",
         donation_upload_at: detailDonation.donation_upload_at
           ? format(new Date(detailDonation.donation_upload_at), "yyyy-MM-dd")
           : "",
@@ -228,7 +236,7 @@ export default function DonationForm({ id, type }: DonationFormProps) {
                     <SearchProgram
                       programs={programOptions}
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={id => field.onChange(String(id))}
                       onSearch={debouncedSearch}
                       isFetching={isFetching}
                     />
@@ -276,12 +284,12 @@ export default function DonationForm({ id, type }: DonationFormProps) {
                   <Input
                     type="number"
                     className="pl-10 disabled:cursor-not-allowed disabled:pointer-events-auto"
-                    {...register("amount", { valueAsNumber: true })}
+                    {...register("amount")}
                     disabled={type === "edit"}
                   />
                 </div>
 
-                {amount > 0 && (
+                {Number(amount) > 0 && (
                   <p className="text-xs mt-1 text-muted-foreground">
                     {formatRupiah(Number(amount))}
                   </p>

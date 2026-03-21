@@ -163,10 +163,10 @@ export async function updateDonationEvidence(
     where: { id: BigInt(id) },
     data: {
       ...fields,
-      ...(fields.program_id ? { program_id: Number(fields.program_id) } : {}),
       ...(fields.donation_upload_at
         ? { donation_upload_at: new Date(fields.donation_upload_at) }
         : {}),
+      program_id: Number(fields.program_id),
       updated_at: new Date(),
     },
   })
@@ -192,7 +192,7 @@ export const getDonationEvidenceStats = cache(async () => {
   }
 })
 
-export async function bulkCreateDonationEvidence(rows: ParsedDonation[]) {
+export async function bulkCreateDonationEvidence(rows: DonationEvidenceFormData[]) {
   if (rows.length === 0) throw new Error("File kosong")
 
   const donationsData = rows.map((row, index) => {

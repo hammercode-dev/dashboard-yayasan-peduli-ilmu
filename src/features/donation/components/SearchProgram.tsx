@@ -16,6 +16,7 @@ interface SearchProgramProps {
   onChange: (programId: string | number) => void
   onSearch?: (query: string) => void
   isFetching: boolean
+  className?: string
 }
 
 export function SearchProgram({
@@ -24,6 +25,7 @@ export function SearchProgram({
   onChange,
   onSearch,
   isFetching,
+  className,
 }: SearchProgramProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -55,7 +57,7 @@ export function SearchProgram({
   }, [])
 
   return (
-    <div className="relative w-full" ref={selectorRef}>
+    <div className={cn("relative w-full", className)} ref={selectorRef}>
       <button
         type="button"
         onClick={() => setIsOpen(prev => !prev)}

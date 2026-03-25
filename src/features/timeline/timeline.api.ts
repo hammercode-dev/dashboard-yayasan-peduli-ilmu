@@ -32,7 +32,7 @@ export const timelineApi = createApi({
         programId,
         ...body
       }: UpdateTimelineItemInput & { id: string; programId: number }) => ({
-        url: `/timeline/item/${id}`,
+        url: `/timeline/${id}`,
         method: "PATCH",
         body,
       }),
@@ -48,7 +48,7 @@ export const timelineApi = createApi({
         id: string
         programId: number
       }) => ({
-        url: `/timeline/item/${id}`,
+        url: `/timeline/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: (_result, _error, { programId }) => [

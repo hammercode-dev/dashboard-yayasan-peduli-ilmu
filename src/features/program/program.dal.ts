@@ -1,5 +1,6 @@
 import "server-only"
 import { cache } from "react"
+import { Prisma } from "@/generated/prisma"
 import { prisma } from "@/lib/client"
 import { verifySession } from "@/lib/session"
 import { TOTAL_PROGRAMS_PER_PAGE } from "@/constants/data"
@@ -36,7 +37,12 @@ export const getProgramDonations = cache(
 export const getProgramDonationById = cache(async (id: bigint) => {
   await verifySession()
 
-  return prisma.program_donation.findUnique({ where: { id } })
+  return prisma.program_donation.findUnique({
+    where: { id },
+    include: {
+      program_timeline: { orderBy: { date: "asc" } },
+    },
+  })
 })
 
 export const countProgramDonations = cache(
@@ -54,8 +60,21 @@ export const countProgramDonations = cache(
   }
 )
 
+// function mapTimelineRowToCreate(row: ProgramDonationFormData["program_timeline"][number]) {
+//   return {
+//     date: row.date ? new Date(row.date + "T12:00:00.000Z") : null,
+//     activity: row.activity ?? null,
+//     activity_en: row.activity_en ?? null,
+//     activity_ar: row.activity_ar ?? null,
+//     cost: row.cost ? new Prisma.Decimal(row.cost) : null,
+//     description: row.description ?? null,
+//   }
+// }
+
 export async function createProgramDonation(input: ProgramDonationFormData) {
   await verifySession()
+
+  // const timelineRows = input.program_timeline ?? []
 
   return prisma.program_donation.create({
     data: {
@@ -77,6 +96,10 @@ export async function createProgramDonation(input: ProgramDonationFormData) {
       title_en: input.title_en,
       title_ar: input.title_ar,
       updated_at: new Date(),
+      // program_timeline:
+      //   timelineRows.length > 0
+      //     ? { create: timelineRows.map(mapTimelineRowToCreate) }
+      //     : undefined,
     },
   })
 }
@@ -85,15 +108,38 @@ export async function updateProgramDonation(input: UpdateProgramDonationInput) {
   await verifySession()
 
   const { id, ...fields } = input
+  const programId = BigInt(id)
 
-  return prisma.program_donation.update({
-    where: { id: BigInt(id) },
-    data: {
-      ...fields,
-      ...(fields.starts_at ? { starts_at: new Date(fields.starts_at) } : {}),
-      ...(fields.ends_at ? { ends_at: new Date(fields.ends_at) } : {}),
-      updated_at: new Date(),
-    },
+  const scalarData: Record<string, unknown> = {
+    ...fields,
+    ...(fields.starts_at ? { starts_at: new Date(fields.starts_at) } : {}),
+    ...(fields.ends_at ? { ends_at: new Date(fields.ends_at) } : {}),
+    updated_at: new Date(),
+  }
+
+  delete scalarData.program_timeline
+
+  return prisma.$transaction(async tx => {
+    await tx.program_donation.update({
+      where: { id: programId },
+      data: scalarData as Parameters<
+        typeof tx.program_donation.update
+      >[0]["data"],
+    })
+    // await tx.program_timeline.deleteMany({ where: { program_id: programId } })
+    // const rows = timelineInput ?? []
+    // if (rows.length > 0) {
+    //   await tx.program_timeline.createMany({
+    //     data: rows.map(row => ({
+    //       program_id: programId,
+    //       ...mapTimelineRowToCreate(row),
+    //     })),
+    //   })
+    // }
+    return tx.program_donation.findUniqueOrThrow({
+      where: { id: programId },
+      // include: { program_timeline: { orderBy: { date: "asc" } } },
+    })
   })
 }
 

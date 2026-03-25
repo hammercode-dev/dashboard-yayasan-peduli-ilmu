@@ -1,3 +1,4 @@
+import { Prisma } from "@/generated/prisma"
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 
 import { ApiResponse } from "@/lib/response"

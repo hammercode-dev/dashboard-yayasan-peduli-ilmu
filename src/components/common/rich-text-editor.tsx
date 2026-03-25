@@ -67,12 +67,40 @@ const ToolbarButton = ({
     onClick={onClick}
     disabled={disabled}
     title={title}
-    className={`p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed ${
-      active ? "bg-primary text-primary-foreground" : ""
-    }`}
+    className={cn(
+      "p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed",
+      active && "bg-primary text-primary-foreground"
+    )}
   >
     {children}
   </Button>
+)
+
+const ToolbarGroupPopover = ({
+  triggerIcon: TriggerIcon,
+  label,
+  children,
+}: {
+  triggerIcon: React.ElementType
+  label: string
+  children: React.ReactNode
+}) => (
+  <Popover>
+    <PopoverTrigger asChild>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        title={label}
+        className="p-2 rounded md:hidden"
+      >
+        <TriggerIcon size={18} />
+      </Button>
+    </PopoverTrigger>
+    <PopoverContent className="w-auto p-2" align="start">
+      <div className="flex flex-wrap gap-1">{children}</div>
+    </PopoverContent>
+  </Popover>
 )
 
 const Toolbar = ({ editor }: { editor: Editor | null }) => {
@@ -138,8 +166,8 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
     setLinkUrl("")
   }, [editor])
 
-  return (
-    <div className="border-b border-gray-200 p-2 flex flex-wrap gap-1">
+  const formatButtons = (
+    <>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
         active={editor.isActive("bold")}
@@ -147,7 +175,6 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
       >
         <Bold size={18} />
       </ToolbarButton>
-
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleItalic().run()}
         active={editor.isActive("italic")}
@@ -155,7 +182,6 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
       >
         <Italic size={18} />
       </ToolbarButton>
-
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleUnderline().run()}
         active={editor.isActive("underline")}
@@ -163,9 +189,11 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
       >
         <UnderlineIcon size={18} />
       </ToolbarButton>
+    </>
+  )
 
-      <div className="w-px bg-gray-300 mx-1" />
-
+  const headingButtons = (
+    <>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         active={editor.isActive("heading", { level: 1 })}
@@ -173,7 +201,6 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
       >
         <Heading1 size={18} />
       </ToolbarButton>
-
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         active={editor.isActive("heading", { level: 2 })}
@@ -181,7 +208,6 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
       >
         <Heading2 size={18} />
       </ToolbarButton>
-
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
         active={editor.isActive("heading", { level: 3 })}
@@ -189,9 +215,11 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
       >
         <Heading3 size={18} />
       </ToolbarButton>
+    </>
+  )
 
-      <div className="w-px bg-gray-300 mx-1" />
-
+  const listButtons = (
+    <>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         active={editor.isActive("bulletList")}
@@ -199,7 +227,6 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
       >
         <List size={18} />
       </ToolbarButton>
-
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
         active={editor.isActive("orderedList")}
@@ -207,9 +234,11 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
       >
         <ListOrdered size={18} />
       </ToolbarButton>
+    </>
+  )
 
-      <div className="w-px bg-gray-300 mx-1" />
-
+  const alignButtons = (
+    <>
       <ToolbarButton
         onClick={() => editor.chain().focus().setTextAlign("left").run()}
         active={isTextAlignActive("left")}
@@ -217,7 +246,6 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
       >
         <AlignLeft size={18} />
       </ToolbarButton>
-
       <ToolbarButton
         onClick={() => editor.chain().focus().setTextAlign("center").run()}
         active={isTextAlignActive("center")}
@@ -225,7 +253,6 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
       >
         <AlignCenter size={18} />
       </ToolbarButton>
-
       <ToolbarButton
         onClick={() => editor.chain().focus().setTextAlign("right").run()}
         active={isTextAlignActive("right")}
@@ -233,7 +260,6 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
       >
         <AlignRight size={18} />
       </ToolbarButton>
-
       <ToolbarButton
         onClick={() => editor.chain().focus().setTextAlign("justify").run()}
         active={isTextAlignActive("justify")}
@@ -241,77 +267,82 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
       >
         <AlignJustify size={18} />
       </ToolbarButton>
+    </>
+  )
 
-      <div className="w-px bg-gray-300 mx-1" />
-
-      <Popover open={linkPopoverOpen} onOpenChange={setLinkPopoverOpen}>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            onClick={handleLinkOpen}
-            className={`p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed ${
-              editor.isActive("link")
-                ? "bg-primary text-primary-foreground"
-                : "hover:bg-gray-100"
-            }`}
-            title="Add Link"
-          >
-            <LinkIcon size={18} />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent className="w-80" align="start">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="link-url">URL</Label>
-              <Input
-                id="link-url"
-                type="url"
-                placeholder="https://example.com"
-                value={linkUrl}
-                onChange={e => setLinkUrl(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === "Enter") {
-                    e.preventDefault()
-                    handleLinkSubmit()
-                  }
-                  if (e.key === "Escape") {
-                    setLinkPopoverOpen(false)
-                  }
-                }}
-                autoFocus
-              />
-            </div>
-            <div className="flex gap-2">
+  const insertLinkButton = (
+    <Popover open={linkPopoverOpen} onOpenChange={setLinkPopoverOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          onClick={handleLinkOpen}
+          className={cn(
+            "p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed",
+            editor.isActive("link")
+              ? "bg-primary text-primary-foreground"
+              : "hover:bg-gray-100"
+          )}
+          title="Add Link"
+        >
+          <LinkIcon size={18} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80" align="start">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="link-url">URL</Label>
+            <Input
+              id="link-url"
+              type="url"
+              placeholder="https://example.com"
+              value={linkUrl}
+              onChange={e => setLinkUrl(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  handleLinkSubmit()
+                }
+                if (e.key === "Escape") {
+                  setLinkPopoverOpen(false)
+                }
+              }}
+              autoFocus
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleLinkSubmit}
+              className="flex-1"
+            >
+              {editor.isActive("link") ? "Update" : "Add"} Link
+            </Button>
+            {editor.isActive("link") && (
               <Button
                 type="button"
                 size="sm"
-                onClick={handleLinkSubmit}
-                className="flex-1"
+                variant="destructive"
+                onClick={handleLinkRemove}
               >
-                {editor.isActive("link") ? "Update" : "Add"} Link
+                Remove
               </Button>
-              {editor.isActive("link") && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="destructive"
-                  onClick={handleLinkRemove}
-                >
-                  Remove
-                </Button>
-              )}
-            </div>
+            )}
           </div>
-        </PopoverContent>
-      </Popover>
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
 
+  const insertImageButton = (
+    <>
+      {insertLinkButton}
       <ToolbarButton
         onClick={() => fileInputRef.current?.click()}
         title="Insert Image"
       >
         <ImageIcon size={18} />
       </ToolbarButton>
-
       <input
         ref={fileInputRef}
         type="file"
@@ -319,9 +350,11 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
         className="hidden"
         onChange={handleImageUpload}
       />
+    </>
+  )
 
-      <div className="w-px bg-gray-300 mx-1" />
-
+  const historyButtons = (
+    <>
       <ToolbarButton
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().undo()}
@@ -329,7 +362,6 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
       >
         <Undo size={18} />
       </ToolbarButton>
-
       <ToolbarButton
         onClick={() => editor.chain().focus().redo().run()}
         disabled={!editor.can().redo()}
@@ -337,6 +369,49 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
       >
         <Redo size={18} />
       </ToolbarButton>
+    </>
+  )
+
+  const separator = <div className="w-px bg-gray-300 mx-1 shrink-0" />
+
+  return (
+    <div className="border-b border-gray-200 p-2 flex flex-wrap items-center gap-1">
+      {/* Desktop: full inline toolbar */}
+      <div className="hidden md:flex flex-wrap gap-1">
+        {formatButtons}
+        {separator}
+        {headingButtons}
+        {separator}
+        {listButtons}
+        {separator}
+        {alignButtons}
+        {separator}
+        {insertImageButton}
+        {separator}
+        {historyButtons}
+      </div>
+
+      {/* Mobile: group popovers */}
+      <div className="flex md:hidden flex-wrap gap-1">
+        <ToolbarGroupPopover triggerIcon={Bold} label="Format">
+          {formatButtons}
+        </ToolbarGroupPopover>
+        <ToolbarGroupPopover triggerIcon={Heading1} label="Heading">
+          {headingButtons}
+        </ToolbarGroupPopover>
+        <ToolbarGroupPopover triggerIcon={List} label="Daftar">
+          {listButtons}
+        </ToolbarGroupPopover>
+        <ToolbarGroupPopover triggerIcon={AlignLeft} label="Rata">
+          {alignButtons}
+        </ToolbarGroupPopover>
+        <ToolbarGroupPopover triggerIcon={LinkIcon} label="Sisipkan">
+          {insertImageButton}
+        </ToolbarGroupPopover>
+        <ToolbarGroupPopover triggerIcon={Undo} label="Riwayat">
+          {historyButtons}
+        </ToolbarGroupPopover>
+      </div>
     </div>
   )
 }

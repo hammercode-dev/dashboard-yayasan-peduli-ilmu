@@ -13,3 +13,8 @@ export function formatDateForAladhan(): string {
   const year = d.getFullYear()
   return `${day}-${month}-${year}`
 }
+
+export function parseDateToString(v: string | null | undefined): string {
+  if (!v) return ""
+  return typeof v === "string" && v.includes("T") ? v.slice(0, 10) : String(v)
+}

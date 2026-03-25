@@ -80,7 +80,7 @@ export async function PATCH(
     }
 
     const result = await updateProgramDonation({
-      id: BigInt(id),
+      id,
       ...parsed.data,
     })
     const resBody: ApiResponse<unknown> = {

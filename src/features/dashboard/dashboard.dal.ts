@@ -57,9 +57,11 @@ export const getProgramTrendings = cache(async () => {
   const serializedTrendings = trendings.map(trending => ({
     ...trending,
     id: trending.id.toString(),
-    collected_amount: trending.collected_amount?.toString() ?? "0",
-    target_amount: trending.target_amount?.toString() ?? "0",
+    collected_amount: Number(trending.collected_amount ?? 0),
+    target_amount: Number(trending.target_amount ?? 0),
     total_donatur: trending._count.donation_evidences,
+    starts_at: trending.starts_at?.toISOString() ?? null,
+    ends_at: trending.ends_at?.toISOString() ?? null,
   }))
 
   return { trendings: serializedTrendings }

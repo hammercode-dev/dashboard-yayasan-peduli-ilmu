@@ -73,7 +73,7 @@ export default function DonationDetail({ id }: { id: string }) {
                   Jumlah Donasi
                 </p>
                 <p className="text-2xl font-bold ">
-                  {detailDonation ? formatRupiah(detailDonation.amount) : "-"}
+                  {detailDonation?.amount != null ? formatRupiah(Number(detailDonation.amount)) : "-"}
                 </p>
               </div>
 

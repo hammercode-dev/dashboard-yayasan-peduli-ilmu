@@ -86,7 +86,7 @@ export default function TimelinePage() {
                 programs={programOptions}
                 value={selectedProgram}
                 onChange={id => setSelectedProgram(String(id))}
-                onSearch={() => setSearch(debouncedSearch)}
+                onSearch={value => setSearch(value)}
                 isFetching={isFetching}
               />
               <Button

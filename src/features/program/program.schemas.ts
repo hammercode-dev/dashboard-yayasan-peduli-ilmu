@@ -34,7 +34,7 @@ export const programDonationSchema = z.object({
   description_ar: z.string().min(1, "Description (Arabic) is required"),
   title_en: z.string().min(1, "Title (English) is required"),
   title_ar: z.string().min(1, "Title (Arabic) is required"),
-  program_timeline: z.array(programTimelineRowSchema),
+  // program_timeline: z.array(programTimelineRowSchema),
 })
 
 export const updateProgramDonationSchema = programDonationSchema.partial()

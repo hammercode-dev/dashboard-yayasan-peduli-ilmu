@@ -43,7 +43,7 @@ import { SkeletonForm } from "./SkeletonForm"
 
 import { formatRupiah } from "@/lib/format"
 import { getDirtyValues } from "@/lib/utils"
-import ProgramTimelineEditor from "./ProgramTimelineEditor"
+// import ProgramTimelineEditor from "./ProgramTimelineEditor"
 
 interface ProgramDonationFormProps {
   id?: string
@@ -74,7 +74,7 @@ export default function ProgramDonationForm({
   const methods = useForm<ProgramDonationFormData>({
     resolver: zodResolver(programDonationSchema),
     defaultValues: {
-      program_timeline: [],
+      // program_timeline: [],
     },
   })
 
@@ -188,7 +188,7 @@ export default function ProgramDonationForm({
         description: detailProgramDonation.description ?? "",
         description_en: detailProgramDonation.description_en ?? "",
         description_ar: detailProgramDonation.description_ar ?? "",
-        program_timeline: timelineRows,
+        // program_timeline: timelineRows,
       })
       setDescription(detailProgramDonation.description ?? "")
       setDescriptionEn(detailProgramDonation.description_en ?? "")
@@ -204,9 +204,9 @@ export default function ProgramDonationForm({
       }
       if (type === "edit" && id) {
         const changedData = getDirtyValues(dirtyFields, data)
-        if (dirtyFields.program_timeline) {
-          changedData.program_timeline = data.program_timeline
-        }
+        // if (dirtyFields.program_timeline) {
+        //   changedData.program_timeline = data.program_timeline
+        // }
 
         await updateProgramDonation({
           id: id as string,
@@ -240,7 +240,7 @@ export default function ProgramDonationForm({
         )}
       >
         <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-12 lg:col-span-8">
+          <div className="col-span-12 lg:col-span-12">
             <div className="space-y-6">
               <Card className="shadow-sm">
                 <CardHeader>
@@ -675,9 +675,9 @@ export default function ProgramDonationForm({
               </Card>
             </div>
           </div>
-          <div className="col-span-12 lg:col-span-4 sticky top-12 self-start">
+          {/* <div className="col-span-4 sticky top-12 self-start">
             <ProgramTimelineEditor />
-          </div>
+          </div> */}
         </div>
 
         <div className="flex justify-end gap-3 py-4">

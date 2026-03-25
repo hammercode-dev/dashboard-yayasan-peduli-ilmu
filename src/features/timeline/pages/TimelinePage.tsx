@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { SearchProgram } from "@/features/donation/components/SearchProgram"
 import { useDebounce } from "@/hooks/use-debounce"
 import { Button } from "@/components/ui/button"
-import { TimelineEmptyState } from "../components"
+import { SkeletonTimelineList, TimelineEmptyState } from "../components"
 import { useGetTimelineByProgramIdQuery } from "../timeline.api"
 import TimelineNoData from "../components/TimelineNoData"
 import TimelineEditor from "../components/TimelineEditor"
@@ -143,11 +143,8 @@ function TimelineContent({
 
   if (!selectedProgram) return <TimelineEmptyState />
   if (isFetchingTimeline && localDrafts.length === 0)
-    return (
-      <div className="rounded-lg border p-8 text-center text-muted-foreground">
-        <p className="text-sm">Memuat timeline...</p>
-      </div>
-    )
+    return <SkeletonTimelineList />
+
   if (!hasItems) return <TimelineNoData onAddTimeline={onAddTimeline} />
 
   return (

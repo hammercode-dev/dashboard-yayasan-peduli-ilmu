@@ -1,13 +1,12 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
-import { useAppSelector } from "@/store/hooks"
+import { FormProvider, useForm } from "react-hook-form"
 
-import { useLogin } from "../auth.hooks"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
   Card,
   CardContent,
@@ -15,14 +14,45 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { loginSchema, LoginSchema } from "../auth.schemas"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useLoginMutation } from "../auth.api"
+import {
+  Field,
+  FieldError,
+  FieldContent,
+  FieldLabel,
+} from "@/components/ui/field"
+import { ApiResponse } from "@/lib/response"
 
 export default function LoginPage() {
-  const auth = useAppSelector(state => state.auth)
+  const methods = useForm<LoginSchema>({
+    resolver: zodResolver(loginSchema),
+    mode: "onChange",
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  })
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = methods
 
   const [showPassword, setShowPassword] = useState(false)
-  const { login, isLoading, error } = useLogin()
-
-  console.log("error:", auth)
+  const [login, { isLoading, error }] = useLoginMutation()
+  const router = useRouter()
+  const onSubmit = async (data: LoginSchema) => {
+    await login({ email: data.email, password: data.password })
+      .unwrap()
+      .then(res => {
+        if (res.success) {
+          router.push("/dashboard")
+        }
+      })
+  }
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-background px-4">
@@ -37,80 +67,86 @@ export default function LoginPage() {
         <CardContent>
           {error && (
             <div className="mb-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
-              {error}
+              {(error as ApiResponse<{ message: string }>)?.data?.message ||
+                "Terjadi kesalahan saat login"}
             </div>
           )}
 
-          <form
-            action={async formData => {
-              const email = formData.get("email") as string
-              const password = formData.get("password") as string
-
-              try {
-                await login({ email, password })
-              } catch (err) {
-                console.error(err)
-              }
-            }}
-            className="space-y-4"
-          >
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                required
-                autoComplete="email"
-                placeholder="email@example.com"
+          <FormProvider {...methods}>
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="space-y-4"
+              noValidate
+            >
+              <Field>
+                <FieldLabel>
+                  Email <span className="text-red-500">*</span>
+                </FieldLabel>
+                <FieldContent>
+                  <Input
+                    id="email"
+                    type="email"
+                    {...register("email")}
+                    autoComplete="email"
+                    placeholder="email@example.com"
+                    disabled={isLoading}
+                    className="h-10"
+                  />
+                </FieldContent>
+                <FieldError errors={[errors.email]} />
+              </Field>
+              <Field>
+                <FieldLabel>
+                  Kata Sandi <span className="text-red-500">*</span>
+                </FieldLabel>
+                <FieldContent>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      {...register("password")}
+                      type={showPassword ? "text" : "password"}
+                      required
+                      autoComplete="current-password"
+                      placeholder="kata sandi"
+                      disabled={isLoading}
+                      className="h-10 pr-10"
+                    />
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer p-1 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none"
+                      style={{
+                        pointerEvents: isLoading ? "none" : undefined,
+                        opacity: isLoading ? 0.5 : 1,
+                      }}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
+                    </span>
+                  </div>
+                </FieldContent>
+                <FieldError errors={[errors.password]} />
+              </Field>
+              <Button
+                type="submit"
                 disabled={isLoading}
-                className="h-10"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Kata Sandi</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  required
-                  autoComplete="current-password"
-                  placeholder="kata sandi"
-                  disabled={isLoading}
-                  className="h-10 pr-10"
-                />
-                <span
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer p-1 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none"
-                  style={{
-                    pointerEvents: isLoading ? "none" : undefined,
-                    opacity: isLoading ? 0.5 : 1,
-                  }}
-                >
-                  {showPassword ? (
-                    <EyeOff className="size-4" />
-                  ) : (
-                    <Eye className="size-4" />
-                  )}
-                </span>
-              </div>
-            </div>
-
-            <Button type="submit" disabled={isLoading} className="w-full h-10">
-              {isLoading ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Memuat...
-                </>
-              ) : (
-                "Masuk"
-              )}
-            </Button>
-          </form>
+                className="w-full h-10"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Memuat...
+                  </>
+                ) : (
+                  "Masuk"
+                )}
+              </Button>
+            </form>
+          </FormProvider>
         </CardContent>
       </Card>
     </main>

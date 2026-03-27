@@ -5,11 +5,13 @@ import { programApi } from "@/features/program/program.api"
 import { dashboardApi } from "@/features/dashboard/dashboard.api"
 import { donationApi } from "@/features/donation/donation.api"
 import { timelineApi } from "@/features/timeline/timeline.api"
+import { authApi } from "@/features/auth/auth.api"
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     dashboard: dashboardReducer,
+    [authApi.reducerPath]: authApi.reducer,
     [programApi.reducerPath]: programApi.reducer,
     [dashboardApi.reducerPath]: dashboardApi.reducer,
     [donationApi.reducerPath]: donationApi.reducer,
@@ -17,6 +19,7 @@ export const store = configureStore({
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware().concat(
+      authApi.middleware,
       programApi.middleware,
       dashboardApi.middleware,
       donationApi.middleware,

@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
 
     if (!email || !password) {
       return NextResponse.json(
-        { error: "Email and password are required" },
+        { success: false, message: "Email and password are required" },
         { status: 400 }
       )
     }
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: "Invalid email or password" },
+        { success: false, message: "Invalid email or password" },
         { status: 401 }
       )
     }
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     if (!isPasswordValid) {
       return NextResponse.json(
-        { error: "Invalid email or password" },
+        { success: false, message: "Invalid email or password" },
         { status: 401 }
       )
     }
@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
+        success: true,
         message: "Login successful",
         user: {
           id: user.id,
@@ -55,9 +56,13 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     )
   } catch (error) {
-    console.error("Login error:", error)
+    console.error("[POST /api/auth/login]", error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        success: false,
+        message: "Failed to login",
+        error: { code: "SERVER_ERROR", details: String(error) },
+      },
       { status: 500 }
     )
   }

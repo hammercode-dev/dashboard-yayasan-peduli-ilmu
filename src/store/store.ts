@@ -6,6 +6,7 @@ import { dashboardApi } from "@/features/dashboard/dashboard.api"
 import { donationApi } from "@/features/donation/donation.api"
 import { timelineApi } from "@/features/timeline/timeline.api"
 import { authApi } from "@/features/auth/auth.api"
+import { userApi } from "@/features/user/user.api"
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ export const store = configureStore({
     [dashboardApi.reducerPath]: dashboardApi.reducer,
     [donationApi.reducerPath]: donationApi.reducer,
     [timelineApi.reducerPath]: timelineApi.reducer,
+    [userApi.reducerPath]: userApi.reducer,
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware().concat(
@@ -23,7 +25,8 @@ export const store = configureStore({
       programApi.middleware,
       dashboardApi.middleware,
       donationApi.middleware,
-      timelineApi.middleware
+      timelineApi.middleware,
+      userApi.middleware
     ),
 })
 

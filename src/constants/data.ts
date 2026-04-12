@@ -1,2 +1,3 @@
 export const TOTAL_PROGRAMS_PER_PAGE = 5
 export const TOTAL_DONATIONS_PER_PAGE = 10
+export const TOTAL_USERS_PER_PAGE = 10

@@ -89,6 +89,8 @@ jobs:
         if: steps.check_pr.outputs.existing_pr == ''
         run: |
           BRANCH="${{ steps.version.outputs.branch }}"
+          # Delete stale remote branch if it exists (e.g. from a previously closed PR)
+          git push origin --delete "$BRANCH" 2>/dev/null || true
           git checkout -b "$BRANCH"
           npm version ${{ steps.bump.outputs.bump }} --no-git-tag-version
           git add package.json pnpm-lock.yaml

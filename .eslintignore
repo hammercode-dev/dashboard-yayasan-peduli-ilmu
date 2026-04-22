@@ -1,0 +1,12 @@
+node_modules
+
+dist
+build
+.next
+out
+
+*.log
+
+src/prisma/generated
+src/prisma/client
+src/**/generated

@@ -13,8 +13,10 @@ jobs:
     name: Detect version bump and open release PR
     runs-on: ubuntu-latest
 
-    # Skip if this is already a release commit to prevent infinite loop
-    if: "!startsWith(github.event.head_commit.message, 'chore(release):')"
+    # Skip if this is a release commit or a merge from a release branch to prevent infinite loop
+    if: |
+      !startsWith(github.event.head_commit.message, 'chore(release):') &&
+      !contains(github.event.head_commit.message, '/release/v')
 
     steps:
       - uses: actions/checkout@v4

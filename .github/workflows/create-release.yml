@@ -59,3 +59,9 @@ jobs:
             ## ${{ steps.version.outputs.tag }}
 
             **Full Changelog:** ${{ steps.prev_tag.outputs.prev_tag != '' && format('https://github.com/{0}/compare/{1}...{2}', github.repository, steps.prev_tag.outputs.prev_tag, steps.version.outputs.tag) || format('https://github.com/{0}/commits/{1}', github.repository, steps.version.outputs.tag) }}
+      - name: Deploy to Vercel Production
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}" | grep -q "201" \
+            && echo "✅ Vercel deploy triggered" \
+            || { echo "❌ Failed to trigger Vercel deploy"; exit 1; }

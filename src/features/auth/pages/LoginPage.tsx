@@ -59,7 +59,7 @@ export default function LoginPage() {
     <main className="min-h-screen flex items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          {/* <Image src="/logo.png" alt="Logo" width={60} height={60} className="mb-2"/> */}
+          <Image src="/logo.png" alt="Logo" width={60} height={60} className="mb-2"/>
           <CardTitle className="text-2xl">Masuk</CardTitle>
           <CardDescription>
             Masukkan email dan password untuk melanjutkan

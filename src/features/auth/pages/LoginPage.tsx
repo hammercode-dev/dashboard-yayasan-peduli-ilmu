@@ -62,7 +62,7 @@ export default function LoginPage() {
           <Image src="/logo.png" alt="Logo" width={60} height={60} className="mb-2"/>
           <CardTitle className="text-2xl">Masuk</CardTitle>
           <CardDescription>
-            Masukkan email dan password untuk melanjutkan
+            Masukkan email dan password untuk melanjutkan ke Dashboard
           </CardDescription>
         </CardHeader>
 

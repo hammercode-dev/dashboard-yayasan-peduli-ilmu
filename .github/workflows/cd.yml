@@ -5,6 +5,10 @@ on:
     workflows: ["Create Release"]
     types: [completed]
 
+permissions:
+  contents: read
+  deployments: write 
+
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -37,3 +41,11 @@ jobs:
 
       - name: Deploy Project Artifacts to Vercel
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Create GitHub Deployment
+        uses: chrnorm/deployment-action@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          environment: production
+          initial-status: success
+          deployment-url: ${{ steps.deploy.outputs.url }}

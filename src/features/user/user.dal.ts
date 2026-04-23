@@ -51,3 +51,11 @@ export const countUsers = cache(async (query: string) => {
     },
   })
 })
+
+export const deleteUser = cache(async (id: string) => {
+  await verifySession()
+
+  return prisma.users.delete({
+    where: { id  },
+  })
+})

@@ -57,9 +57,12 @@ export const countUsers = cache(async (query: string) => {
 export const deleteUser = cache(async (id: string) => {
   await verifySession()
 
-  return prisma.users.delete({
-    where: { id },
-  })
+  return prisma.$transaction([
+
+    prisma.profiles.deleteMany({ where: { id: id } }),
+ 
+    prisma.users.delete({ where: { id } })
+  ])
 })
 
 export const getRoles = cache(async () => {

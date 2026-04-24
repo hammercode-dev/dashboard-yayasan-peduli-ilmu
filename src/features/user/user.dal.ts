@@ -12,11 +12,28 @@ export const getUsers = cache(async (query: string, currentPage: number) => {
   await verifySession()
 
   const offset = (currentPage - 1) * TOTAL_USERS_PER_PAGE
+  const normalizedQuery = query.trim()
+  const where =
+    normalizedQuery.length > 0
+      ? {
+          OR: [
+            { email: { contains: normalizedQuery, mode: "insensitive" as const } },
+            {
+              profiles: {
+                is: {
+                  full_name: {
+                    contains: normalizedQuery,
+                    mode: "insensitive" as const,
+                  },
+                },
+              },
+            },
+          ],
+        }
+      : undefined
 
   return prisma.users.findMany({
-    where: {
-      email: { contains: query || "", mode: "insensitive" },
-    },
+    where,
 
     select: {
       id: true,
@@ -46,11 +63,28 @@ export const getUsers = cache(async (query: string, currentPage: number) => {
 
 export const countUsers = cache(async (query: string) => {
   await verifySession()
+  const normalizedQuery = query.trim()
+  const where =
+    normalizedQuery.length > 0
+      ? {
+          OR: [
+            { email: { contains: normalizedQuery, mode: "insensitive" as const } },
+            {
+              profiles: {
+                is: {
+                  full_name: {
+                    contains: normalizedQuery,
+                    mode: "insensitive" as const,
+                  },
+                },
+              },
+            },
+          ],
+        }
+      : undefined
 
   return prisma.users.count({
-    where: {
-      email: { contains: query || "", mode: "insensitive" },
-    },
+    where,
   })
 })
 

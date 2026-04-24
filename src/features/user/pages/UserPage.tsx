@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
+import { SearchUser } from "../components/SearchUser"
 import { UserTable } from "../components/UserTable"
 
 export default function UserPage() {
@@ -15,7 +16,8 @@ export default function UserPage() {
       <Card>
         <CardContent className="">
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col md:flex-row gap-4 ">
+            <div className="flex flex-col md:flex-row gap-4">
+              <SearchUser className="md:max-w-md" />
               <Button variant="default" className="font-bold ml-auto">
                 <Link href="/dashboard/user/create">Tambah User</Link>
               </Button>

@@ -7,7 +7,7 @@
 - [ ] feat – new feature
 - [ ] fix – bug fix
 - [ ] docs – documentation
-- [ ] chore – maintenance
+- [ ] chore – maintenance feature/code
 - [ ] refactor – refactoring code
 
 ## Related Issue

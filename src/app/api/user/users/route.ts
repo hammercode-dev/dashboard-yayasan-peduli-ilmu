@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server"
+import { flattenError } from "zod"
 
 import { serializeBigInt } from "@/lib/serialize"
 
 import { TOTAL_USERS_PER_PAGE } from "@/constants/data"
 
-import { getUsers, countUsers } from "@/features/user/user.dal"
+import { createUser, getUsers, countUsers } from "@/features/user/user.dal"
+import { createUserSchema } from "@/features/user/user.schemas"
 
 import { ApiMeta, ApiResponse } from "@/lib/response"
 
@@ -42,5 +44,50 @@ export async function GET(req: Request) {
       error: { code: "FETCH_ERROR", details: String(error) },
     }
     return NextResponse.json(body, { status: 500 })
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const reqBody = await req.json()
+    const parsed = createUserSchema.safeParse(reqBody)
+
+    if (!parsed.success) {
+      const body: ApiResponse<never> = {
+        success: false,
+        message: "Validation failed",
+        error: {
+          code: "VALIDATION_ERROR",
+          details: flattenError(parsed.error),
+        },
+      }
+      return NextResponse.json(body, { status: 400 })
+    }
+
+    const created = await createUser(parsed.data)
+    const body: ApiResponse<unknown> = {
+      success: true,
+      message: "User created successfully",
+      data: serializeBigInt(created),
+    }
+    return NextResponse.json(body, { status: 201 })
+  } catch (error) {
+    console.error("[POST /api/user/users]", error)
+    const isDuplicateError =
+      error instanceof Error &&
+      error.message === "User with this email already exists"
+
+    const body: ApiResponse<never> = {
+      success: false,
+      message: isDuplicateError
+        ? "User dengan email ini sudah terdaftar"
+        : "Failed to create user",
+      error: {
+        code: isDuplicateError ? "CONFLICT_ERROR" : "SERVER_ERROR",
+        details: String(error),
+      },
+    }
+
+    return NextResponse.json(body, { status: isDuplicateError ? 409 : 500 })
   }
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { ColumnDef } from "@tanstack/react-table"
-import { Eye, Trash2, MoreHorizontal, Pencil } from "lucide-react"
+import { Trash2, MoreHorizontal, Pencil } from "lucide-react"
 
 import {
   Tooltip,
@@ -108,14 +108,7 @@ export function getUserColumns(options: {
           </Tooltip>
 
           <DropdownMenuContent align="end">
-            <Link href={`/dashboard/donation/${row.original.id}`}>
-              <DropdownMenuItem>
-                <Eye className="mr-2 h-4 w-4" />
-                Lihat Detail
-              </DropdownMenuItem>
-            </Link>
-
-            <Link href={`/dashboard/donation/${row.original.id}/edit`}>
+            <Link href={`/dashboard/user/${row.original.id}/edit`}>
               <DropdownMenuItem>
                 <Pencil className="mr-2 h-4 w-4" />
                 Ubah

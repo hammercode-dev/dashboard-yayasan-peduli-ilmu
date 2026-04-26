@@ -239,12 +239,14 @@ export function UserForm({ id, type }: UserFormProps) {
               <FieldLabel>
                 Role <span className="text-red-500">*</span>
               </FieldLabel>
+
               <FieldContent>
                 <Controller
-                  control={control}
                   name="role_id"
+                  control={control}
                   render={({ field }) => (
                     <Select
+                    key={field.value}
                       name={field.name}
                       value={field.value ?? ""}
                       onValueChange={field.onChange}

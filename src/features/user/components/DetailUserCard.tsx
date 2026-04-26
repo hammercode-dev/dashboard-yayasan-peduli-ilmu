@@ -22,10 +22,10 @@ function UserInfoItem({
     <div className="flex flex-col gap-1 p-3 rounded-lg bg-slate-50/50 border border-transparent hover:border-slate-200 transition-colors">
       <div className="flex items-center gap-2 text-slate-500">
         {Icon && <Icon className="size-3.5" />}
-        <p className="text-sm font-medium uppercase tracking-wide">{label}</p>
+        <p className="text-xs font-medium uppercase tracking-wide">{label}</p>
       </div>
 
-      <p className="text-base font-semibold text-slate-900 break-words">
+      <p className=" font-semibold text-slate-900 break-words">
         {value && value.length > 0 ? value : "-"}
       </p>
     </div>

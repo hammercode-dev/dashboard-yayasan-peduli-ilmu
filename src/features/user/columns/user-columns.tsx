@@ -2,22 +2,24 @@
 
 import Link from "next/link"
 import { ColumnDef } from "@tanstack/react-table"
-import { Trash2, MoreHorizontal, Pencil, Eye } from "lucide-react"
+import { Trash2, Pencil, Eye, User, MoreHorizontal } from "lucide-react"
 
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { formatDate } from "@/lib/format"
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
-
-import { formatDate } from "@/lib/format"
 
 export type UserRow = {
   id: string
@@ -42,51 +44,59 @@ export function getUserColumns(options: {
   return [
     {
       accessorKey: "user",
-      header: "User",
+      header: "User / Identitas",
       cell: ({ row }) => (
-        <div>
-          <div className="font-bold">{row.original?.profiles?.full_name}</div>
-          <div className="text-xs text-muted-foreground mt-1">
-            <span>{row.original.profiles?.roles?.name ?? "-"}</span>
+        <div className="flex items-center gap-3 py-1">
+          <Avatar className="h-10 w-10 border border-slate-200">
+            <AvatarImage src={row.original.profiles?.avatar_url} />
+            <AvatarFallback className="bg-primary/5 text-primary font-bold">
+              {row.original.profiles?.full_name?.charAt(0) || <User className="size-4" />}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col">
+            <span className="font-bold text-slate-900">
+              {row.original.profiles?.full_name || "Tanpa Nama"}
+            </span>
+            <div className="flex items-center gap-2">
+               <Badge variant="secondary" className="text-xs font-bold py-0.5">
+                  {row.original.profiles?.roles?.name ?? "No Role"}
+               </Badge>
+            </div>
           </div>
         </div>
       ),
     },
     {
-      accessorKey: "email",
-      header: "E-mail",
-      cell: ({ row }) => {
-        return <span className=" ">{row.original.email ?? "-"}</span>
-      },
-    },
-
-    {
-      id: "phone_number",
-      header: "Telepon",
-      cell: ({ row }) => {
-        return (
-          <span className=" ">
+      accessorKey: "contact",
+      header: "Kontak",
+      cell: ({ row }) => (
+        <div className="flex flex-col gap-1">
+          <span className="text-sm font-medium text-slate-700">{row.original.email}</span>
+          <div className="flex items-center text-slate-500 text-xs gap-1">
             {row.original.profiles?.phone_number ?? "-"}
-          </span>
-        )
-      },
+          </div>
+        </div>
+      ),
     },
-
     {
       accessorKey: "address",
       header: "Alamat",
-      cell: ({ row }) => {
-        return (
-          <span className=" ">{row.original.profiles?.address ?? "-"}</span>
-        )
-      },
+      cell: ({ row }) => (
+        <div className="max-w-[200px] flex items-start gap-1">
+          <span className="text-sm text-slate-600 line-clamp-2 leading-tight">
+            {row.original.profiles?.address ?? "-"}
+          </span>
+        </div>
+      ),
     },
     {
       accessorKey: "created_at",
-      header: "Tanggal Dibuat",
-      cell: ({ row }) => {
-        return <span className=" ">{formatDate(row.original.created_at)}</span>
-      },
+      header: "Terdaftar",
+      cell: ({ row }) => (
+        <div className="flex flex-col">
+          <span className="text-sm font-medium">{formatDate(row.original.created_at)}</span>
+        </div>
+      ),
     },
     {
       id: "actions",
@@ -106,30 +116,22 @@ export function getUserColumns(options: {
               <p>Aksi</p>
             </TooltipContent>
           </Tooltip>
-
           <DropdownMenuContent align="end">
-            <Link href={`/dashboard/user/${row.original.id}`}>
+           <Link href={`/dashboard/user/${row.original.id}`}>
               <DropdownMenuItem>
                 <Eye className="mr-2 h-4 w-4" />
-                Detail
+                Lihat Detail
               </DropdownMenuItem>
             </Link>
-
             <Link href={`/dashboard/user/${row.original.id}/edit`}>
               <DropdownMenuItem>
                 <Pencil className="mr-2 h-4 w-4" />
                 Ubah
               </DropdownMenuItem>
             </Link>
-
             {options.onDelete && (
               <DropdownMenuItem
-                onClick={() =>
-                  options.onDelete?.(
-                    row.original.id,
-                    row.original.profiles?.full_name ?? row.original.email
-                  )
-                }
+              onClick={() => options.onDelete?.(row.original.id, row.original.profiles?.full_name || row.original.email)}
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="mr-2 h-4 w-4" />

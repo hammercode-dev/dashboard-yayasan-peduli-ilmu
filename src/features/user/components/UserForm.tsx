@@ -42,12 +42,12 @@ import {
   type UpdateUserFormData,
 } from "../user.schemas"
 
-interface CreateUserFormProps {
+interface UserFormProps {
   id?: string
   type: "create" | "edit"
 }
 
-export function CreateUserForm({ id, type }: CreateUserFormProps) {
+export function UserForm({ id, type }: UserFormProps) {
   const router = useRouter()
   const [createUser, { isLoading: isLoadingCreate }] = useCreateUserMutation()
   const [updateUser, { isLoading: isLoadingUpdate }] = useUpdateUserMutation()

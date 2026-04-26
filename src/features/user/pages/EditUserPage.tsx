@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
-import { CreateUserForm } from "../components/CreateUserForm"
+import { UserForm } from "../components/UserForm"
 
 export default function EditUserPage({ id }: { id: string }) {
   return (
@@ -20,7 +20,7 @@ export default function EditUserPage({ id }: { id: string }) {
           Kelola informasi user yang telah terdaftar dalam sistem.
         </p>
       </div>
-      <CreateUserForm id={id} type="edit" />
+      <UserForm id={id} type="edit" />
     </section>
   )
 }

@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
-import { CreateUserForm } from "../components/CreateUserForm"
+import { UserForm } from "../components/UserForm"
 
 export default function CreateUserPage() {
   return (
@@ -18,7 +18,7 @@ export default function CreateUserPage() {
         <h1 className="text-2xl font-bold tracking-tight">Tambah User</h1>
         <p>Silakan isi form di bawah ini untuk menambahkan user baru</p>
       </div>
-      <CreateUserForm type="create" />
+      <UserForm type="create" />
     </section>
   )
 }

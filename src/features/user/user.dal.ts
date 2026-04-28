@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs"
 
 import { prisma } from "@/lib/client"
 import { verifySession } from "@/lib/session"
+import { requireSuperAdmin } from "@/lib/authorization"
 
 import { TOTAL_USERS_PER_PAGE } from "@/constants/data"
 import { CreateUserFormData, UpdateUserFormData } from "./user.schemas"
@@ -89,7 +90,7 @@ export const countUsers = cache(async (query: string) => {
 })
 
 export const deleteUser = cache(async (id: string) => {
-  await verifySession()
+  await requireSuperAdmin()
 
   return prisma.$transaction([
 
@@ -112,7 +113,7 @@ export const getRoles = cache(async () => {
 })
 
 export async function createUser(input: CreateUserFormData) {
-  await verifySession()
+  await requireSuperAdmin()
 
   const existingUser = await prisma.users.findUnique({
     where: { email: input.email },
@@ -189,7 +190,7 @@ export async function getUserById(id: string) {
 }
 
 export async function updateUser(input: UpdateUserFormData & { id: string }) {
-  await verifySession()
+  await requireSuperAdmin()
 
   const existingUser = await prisma.users.findFirst({
     where: {

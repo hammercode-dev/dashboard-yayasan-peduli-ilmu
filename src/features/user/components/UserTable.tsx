@@ -13,10 +13,14 @@ import { DataTable } from "@/components/common/data-table"
 import { Pagination } from "@/components/common/pagination"
 
 import { useDeleteUserMutation, useGetUsersQuery } from "../user.api"
+import { useAppSelector } from "@/store/hooks"
+import { isSuperAdminRole } from "@/features/auth/roles"
 
 import { getUserColumns } from "../columns/user-columns"
 
 export function UserTable() {
+  const currentUserRoleCode = useAppSelector(state => state.auth.user?.roleCode)
+  const canManageUsers = isSuperAdminRole(currentUserRoleCode)
   const { getParam, getNumberParam } = useQueryParams()
   const query = getParam("query")
   const page = getNumberParam("page", 1)
@@ -39,9 +43,10 @@ export function UserTable() {
   const columns = useMemo(
     () =>
       getUserColumns({
+        canManageUsers,
         onDelete: (id, name) => setDeleteTarget({ id, name }),
       }),
-    []
+    [canManageUsers]
   )
 
   const handleConfirmDelete = async () => {

@@ -21,6 +21,7 @@ const cookieOptions = {
 export interface SessionPayload {
   userId: string
   email: string
+  roleCode: string | null
   iat?: number
   exp?: number
 }
@@ -39,8 +40,12 @@ export function verifyToken(token: string): SessionPayload | null {
   }
 }
 
-export async function createSession(userId: string, email: string) {
-  const token = signToken({ userId, email })
+export async function createSession(
+  userId: string,
+  email: string,
+  roleCode: string | null
+) {
+  const token = signToken({ userId, email, roleCode })
   const cookieStore = await cookies()
 
   cookieStore.set({ ...cookieOptions, value: token, maxAge: SESSION_MAX_AGE })
@@ -67,5 +72,10 @@ export const verifySession = cache(async () => {
     redirect("/login")
   }
 
-  return { isAuth: true, userId: session.userId, email: session.email }
+  return {
+    isAuth: true,
+    userId: session.userId,
+    email: session.email,
+    roleCode: session.roleCode ?? null,
+  }
 })

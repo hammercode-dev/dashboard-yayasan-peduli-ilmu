@@ -1,13 +1,15 @@
 "use client"
 
 import Link from "next/link"
-import { Pencil, User, Mail, ShieldCheck, Calendar } from "lucide-react"
+import { Pencil, User, ShieldCheck, Calendar, type LucideIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { formatDate } from "@/lib/format"
 import { useGetUserByIdQuery } from "../user.api"
+import { useAppSelector } from "@/store/hooks"
+import { isSuperAdminRole } from "@/features/auth/roles"
 import { SkeletonDetail } from "./SkeletonDetail"
 
 function UserInfoItem({
@@ -17,7 +19,7 @@ function UserInfoItem({
 }: {
   label: string
   value: string | null | undefined
-  icon?: any
+  icon?: LucideIcon
 }) {
   return (
     <div className="flex flex-col gap-1 p-3 rounded-lg bg-slate-50/50 border border-transparent hover:border-slate-200 transition-colors">
@@ -34,6 +36,8 @@ function UserInfoItem({
 }
 
 export function DetailUserCard({ id }: { id: string }) {
+  const currentUserRoleCode = useAppSelector(state => state.auth.user?.roleCode)
+  const canManageUsers = isSuperAdminRole(currentUserRoleCode)
   const { data: user, isFetching, isError } = useGetUserByIdQuery(id)
 
   if (isFetching) {
@@ -61,13 +65,20 @@ export function DetailUserCard({ id }: { id: string }) {
           </div>
           <CardTitle className="text-lg md:text-xl font-bold">Informasi Detail User</CardTitle>
         </div>
-        <Button asChild variant="default" size="default" className="shadow-sm shrink-0">
-          <Link href={`/dashboard/user/${id}/edit`} className="gap-2">
-            <Pencil className="size-4" />
-            <span className="hidden sm:inline">Ubah User</span>
-            <span className="sm:hidden">Ubah</span>
-          </Link>
-        </Button>
+        {canManageUsers && (
+          <Button
+            asChild
+            variant="default"
+            size="default"
+            className="shadow-sm shrink-0"
+          >
+            <Link href={`/dashboard/user/${id}/edit`} className="gap-2">
+              <Pencil className="size-4" />
+              <span className="hidden sm:inline">Ubah User</span>
+              <span className="sm:hidden">Ubah</span>
+            </Link>
+          </Button>
+        )}
       </CardHeader>
       
       <CardContent className="p-4 md:p-6 space-y-8">

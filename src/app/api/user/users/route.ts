@@ -9,6 +9,7 @@ import { createUser, getUsers, countUsers } from "@/features/user/user.dal"
 import { createUserSchema } from "@/features/user/user.schemas"
 
 import { ApiMeta, ApiResponse } from "@/lib/response"
+import { ForbiddenError } from "@/lib/authorization"
 
 export async function GET(req: Request) {
   try {
@@ -73,21 +74,29 @@ export async function POST(req: Request) {
     return NextResponse.json(body, { status: 201 })
   } catch (error) {
     console.error("[POST /api/user/users]", error)
+    const isForbiddenError = error instanceof ForbiddenError
     const isDuplicateError =
       error instanceof Error &&
       error.message === "User with this email already exists"
 
     const body: ApiResponse<never> = {
       success: false,
-      message: isDuplicateError
+      message: isForbiddenError
+        ? "Anda tidak memiliki izin untuk melakukan aksi ini"
+        : isDuplicateError
         ? "User dengan email ini sudah terdaftar"
         : "Failed to create user",
       error: {
-        code: isDuplicateError ? "CONFLICT_ERROR" : "SERVER_ERROR",
+        code: isForbiddenError
+          ? "FORBIDDEN_ERROR"
+          : isDuplicateError
+          ? "CONFLICT_ERROR"
+          : "SERVER_ERROR",
         details: String(error),
       },
     }
 
-    return NextResponse.json(body, { status: isDuplicateError ? 409 : 500 })
+    const statusCode = isForbiddenError ? 403 : isDuplicateError ? 409 : 500
+    return NextResponse.json(body, { status: statusCode })
   }
 }

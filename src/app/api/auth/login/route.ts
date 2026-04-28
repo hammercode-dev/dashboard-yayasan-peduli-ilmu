@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/client"
 import { createSession } from "@/lib/session"
+import { mapRoleNameToCode } from "@/features/auth/roles"
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,6 +23,15 @@ export async function POST(request: NextRequest) {
         email: true,
         password: true,
         created_at: true,
+        profiles: {
+          select: {
+            roles: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
       },
     })
 
@@ -41,7 +51,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    await createSession(user.id, user.email)
+    const roleCode = mapRoleNameToCode(user.profiles?.roles?.name)
+    await createSession(user.id, user.email, roleCode)
 
     return NextResponse.json(
       {
@@ -50,6 +61,7 @@ export async function POST(request: NextRequest) {
         user: {
           id: user.id,
           email: user.email,
+          roleCode,
           created_at: user.created_at,
         },
       },

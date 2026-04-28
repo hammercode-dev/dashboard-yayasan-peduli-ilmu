@@ -9,6 +9,7 @@ import { updateUserSchema } from "@/features/user/user.schemas"
 import { ApiResponse } from "@/lib/response"
 import { serializeBigInt } from "@/lib/serialize"
 import { flattenError } from "zod"
+import { ForbiddenError } from "@/lib/authorization"
 
 import { NextResponse } from "next/server"
 
@@ -50,12 +51,18 @@ export async function DELETE(
     return NextResponse.json(body, { status: 200 })
   } catch (err) {
     console.error("[DELETE /api/user/:id]", err)
+    const isForbiddenError = err instanceof ForbiddenError
     const body: ApiResponse<void> = {
       success: false,
-      message: "Failed to delete user",
-      error: { code: "SERVER_ERROR", details: String(err) },
+      message: isForbiddenError
+        ? "Anda tidak memiliki izin untuk melakukan aksi ini"
+        : "Failed to delete user",
+      error: {
+        code: isForbiddenError ? "FORBIDDEN_ERROR" : "SERVER_ERROR",
+        details: String(err),
+      },
     }
-    return NextResponse.json(body, { status: 500 })
+    return NextResponse.json(body, { status: isForbiddenError ? 403 : 500 })
   }
 }
 
@@ -89,18 +96,26 @@ export async function PATCH(
     return NextResponse.json(body, { status: 200 })
   } catch (err) {
     console.error("[PATCH /api/user/:id]", err)
+    const isForbiddenError = err instanceof ForbiddenError
     const isDuplicateError =
       err instanceof Error && err.message === "User with this email already exists"
     const body: ApiResponse<void> = {
       success: false,
-      message: isDuplicateError
+      message: isForbiddenError
+        ? "Anda tidak memiliki izin untuk melakukan aksi ini"
+        : isDuplicateError
         ? "User dengan email ini sudah terdaftar"
         : "Failed to update user",
       error: {
-        code: isDuplicateError ? "CONFLICT_ERROR" : "SERVER_ERROR",
+        code: isForbiddenError
+          ? "FORBIDDEN_ERROR"
+          : isDuplicateError
+          ? "CONFLICT_ERROR"
+          : "SERVER_ERROR",
         details: String(err),
       },
     }
-    return NextResponse.json(body, { status: isDuplicateError ? 409 : 500 })
+    const statusCode = isForbiddenError ? 403 : isDuplicateError ? 409 : 500
+    return NextResponse.json(body, { status: statusCode })
   }
 }

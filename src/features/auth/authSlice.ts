@@ -1,20 +1,16 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit"
 
 export interface User {
-  //   id: string;
-  //   email: string;
-  //   name?: string | null;
-  //   avatarUrl?: string | null;
-
-  email: string;
-  password: string;
+  id: string
+  email: string
+  roleCode: string | null
 }
 
 interface AuthState {
-  user: User | null;
-  isAuthenticated: boolean;
-  loading: boolean;
-  error?: string | null;
+  user: User | null
+  isAuthenticated: boolean
+  loading: boolean
+  error?: string | null
 }
 
 const initialState: AuthState = {
@@ -22,33 +18,37 @@ const initialState: AuthState = {
   isAuthenticated: false,
   loading: false,
   error: null,
-};
+}
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
     authStart(state) {
-      state.loading = true;
-      state.error = null;
+      state.loading = true
+      state.error = null
     },
     authSuccess(state, action: PayloadAction<User>) {
-      state.user = action.payload;
-      state.isAuthenticated = true;
-      state.loading = false;
+      state.user = action.payload
+      state.isAuthenticated = true
+      state.loading = false
+    },
+    setSessionUser(state, action: PayloadAction<User | null>) {
+      state.user = action.payload
+      state.isAuthenticated = !!action.payload
     },
     authFailure(state, action: PayloadAction<string>) {
-      state.loading = false;
-      state.error = action.payload;
+      state.loading = false
+      state.error = action.payload
     },
     logout(state) {
-      state.user = null;
-      state.isAuthenticated = false;
+      state.user = null
+      state.isAuthenticated = false
     },
   },
-});
+})
 
-export const { authStart, authSuccess, authFailure, logout } =
-  authSlice.actions;
+export const { authStart, authSuccess, setSessionUser, authFailure, logout } =
+  authSlice.actions
 
-export default authSlice.reducer;
+export default authSlice.reducer

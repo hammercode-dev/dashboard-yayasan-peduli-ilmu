@@ -39,6 +39,7 @@ export type UserRow = {
 }
 
 export function getUserColumns(options: {
+  canManageUsers: boolean
   onDelete?: (id: string, name: string) => void
 }): ColumnDef<UserRow>[] {
   return [
@@ -123,13 +124,15 @@ export function getUserColumns(options: {
                 Lihat Detail
               </DropdownMenuItem>
             </Link>
-            <Link href={`/dashboard/user/${row.original.id}/edit`}>
-              <DropdownMenuItem>
-                <Pencil className="mr-2 h-4 w-4" />
-                Ubah
-              </DropdownMenuItem>
-            </Link>
-            {options.onDelete && (
+            {options.canManageUsers && (
+              <Link href={`/dashboard/user/${row.original.id}/edit`}>
+                <DropdownMenuItem>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Ubah
+                </DropdownMenuItem>
+              </Link>
+            )}
+            {options.canManageUsers && options.onDelete && (
               <DropdownMenuItem
               onClick={() => options.onDelete?.(row.original.id, row.original.profiles?.full_name || row.original.email)}
                 className="text-destructive focus:text-destructive"

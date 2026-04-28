@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { formatDate } from "@/lib/format"
 import { useGetUserByIdQuery } from "../user.api"
+import { SkeletonDetail } from "./SkeletonDetail"
 
 function UserInfoItem({
   label,
@@ -36,13 +37,7 @@ export function DetailUserCard({ id }: { id: string }) {
   const { data: user, isFetching, isError } = useGetUserByIdQuery(id)
 
   if (isFetching) {
-    return (
-      <div className="flex items-center justify-center p-12 border-2 border-dashed rounded-xl">
-        <p className="text-base animate-pulse text-muted-foreground font-medium">
-          Mengambil data profil...
-        </p>
-      </div>
-    )
+    return <SkeletonDetail />
   }
 
   if (isError || !user) {

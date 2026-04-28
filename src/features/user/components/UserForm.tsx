@@ -41,6 +41,7 @@ import {
   type CreateUserFormData,
   type UpdateUserFormData,
 } from "../user.schemas"
+import { SkeletonForm } from "./SkeletonForm"
 
 interface UserFormProps {
   id?: string
@@ -128,7 +129,7 @@ export function UserForm({ id, type }: UserFormProps) {
   }
 
   if (type === "edit" && isLoadingDetailUser) {
-    return <p className="text-sm text-muted-foreground">Memuat data user...</p>
+    return <SkeletonForm />
   }
 
   return (

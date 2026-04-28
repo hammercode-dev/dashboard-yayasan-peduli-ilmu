@@ -26,9 +26,11 @@ import {
 import { useLogout } from "@/features/auth/auth.hooks"
 import Image from "next/image"
 import { MAIN_MENU_ITEMS } from "@/constants/menu"
+import { useAppSelector } from "@/store/hooks"
 
 export const AppSidebar = () => {
   const pathname = usePathname()
+  const currentUser = useAppSelector(state => state.auth.user)
   const { logout } = useLogout()
 
   const isActive = (url: string) => {
@@ -107,9 +109,11 @@ export const AppSidebar = () => {
                     <User2 className="size-4" />
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">Admin</span>
+                    <span className="truncate font-semibold">
+                      {currentUser?.email}
+                    </span>
                     <span className="truncate text-xs text-muted-foreground">
-                      admin@yayasan.org
+                      {currentUser?.roleName}
                     </span>
                   </div>
                   <ChevronUp className="ml-auto size-4" />

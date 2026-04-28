@@ -16,8 +16,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const normalizedEmail = email.trim().toLowerCase()
+
     const user = await prisma.users.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
       select: {
         id: true,
         email: true,
@@ -25,6 +27,7 @@ export async function POST(request: NextRequest) {
         created_at: true,
         profiles: {
           select: {
+            full_name: true,
             roles: {
               select: {
                 name: true,
@@ -34,6 +37,7 @@ export async function POST(request: NextRequest) {
         },
       },
     })
+    
 
     if (!user) {
       return NextResponse.json(
@@ -52,7 +56,9 @@ export async function POST(request: NextRequest) {
     }
 
     const roleCode = mapRoleNameToCode(user.profiles?.roles?.name)
-    await createSession(user.id, user.email, roleCode)
+    const fullName = user.profiles?.full_name ?? "-"
+    const roleName = user.profiles?.roles?.name ?? "-"
+    await createSession(user.id, user.email, roleCode, fullName, roleName)
 
     return NextResponse.json(
       {
@@ -62,6 +68,8 @@ export async function POST(request: NextRequest) {
           id: user.id,
           email: user.email,
           roleCode,
+          fullName,
+          roleName,
           created_at: user.created_at,
         },
       },

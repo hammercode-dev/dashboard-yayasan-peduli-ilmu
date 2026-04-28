@@ -10,6 +10,8 @@ type AuthSessionHydratorProps = {
     id: string
     email: string
     roleCode: string | null
+    fullName: string | null
+    roleName: string | null
   } | null
 }
 

@@ -17,6 +17,7 @@ export async function requireSuperAdmin() {
   const profile = await prisma.profiles.findUnique({
     where: { id: session.userId },
     select: {
+      full_name:true,
       roles: {
         select: {
           name: true,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/client"
 import { createSession } from "@/lib/session"
+import { mapRoleNameToCode } from "@/features/auth/roles"
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,15 +16,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const normalizedEmail = email.trim().toLowerCase()
+
     const user = await prisma.users.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
       select: {
         id: true,
         email: true,
         password: true,
         created_at: true,
+        profiles: {
+          select: {
+            full_name: true,
+            roles: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
       },
     })
+    
 
     if (!user) {
       return NextResponse.json(
@@ -41,7 +55,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    await createSession(user.id, user.email)
+    const roleCode = mapRoleNameToCode(user.profiles?.roles?.name)
+    const fullName = user.profiles?.full_name ?? "-"
+    const roleName = user.profiles?.roles?.name ?? "-"
+    await createSession(user.id, user.email, roleCode, fullName, roleName)
 
     return NextResponse.json(
       {
@@ -50,6 +67,9 @@ export async function POST(request: NextRequest) {
         user: {
           id: user.id,
           email: user.email,
+          roleCode,
+          fullName,
+          roleName,
           created_at: user.created_at,
         },
       },

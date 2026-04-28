@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { authService } from "./auth.services"
 import { useAppDispatch } from "@/store/hooks"
-import { authStart, authSuccess, authFailure } from "./authSlice"
+import { authStart, authSuccess, authFailure, logout as clearAuth } from "./authSlice"
 
 interface LoginCredentials {
   email: string
@@ -24,8 +24,8 @@ export function useLogin() {
     dispatch(authStart())
 
     try {
-      await authService.login(credentials)
-      dispatch(authSuccess(credentials))
+      const response = await authService.login(credentials)
+      dispatch(authSuccess(response.user))
 
       router.push("/dashboard")
       router.refresh()
@@ -48,6 +48,7 @@ export function useLogin() {
 }
 
 export function useLogout() {
+  const dispatch = useAppDispatch()
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
@@ -56,6 +57,7 @@ export function useLogout() {
 
     try {
       await authService.logout()
+      dispatch(clearAuth())
       router.push("/login")
       router.refresh()
     } catch (err) {

@@ -10,6 +10,9 @@ interface LoginResponse {
   user: {
     id: string
     email: string
+    roleCode: string | null
+    fullName: string
+    roleName: string | null
     created_at: string
   }
 }

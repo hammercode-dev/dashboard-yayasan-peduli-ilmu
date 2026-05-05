@@ -377,7 +377,9 @@ export default function ProgramDonationForm({
                           value={description}
                           onChange={async markdown => {
                             setDescription(markdown)
-                            setValue("description", markdown)
+                            setValue("description", markdown, {
+                              shouldDirty: true,
+                            })
                             await trigger("description")
                           }}
                           placeholder="Masukkan deskripsi lengkap..."
@@ -397,7 +399,9 @@ export default function ProgramDonationForm({
                           value={descriptionEn}
                           onChange={async markdown => {
                             setDescriptionEn(markdown)
-                            setValue("description_en", markdown)
+                            setValue("description_en", markdown, {
+                              shouldDirty: true,
+                            })
                             await trigger("description_en")
                           }}
                           placeholder="Masukkan deskripsi lengkap dalam Bahasa Inggris..."
@@ -417,7 +421,9 @@ export default function ProgramDonationForm({
                           value={descriptionAr}
                           onChange={async markdown => {
                             setDescriptionAr(markdown)
-                            setValue("description_ar", markdown)
+                            setValue("description_ar", markdown, {
+                              shouldDirty: true,
+                            })
                             await trigger("description_ar")
                           }}
                           placeholder="Masukkan deskripsi lengkap dalam Bahasa Arab..."

@@ -33,6 +33,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
+import {
+  validateProgramImageFile,
+  uploadProgramImage,
+  removeProgramImagesByPaths,
+} from "@/lib/storage/program-images"
 
 interface RichTextEditorProps {
   value?: string
@@ -103,7 +109,15 @@ const ToolbarGroupPopover = ({
   </Popover>
 )
 
-const Toolbar = ({ editor }: { editor: Editor | null }) => {
+const Toolbar = ({
+  editor,
+  uploadedImages,
+  setUploadedImages,
+}: {
+  editor: Editor | null
+  uploadedImages: Map<string, string>
+  setUploadedImages: React.Dispatch<React.SetStateAction<Map<string, string>>>
+}) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [linkPopoverOpen, setLinkPopoverOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState("")
@@ -116,18 +130,42 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
     return textAlign === alignment
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      const base64 = reader.result as string
-      editor.chain().focus().setImage({ src: base64 }).run()
+    const validation = validateProgramImageFile(file)
+    if (!validation.ok) {
+      toast.error(validation.message)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+      return
     }
-    reader.readAsDataURL(file)
 
-    // Reset input
+    const result = await uploadProgramImage(file)
+    if (!result.ok) {
+      toast.error(result.message)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+      return
+    }
+
+    editor
+      .chain()
+      .focus()
+      .setImage({
+        src: result.publicUrl,
+        // @ts-ignore - custom attribute
+        "data-storage-path": result.path,
+      })
+      .run()
+
+    setUploadedImages(prev => new Map(prev).set(result.publicUrl, result.path))
+
+    toast.success("Gambar berhasil diupload")
+
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
     }
@@ -423,11 +461,30 @@ const RichTextEditor = ({
   "aria-invalid": ariaInvalid,
   textAlign = "left",
 }: RichTextEditorProps) => {
+  const [uploadedImages, setUploadedImages] = useState<Map<string, string>>(
+    new Map()
+  )
+
   const editor = useEditor({
     extensions: [
       StarterKit,
       Underline,
-      Image.configure({
+      Image.extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            "data-storage-path": {
+              default: null,
+              parseHTML: element =>
+                element.getAttribute("data-storage-path"),
+              renderHTML: attributes => {
+                if (!attributes["data-storage-path"]) return {}
+                return { "data-storage-path": attributes["data-storage-path"] }
+              },
+            },
+          }
+        },
+      }).configure({
         inline: true,
         allowBase64: true,
       }),
@@ -453,6 +510,23 @@ const RichTextEditor = ({
       const html = editor.getHTML()
       const markdown = turndownService.turndown(html)
       onChange?.(markdown)
+
+      const currentImages = new Set<string>()
+      const doc = new DOMParser().parseFromString(html, "text/html")
+      doc.querySelectorAll("img").forEach(img => {
+        currentImages.add(img.src)
+      })
+
+      uploadedImages.forEach((storagePath, url) => {
+        if (!currentImages.has(url)) {
+          removeProgramImagesByPaths([storagePath])
+          setUploadedImages(prev => {
+            const next = new Map(prev)
+            next.delete(url)
+            return next
+          })
+        }
+      })
     },
   })
 
@@ -487,9 +561,13 @@ const RichTextEditor = ({
         "aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40"
       )}
     >
-      <Toolbar editor={editor} />
+      <Toolbar
+        editor={editor}
+        uploadedImages={uploadedImages}
+        setUploadedImages={setUploadedImages}
+      />
       <div className="overflow-y-auto h-[300px] px-4">
-        <div className="prose prose-sm max-w-none min-h-[200px] prose-p:my-2 prose-headings:font-semibold prose-headings:mt-2 prose-headings:mb-2 prose-h1:text-2xl prose-h2:text-xl prose-ul:list-disc prose-li:my-1 prose-a:text-blue-500 hover:prose-a:underline [&_*]:focus:outline-none">
+        <div className="prose prose-sm max-w-none min-h-[200px] prose-p:my-2 prose-headings:font-semibold prose-headings:mt-2 prose-headings:mb-2 prose-h1:text-2xl prose-h2:text-xl prose-ul:list-disc prose-li:my-1 prose-a:text-blue-500 hover:prose-a:underline **:focus:outline-none">
           <EditorContent editor={editor} />
         </div>
       </div>

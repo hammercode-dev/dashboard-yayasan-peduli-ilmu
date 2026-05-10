@@ -167,9 +167,43 @@ const Toolbar = ({
   const [linkPopoverOpen, setLinkPopoverOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState("")
 
+  const handleLinkOpen = useCallback(() => {
+    if (!editor) return
+    const previousUrl = editor.getAttributes("link").href || ""
+    setLinkUrl(previousUrl)
+    setLinkPopoverOpen(true)
+  }, [editor])
+
+  const handleLinkSubmit = useCallback(() => {
+    if (!editor) return
+    if (linkUrl === "") {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run()
+    } else {
+      const url =
+        linkUrl.startsWith("http://") || linkUrl.startsWith("https://")
+          ? linkUrl
+          : `https://${linkUrl}`
+
+      editor
+        .chain()
+        .focus()
+        .extendMarkRange("link")
+        .setLink({ href: url })
+        .run()
+    }
+    setLinkPopoverOpen(false)
+    setLinkUrl("")
+  }, [editor, linkUrl])
+
+  const handleLinkRemove = useCallback(() => {
+    if (!editor) return
+    editor.chain().focus().extendMarkRange("link").unsetLink().run()
+    setLinkPopoverOpen(false)
+    setLinkUrl("")
+  }, [editor])
+
   if (!editor) return null
 
-  // Helper function to check text align active state
   const isTextAlignActive = (alignment: string) => {
     const { textAlign } = editor.getAttributes("textAlign")
     return textAlign === alignment
@@ -193,13 +227,11 @@ const Toolbar = ({
     editor
       .chain()
       .focus()
-      // TipTap Image attrs extended with data-storage-path / data-pending-id
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .setImage({
         src: blobUrl,
         "data-storage-path": "pending",
         "data-pending-id": blobUrl,
-      } as any)
+      } as { src: string; "data-storage-path": string; "data-pending-id": string })
       .run()
 
     setPendingImages(prev => new Map(prev).set(blobUrl, { file, blobUrl }))
@@ -208,39 +240,6 @@ const Toolbar = ({
       fileInputRef.current.value = ""
     }
   }
-
-  const handleLinkOpen = useCallback(() => {
-    const previousUrl = editor.getAttributes("link").href || ""
-    setLinkUrl(previousUrl)
-    setLinkPopoverOpen(true)
-  }, [editor])
-
-  const handleLinkSubmit = useCallback(() => {
-    if (linkUrl === "") {
-      editor.chain().focus().extendMarkRange("link").unsetLink().run()
-    } else {
-      // Add https:// if no protocol is present
-      const url =
-        linkUrl.startsWith("http://") || linkUrl.startsWith("https://")
-          ? linkUrl
-          : `https://${linkUrl}`
-
-      editor
-        .chain()
-        .focus()
-        .extendMarkRange("link")
-        .setLink({ href: url })
-        .run()
-    }
-    setLinkPopoverOpen(false)
-    setLinkUrl("")
-  }, [editor, linkUrl])
-
-  const handleLinkRemove = useCallback(() => {
-    editor.chain().focus().extendMarkRange("link").unsetLink().run()
-    setLinkPopoverOpen(false)
-    setLinkUrl("")
-  }, [editor])
 
   const formatButtons = (
     <>

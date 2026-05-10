@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(resBody, { status: 201 })
-  } catch (error: any) {
+  } catch (error) {
     console.error("[POST /api/donation/donation-evidence/bulk]", error)
 
     const resBody: ApiResponse<never> = {

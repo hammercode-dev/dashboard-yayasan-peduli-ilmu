@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { format } from "date-fns"
@@ -23,7 +23,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import RichTextEditor from "@/components/common/rich-text-editor"
+import RichTextEditor, {
+  RichTextEditorRef,
+} from "@/components/common/rich-text-editor"
 import { CalendarPopover } from "@/components/common/calendar-popover"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 
@@ -55,9 +57,13 @@ export default function ProgramDonationForm({
   type,
 }: ProgramDonationFormProps) {
   const router = useRouter()
+  const [isUploadPendingFile, setIsUploadPendingFile] = useState(false)
   const [description, setDescription] = useState("")
   const [descriptionEn, setDescriptionEn] = useState("")
   const [descriptionAr, setDescriptionAr] = useState("")
+  const descriptionRef = useRef<RichTextEditorRef>(null)
+  const descriptionEnRef = useRef<RichTextEditorRef>(null)
+  const descriptionArRef = useRef<RichTextEditorRef>(null)
   const [createProgramDonation, { isLoading: isLoadingCreate }] =
     useCreateProgramDonationMutation()
   const [updateProgramDonation, { isLoading: isLoadingUpdate }] =
@@ -89,7 +95,6 @@ export default function ProgramDonationForm({
     formState: { errors, dirtyFields },
   } = methods
 
-  // eslint-disable-next-line react-hooks/incompatible-library
   const target_amount = watch("target_amount")
   const collected_amount = watch("collected_amount")
   const starts_at = watch("starts_at") ? new Date(watch("starts_at")) : null
@@ -140,31 +145,6 @@ export default function ProgramDonationForm({
 
   useEffect(() => {
     if (detailProgramDonation) {
-      const rawTimeline =
-        (
-          detailProgramDonation as {
-            program_timeline?: Array<{
-              id?: string | number | bigint
-              date?: string | Date | null
-              activity?: string | null
-              activity_en?: string | null
-              activity_ar?: string | null
-              cost?: string | number | { toString: () => string } | null
-              description?: string | null
-            }>
-          }
-        ).program_timeline ?? []
-
-      const timelineRows = rawTimeline.map(row => ({
-        id: row.id != null ? String(row.id) : undefined,
-        date: row.date ? format(new Date(row.date), "yyyy-MM-dd") : "",
-        activity: row.activity ?? "",
-        activity_en: row.activity_en ?? "",
-        activity_ar: row.activity_ar ?? "",
-        cost: row.cost != null ? String(row.cost) : "",
-        description: row.description ?? "",
-      }))
-
       reset({
         title: detailProgramDonation.title ?? "",
         title_en: detailProgramDonation.title_en ?? "",
@@ -188,16 +168,44 @@ export default function ProgramDonationForm({
         description: detailProgramDonation.description ?? "",
         description_en: detailProgramDonation.description_en ?? "",
         description_ar: detailProgramDonation.description_ar ?? "",
-        // program_timeline: timelineRows,
       })
       setDescription(detailProgramDonation.description ?? "")
       setDescriptionEn(detailProgramDonation.description_en ?? "")
       setDescriptionAr(detailProgramDonation.description_ar ?? "")
     }
-  }, [detailProgramDonation])
+  }, [detailProgramDonation, reset])
 
   const onSubmit = async (data: ProgramDonationFormData) => {
+    setIsUploadPendingFile(true)
     try {
+      const [descResult, descEnResult, descArResult] = await Promise.all([
+        descriptionRef.current?.uploadPendingFiles() ?? {
+          markdown: description,
+          success: true,
+        },
+        descriptionEnRef.current?.uploadPendingFiles() ?? {
+          markdown: descriptionEn,
+          success: true,
+        },
+        descriptionArRef.current?.uploadPendingFiles() ?? {
+          markdown: descriptionAr,
+          success: true,
+        },
+      ])
+
+      if (
+        !descResult.success ||
+        !descEnResult.success ||
+        !descArResult.success
+      ) {
+        toast.error("Gagal mengupload gambar, silakan coba lagi")
+        return
+      }
+
+      data.description = descResult.markdown
+      data.description_en = descEnResult.markdown
+      data.description_ar = descArResult.markdown
+
       if (type === "create") {
         await createProgramDonation(data).unwrap()
         toast.success("Program donation created successfully")
@@ -224,8 +232,12 @@ export default function ProgramDonationForm({
       }
       const message = apiError?.data?.message
       toast.error(message)
+    } finally {
+      setIsUploadPendingFile(false)
     }
   }
+
+  const isSaving = isUploadPendingFile || isLoadingCreate || isLoadingUpdate
 
   if (isLoadingDetailProgramDonation) {
     return <SkeletonForm />
@@ -374,6 +386,7 @@ export default function ProgramDonationForm({
                       </FieldLabel>
                       <FieldContent>
                         <RichTextEditor
+                          ref={descriptionRef}
                           value={description}
                           onChange={async markdown => {
                             setDescription(markdown)
@@ -396,6 +409,7 @@ export default function ProgramDonationForm({
                       </FieldLabel>
                       <FieldContent>
                         <RichTextEditor
+                          ref={descriptionEnRef}
                           value={descriptionEn}
                           onChange={async markdown => {
                             setDescriptionEn(markdown)
@@ -418,6 +432,7 @@ export default function ProgramDonationForm({
                       </FieldLabel>
                       <FieldContent>
                         <RichTextEditor
+                          ref={descriptionArRef}
                           value={descriptionAr}
                           onChange={async markdown => {
                             setDescriptionAr(markdown)
@@ -691,13 +706,15 @@ export default function ProgramDonationForm({
             type="button"
             variant="outline"
             className="hover:cursor-pointer"
+            disabled={isSaving}
             onClick={() => router.back()}
           >
             Batal
           </Button>
           <Button
             type="submit"
-            loading={isLoadingCreate || isLoadingUpdate}
+            loading={isSaving}
+            disabled={isSaving}
             className="hover:cursor-pointer font-bold"
           >
             {type === "create" ? "Buat Program" : "Perbarui Program"}

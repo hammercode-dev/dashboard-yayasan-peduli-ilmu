@@ -5,9 +5,7 @@ export const PROGRAM_IMAGES_BUCKET = "program-images"
 export const PROGRAM_IMAGE_MAX_BYTES = 500 * 1024 // 500KB
 export const PROGRAM_IMAGE_UPLOAD_PREFIX = "uploads/"
 
-type ValidationResult =
-  | { ok: true }
-  | { ok: false; message: string }
+type ValidationResult = { ok: true } | { ok: false; message: string }
 
 type UploadResult =
   | { ok: true; path: string; publicUrl: string }

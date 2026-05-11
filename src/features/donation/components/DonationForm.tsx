@@ -56,6 +56,12 @@ interface DonationFormProps {
   type: "create" | "edit"
 }
 
+interface ProgramDonationListItem {
+  id: string | number
+  title?: string | null
+  collected_amount?: unknown
+}
+
 export default function DonationForm({ id, type }: DonationFormProps) {
   const router = useRouter()
   const [search, setSearch] = useState("")
@@ -79,11 +85,12 @@ export default function DonationForm({ id, type }: DonationFormProps) {
     query: search,
   })
 
-  const programOptions = data?.data.donations.map((p: any) => ({
-    id: p.id,
-    nama: p.title,
-    collectedAmount: p.collected_amount,
-  }))
+  const programOptions =
+    data?.data.donations?.map((p: ProgramDonationListItem) => ({
+      id: p.id,
+      nama: typeof p.title === "string" ? p.title : String(p.title ?? ""),
+      collectedAmount: p.collected_amount,
+    })) ?? []
 
   const {
     register,
@@ -100,6 +107,7 @@ export default function DonationForm({ id, type }: DonationFormProps) {
     },
   })
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- RHF watch
   const amount = watch("amount")
 
   useEffect(() => {
@@ -122,7 +130,7 @@ export default function DonationForm({ id, type }: DonationFormProps) {
         description: detailDonation.description ?? "",
       })
     }
-  }, [detailDonation])
+  }, [detailDonation, reset])
 
   const onSubmit = async (formData: DonationEvidenceFormData) => {
     try {

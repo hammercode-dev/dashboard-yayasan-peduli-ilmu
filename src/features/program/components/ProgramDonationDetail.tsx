@@ -439,7 +439,9 @@ function ContentBody({
       )}
 
       <article className="prose prose-sm prose-zinc max-w-none">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{desc || ""}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={url => url}>
+          {desc || ""}
+        </ReactMarkdown>
       </article>
     </div>
   )

@@ -10,11 +10,13 @@ import { Prisma } from "@/generated/prisma"
 const getAllParams = (params: {
   query?: string
   page?: number
+  limit?: number
   status?: string
 }) => {
   const searchParams = new URLSearchParams()
   if (params.query != null) searchParams.set("query", params.query)
   if (params.page != null) searchParams.set("page", String(params.page))
+  if (params.limit != null) searchParams.set("limit", String(params.limit))
   if (params.status != null) searchParams.set("status", params.status)
   return searchParams.toString()
 }
@@ -25,11 +27,10 @@ export const programApi = createApi({
   tagTypes: ["ProgramDonation"],
   endpoints: builder => ({
     getProgramDonations: builder.query({
-      query: (params: { query?: string; page?: number; status?: string }) => {
+      query: (params: { query?: string; page?: number; limit?: number; status?: string }) => {
         return { url: `/program/program-donation?${getAllParams(params)}` }
       },
       providesTags: result => {
-        console.log("result", result)
         return result?.data
           ? [
               ...result.data.donations.map((item: { id: string }) => ({
@@ -85,7 +86,6 @@ export const programApi = createApi({
         }
       },
       providesTags: result => {
-        console.log("result", result)
         return result?.data
           ? [
               ...result.data.donations.map((item: { id: string }) => ({

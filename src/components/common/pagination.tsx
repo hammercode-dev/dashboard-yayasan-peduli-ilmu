@@ -8,6 +8,13 @@ import {
 } from "lucide-react"
 import { useQueryParams } from "@/hooks/use-query-params"
 import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface PaginationProps {
   totalPages: number
@@ -16,11 +23,31 @@ interface PaginationProps {
 export function Pagination({ totalPages }: PaginationProps) {
   const { getNumberParam, setParam } = useQueryParams()
   const currentPage = getNumberParam("page", 1)
+  const currentLimit = getNumberParam("limit", 10)
 
   if (totalPages <= 0) return null
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-4">
+      <div>
+        <Select
+          value={currentLimit.toString()}
+          onValueChange={value => setParam("limit", parseInt(value))}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Pilih halaman" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1">1</SelectItem>
+            <SelectItem value="5">5</SelectItem>
+            <SelectItem value="10">10</SelectItem>
+            <SelectItem value="20">20</SelectItem>
+            <SelectItem value="50">50</SelectItem>
+            <SelectItem value="100">100</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="flex items-center gap-1 ml-auto">
         <Button
           variant="outline"

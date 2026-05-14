@@ -15,10 +15,10 @@ export interface UpdateProgramDonationInput extends Partial<UpdateProgramDonatio
 }
 
 export const getProgramDonations = cache(
-  async (query: string, currentPage: number, status: string) => {
+  async (query: string, currentPage: number, limit: number, status: string) => {
     await verifySession()
 
-    const offset = (currentPage - 1) * TOTAL_PROGRAMS_PER_PAGE
+    const offset = (currentPage - 1) * limit
 
     return prisma.program_donation.findMany({
       where: {
@@ -27,7 +27,7 @@ export const getProgramDonations = cache(
           ? { status: status as DonationStatus }
           : {}),
       },
-      take: TOTAL_PROGRAMS_PER_PAGE,
+      take: limit,
       skip: offset,
       orderBy: { created_at: "desc" },
     })

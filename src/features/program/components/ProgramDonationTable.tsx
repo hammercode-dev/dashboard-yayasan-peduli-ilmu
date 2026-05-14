@@ -22,6 +22,7 @@ export function ProgramDonationTable() {
   const { getParam, getNumberParam } = useQueryParams()
   const query = getParam("query")
   const page = getNumberParam("page", 1)
+  const limit = getNumberParam("limit", 10)
   const status = getParam("status", "all")
 
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -34,7 +35,8 @@ export function ProgramDonationTable() {
   const { data, isFetching } = useGetProgramDonationsQuery({
     query,
     page,
-    status: status || "all",
+    limit,
+    status,
   })
   const [deleteProgramDonation, { isLoading: isDeleting }] =
     useDeleteProgramDonationMutation()

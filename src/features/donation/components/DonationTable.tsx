@@ -16,8 +16,6 @@ import {
   useGetDonationEvidencesQuery,
 } from "../donation.api"
 
-import { useGetProgramDonationsQuery } from "@/features/program/program.api"
-
 import { getDonationColumns } from "../columns/donation-columns"
 
 export function DonationTable() {
@@ -34,19 +32,6 @@ export function DonationTable() {
 
   const [deleteProgramDonation, { isLoading: isDeleting }] =
     useDeleteDonationEvidenceMutation()
-
-  const params = useMemo(
-    () => ({
-      query: "",
-      page: 1,
-      status: "all",
-    }),
-    []
-  )
-
-  const { refetch } = useGetProgramDonationsQuery(params, {
-    refetchOnMountOrArgChange: true,
-  })
 
   const { data, isFetching } = useGetDonationEvidencesQuery({
     query,
@@ -71,7 +56,6 @@ export function DonationTable() {
     try {
       await deleteProgramDonation(deleteTarget.id).unwrap()
       setLastDeletedDonation(deleteTarget.fullName)
-      await refetch()
       setShowSuccess(true)
     } catch (err) {
       const apiError = err as {

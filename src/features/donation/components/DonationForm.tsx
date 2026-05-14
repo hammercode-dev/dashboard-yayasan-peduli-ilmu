@@ -151,7 +151,6 @@ export default function DonationForm({ id, type }: DonationFormProps) {
         toast.success("Donation evidence updated successfully")
       }
 
-      console.log("formData", formData)
       router.push("/dashboard/donation")
     } catch (err) {
       console.log("err", err)

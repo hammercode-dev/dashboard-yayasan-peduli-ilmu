@@ -16,7 +16,7 @@ const getAllParams = (params: { query?: string; page?: number }) => {
 export const donationApi = createApi({
   reducerPath: "donationApi",
   baseQuery: fetchBaseQuery({ baseUrl: "/api" }),
-  tagTypes: ["DonationEvidence"],
+  tagTypes: ["DonationEvidence", "DonationStats"],
   endpoints: builder => ({
     getDonationEvidences: builder.query({
       query: (params: { query?: string; page?: number }) => {
@@ -39,7 +39,7 @@ export const donationApi = createApi({
         url: `/donation/donation-evidence/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: [{ type: "DonationEvidence", id: "LIST" }],
+      invalidatesTags: [{ type: "DonationEvidence", id: "LIST" }, { type: "DonationStats", id: "STATS" }],
     }),
     createDonation: builder.mutation({
       query: (body: DonationFormData) => ({
@@ -47,7 +47,7 @@ export const donationApi = createApi({
         method: "POST",
         body,
       }),
-      invalidatesTags: [{ type: "DonationEvidence", id: "LIST" }],
+      invalidatesTags: [{ type: "DonationEvidence", id: "LIST" }, { type: "DonationStats", id: "STATS" }],
     }),
     getDonationById: builder.query({
       query: (id: string) => ({
@@ -66,10 +66,11 @@ export const donationApi = createApi({
         method: "PATCH",
         body,
       }),
-      invalidatesTags: [{ type: "DonationEvidence", id: "LIST" }],
+      invalidatesTags: [{ type: "DonationEvidence", id: "LIST" }, { type: "DonationStats", id: "STATS" }],
     }),
     getDonationStats: builder.query({
       query: () => "/donation/donation-evidence-stats",
+      providesTags: [{ type: "DonationStats", id: "STATS" }],
       transformResponse: (response: ApiResponse<DonationStatsDataResponse>) => {
         return response.data
       },

@@ -16,10 +16,10 @@ export interface UpdateDonationEvidenceInput extends Partial<UpdateDonationFormD
 }
 
 export const getDonationEvidences = cache(
-  async (query: string, currentPage: number) => {
+  async (query: string, currentPage: number, limit: number) => {
     await verifySession()
 
-    const offset = (currentPage - 1) * TOTAL_DONATIONS_PER_PAGE
+    const offset = (currentPage - 1) * limit
 
     return prisma.donation_evidences.findMany({
       where: {
@@ -42,7 +42,7 @@ export const getDonationEvidences = cache(
         },
       },
 
-      take: TOTAL_DONATIONS_PER_PAGE,
+      take: limit,
       skip: offset,
       orderBy: { created_at: "desc" },
     })

@@ -6,10 +6,11 @@ import { getDonationById, UpdateDonationEvidenceInput } from "./donation.dal"
 import { DonationStatsDataResponse } from "./donation.types"
 import { DonationFormData } from "./donation.schemas"
 
-const getAllParams = (params: { query?: string; page?: number }) => {
+const getAllParams = (params: { query?: string; page?: number; limit?: number }) => {
   const searchParams = new URLSearchParams()
   if (params.query != null) searchParams.set("query", params.query)
   if (params.page != null) searchParams.set("page", String(params.page))
+  if (params.limit != null) searchParams.set("limit", String(params.limit))
   return searchParams.toString()
 }
 
@@ -19,7 +20,7 @@ export const donationApi = createApi({
   tagTypes: ["DonationEvidence", "DonationStats"],
   endpoints: builder => ({
     getDonationEvidences: builder.query({
-      query: (params: { query?: string; page?: number }) => {
+      query: (params: { query?: string; page?: number; limit?: number }) => {
         return { url: `/donation/donation-evidence?${getAllParams(params)}` }
       },
       providesTags: result => {

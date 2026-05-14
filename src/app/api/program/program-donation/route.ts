@@ -6,7 +6,6 @@ import {
   getProgramDonations,
 } from "@/features/program/program.dal"
 import { programDonationSchema } from "@/features/program/program.schemas"
-import { TOTAL_PROGRAMS_PER_PAGE } from "@/constants/data"
 import type { ApiResponse, ApiMeta } from "@/lib/response"
 import { serializeBigInt } from "@/lib/serialize"
 
@@ -23,7 +22,7 @@ export async function GET(req: Request) {
       countProgramDonations(query, status),
     ])
 
-    const totalPages = Math.ceil(total / TOTAL_PROGRAMS_PER_PAGE)
+    const totalPages = Math.ceil(total / limit)
     const meta: ApiMeta = {
       page,
       limit,

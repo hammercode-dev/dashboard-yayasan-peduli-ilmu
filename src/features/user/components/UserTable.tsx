@@ -24,6 +24,7 @@ export function UserTable() {
   const { getParam, getNumberParam } = useQueryParams()
   const query = getParam("query")
   const page = getNumberParam("page", 1)
+  const limit = getNumberParam("limit", 10)
 
   const [showSuccess, setShowSuccess] = useState(false)
   const [lastDeletedUser, setLastDeletedUser] = useState("")
@@ -35,6 +36,7 @@ export function UserTable() {
   const { data, isFetching } = useGetUsersQuery({
     query,
     page,
+    limit,
   })
   const totalPages = data?.meta?.totalPages ?? 0
 

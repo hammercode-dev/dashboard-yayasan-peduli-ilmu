@@ -22,6 +22,7 @@ export function DonationTable() {
   const { getParam, getNumberParam } = useQueryParams()
   const query = getParam("query")
   const page = getNumberParam("page", 1)
+  const limit = getNumberParam("limit", 10)
 
   const [showSuccess, setShowSuccess] = useState(false)
   const [lastDeletedDonation, setLastDeletedDonation] = useState("")
@@ -36,6 +37,7 @@ export function DonationTable() {
   const { data, isFetching } = useGetDonationEvidencesQuery({
     query,
     page,
+    limit,
   })
   const totalPages = data?.meta?.totalPages ?? 0
 

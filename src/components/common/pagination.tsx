@@ -21,7 +21,7 @@ interface PaginationProps {
 }
 
 export function Pagination({ totalPages }: PaginationProps) {
-  const { getNumberParam, setParam } = useQueryParams()
+  const { getNumberParam, setParam, setParams } = useQueryParams()
   const currentPage = getNumberParam("page", 1)
   const currentLimit = getNumberParam("limit", 10)
 
@@ -32,13 +32,17 @@ export function Pagination({ totalPages }: PaginationProps) {
       <div>
         <Select
           value={currentLimit.toString()}
-          onValueChange={value => setParam("limit", parseInt(value))}
+          onValueChange={value => {
+            const limit = parseInt(value, 10)
+            setParams({ limit, page: 1 })
+          }}
         >
           <SelectTrigger>
             <SelectValue placeholder="Pilih halaman" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="1">1</SelectItem>
+            <SelectItem value="2">2</SelectItem>
             <SelectItem value="5">5</SelectItem>
             <SelectItem value="10">10</SelectItem>
             <SelectItem value="20">20</SelectItem>

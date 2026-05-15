@@ -23,8 +23,12 @@ import { formatDate, formatRupiah } from "@/lib/format"
 
 export type DonationEvidenceRow = {
   id: string
-  full_name: string
-  phone_number: string
+  donors: {
+    id: string
+    name: string
+    phone_number: string
+    email: string | null
+  } | null
   payment_method: string
   amount: number
   evidence_url?: string | null
@@ -41,16 +45,19 @@ export function getDonationColumns(options: {
 }): ColumnDef<DonationEvidenceRow>[] {
   return [
     {
-      accessorKey: "full_name",
+      id: "donor",
       header: "Donatur",
-      cell: ({ row }) => (
-        <div>
-          <div className="font-bold">{row.original.full_name}</div>
-          <div className="text-xs text-muted-foreground mt-1">
-            <span>{row.original.phone_number}</span>
+      cell: ({ row }) => {
+        const d = row.original.donors
+        return (
+          <div>
+            <div className="font-bold">{d?.name ?? "—"}</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              <span>{d?.phone_number ?? "—"}</span>
+            </div>
           </div>
-        </div>
-      ),
+        )
+      },
     },
     {
       accessorKey: "amount",
@@ -147,7 +154,10 @@ export function getDonationColumns(options: {
             {options.onDelete && (
               <DropdownMenuItem
                 onClick={() =>
-                  options.onDelete?.(row.original.id, row.original.full_name)
+                  options.onDelete?.(
+                    row.original.id,
+                    row.original.donors?.name ?? "Donatur"
+                  )
                 }
                 className="text-destructive focus:text-destructive"
               >

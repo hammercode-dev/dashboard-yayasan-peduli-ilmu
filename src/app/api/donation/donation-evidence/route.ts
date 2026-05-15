@@ -3,14 +3,12 @@ import { NextResponse } from "next/server"
 
 import { serializeBigInt } from "@/lib/serialize"
 
-import { TOTAL_DONATIONS_PER_PAGE } from "@/constants/data"
-
 import {
   getDonationEvidences,
   countDonationEvidences,
   createDonationEvidence,
 } from "@/features/donation/donation.dal"
-import { donationEvidenceSchema } from "@/features/donation/donation.schemas"
+import { createDonationEvidenceSchema } from "@/features/donation/donation.schemas"
 import { ApiMeta, ApiResponse } from "@/lib/response"
 
 export async function GET(req: Request) {
@@ -40,7 +38,7 @@ export async function GET(req: Request) {
     }
     return NextResponse.json(body)
   } catch (error) {
-    console.error("[GET /api/program/program-donation]", error)
+    console.error("[GET /api/donation/donation-evidence]", error)
     const body: ApiResponse<never> = {
       success: false,
       message: "Error fetching data",
@@ -53,7 +51,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const parsed = donationEvidenceSchema.safeParse(body)
+    const parsed = createDonationEvidenceSchema.safeParse(body)
 
     if (!parsed.success) {
       const body: ApiResponse<never> = {

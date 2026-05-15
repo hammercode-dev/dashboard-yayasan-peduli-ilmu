@@ -36,7 +36,29 @@ export async function seedDonationEvidence(programs: program_donation[]) {
   ]
 
   for (const d of donationsData) {
-    const donation = await prisma.donation_evidences.create({ data: d })
-    console.log("Created donation_evidence ->", donation.id, d.full_name)
+    const phone = d.phone_number.trim()
+    const donor = await prisma.donors.upsert({
+      where: { phone_number: phone },
+      create: {
+        name: d.full_name,
+        phone_number: phone,
+        email: d.email,
+      },
+      update: {},
+    })
+
+    const donation = await prisma.donation_evidences.create({
+      data: {
+        donor_id: donor.id,
+        program_id: d.program_id,
+        amount: d.amount,
+        payment_method: d.payment_method,
+        evidence_url: d.evidence_url,
+        description: d.description,
+        donation_upload_at: new Date(),
+      },
+    })
+
+    console.log("Created donation_evidence ->", donation.id, donor.name)
   }
 }

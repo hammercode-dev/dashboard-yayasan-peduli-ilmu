@@ -37,7 +37,16 @@ export default function DonationDetail({ id }: { id: string }) {
                   Nama Donatur
                 </p>
                 <p className="text-lg font-semibold text-gray-900">
-                  {detailDonation?.full_name || "-"}
+                  {detailDonation?.donors?.id ? (
+                    <Link
+                      href={`/dashboard/donor/${detailDonation.donors.id}`}
+                      className="hover:text-primary underline-offset-4 hover:underline"
+                    >
+                      {detailDonation.donors.name || "-"}
+                    </Link>
+                  ) : (
+                    (detailDonation?.donors?.name ?? "-")
+                  )}
                 </p>
               </div>
 
@@ -46,7 +55,7 @@ export default function DonationDetail({ id }: { id: string }) {
                   Nomor Telepon
                 </p>
                 <p className="text-lg font-semibold text-gray-900">
-                  {detailDonation?.phone_number || "-"}
+                  {detailDonation?.donors?.phone_number ?? "-"}
                 </p>
               </div>
 
@@ -55,7 +64,7 @@ export default function DonationDetail({ id }: { id: string }) {
                   E-mail
                 </p>
                 <p className="text-lg font-semibold text-gray-900">
-                  {detailDonation?.email || "-"}
+                  {detailDonation?.donors?.email ?? "-"}
                 </p>
               </div>
             </div>

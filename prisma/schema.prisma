@@ -84,6 +84,11 @@ model program_donation {
   title_ar             String?
   description_ar       String?
   short_description_ar String?
+
+  parent_id            BigInt?
+  parent               program_donation?    @relation("ProgramDonationHierarchy", fields: [parent_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  children             program_donation[]   @relation("ProgramDonationHierarchy")
+
   donation_evidences   donation_evidences[]
   program_timeline     program_timeline[]
 

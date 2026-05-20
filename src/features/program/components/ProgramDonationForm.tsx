@@ -251,7 +251,6 @@ export default function ProgramDonationForm({
       if (type === "edit" && id) {
         const changedData = getDirtyValues(dirtyFields, {
           ...data,
-          program_type: data.program_type ?? "parent",
           parent_id:
             data.program_type === "child" ? (data.parent_id ?? null) : null,
         })
@@ -259,6 +258,7 @@ export default function ProgramDonationForm({
         await updateProgramDonation({
           id: id as string,
           ...changedData,
+          program_type: data.program_type ?? "parent",
         }).unwrap()
 
         toast.success("Program donation updated successfully")

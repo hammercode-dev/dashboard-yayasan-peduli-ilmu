@@ -6,6 +6,7 @@ import {
   UpdateProgramDonationInput,
 } from "./program.dal"
 import { Prisma } from "@/generated/prisma"
+import type { ProgramDonationListItem } from "./types/programDonation"
 
 const getAllParams = (params: {
   query?: string
@@ -27,7 +28,12 @@ export const programApi = createApi({
   tagTypes: ["ProgramDonation"],
   endpoints: builder => ({
     getProgramDonations: builder.query({
-      query: (params: { query?: string; page?: number; limit?: number; status?: string }) => {
+      query: (params: {
+        query?: string
+        page?: number
+        limit?: number
+        status?: string
+      }) => {
         return { url: `/program/program-donation?${getAllParams(params)}` }
       },
       providesTags: result => {
@@ -42,20 +48,37 @@ export const programApi = createApi({
           : [{ type: "ProgramDonation", id: "LIST" }]
       },
     }),
+    getParentPrograms: builder.query({
+      query: (params?: { query?: string }) => {
+        const searchParams = new URLSearchParams()
+        if (params?.query) searchParams.set("query", params.query)
+        const qs = searchParams.toString()
+        return {
+          url: `/program/program-donation/parents${qs ? `?${qs}` : ""}`,
+        }
+      },
+      providesTags: [{ type: "ProgramDonation", id: "PARENTS" }],
+    }),
     createProgramDonation: builder.mutation({
       query: (body: ProgramDonationFormData) => ({
         url: "/program/program-donation",
         method: "POST",
         body,
       }),
-      invalidatesTags: [{ type: "ProgramDonation", id: "LIST" }],
+      invalidatesTags: [
+        { type: "ProgramDonation", id: "LIST" },
+        { type: "ProgramDonation", id: "PARENTS" },
+      ],
     }),
     deleteProgramDonation: builder.mutation({
       query: (id: string) => ({
         url: `/program/program-donation/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: [{ type: "ProgramDonation", id: "LIST" }],
+      invalidatesTags: [
+        { type: "ProgramDonation", id: "LIST" },
+        { type: "ProgramDonation", id: "PARENTS" },
+      ],
     }),
     getProgramDonationById: builder.query({
       query: (id: string) => ({
@@ -76,7 +99,10 @@ export const programApi = createApi({
         method: "PATCH",
         body,
       }),
-      invalidatesTags: [{ type: "ProgramDonation", id: "LIST" }],
+      invalidatesTags: [
+        { type: "ProgramDonation", id: "LIST" },
+        { type: "ProgramDonation", id: "PARENTS" },
+      ],
     }),
 
     getAllProgramDonations: builder.query({
@@ -103,8 +129,11 @@ export const programApi = createApi({
 export const {
   useCreateProgramDonationMutation,
   useGetProgramDonationsQuery,
+  useGetParentProgramsQuery,
   useDeleteProgramDonationMutation,
   useGetProgramDonationByIdQuery,
   useUpdateProgramDonationMutation,
   useGetAllProgramDonationsQuery,
 } = programApi
+
+export type { ProgramDonationListItem }

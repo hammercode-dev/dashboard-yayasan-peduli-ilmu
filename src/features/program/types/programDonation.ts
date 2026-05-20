@@ -1,5 +1,40 @@
 export type DonationStatus = "active" | "closed" | "draft" | "archived"
 
+export type ProgramType = "parent" | "child"
+
+export interface ProgramDonationParentRef {
+  id: string
+  title: string
+  slug?: string | null
+}
+
+export interface ProgramDonationChildSummary {
+  id: string
+  title: string
+  status: DonationStatus | string | null
+  target_amount?: number | string | null
+  collected_amount?: number | string | null
+  slug?: string | null
+  starts_at?: string
+  ends_at?: string
+  created_at?: string
+}
+
+export interface ProgramDonationListItem {
+  id: string
+  title: string
+  collected_amount: number
+  target_amount: number
+  starts_at: string
+  ends_at: string
+  status: DonationStatus
+  created_at: string
+  parent_id: string | null
+  children?: ProgramDonationListItem[]
+  childrenCount?: number
+  parent?: ProgramDonationParentRef | null
+}
+
 export interface Donation {
   id: string
   created_at: string
@@ -21,6 +56,9 @@ export interface Donation {
   short_description: string
   short_description_en: string
   short_description_ar: string
+  parent_id?: string | null
+  parent?: ProgramDonationParentRef | null
+  children?: ProgramDonationChildSummary[]
 }
 
 export interface DonationFilters {

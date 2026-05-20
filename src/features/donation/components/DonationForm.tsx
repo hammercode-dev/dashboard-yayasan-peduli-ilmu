@@ -76,6 +76,8 @@ interface ProgramDonationListItem {
   id: string | number
   title?: string | null
   collected_amount?: unknown
+  parent_id?: string | number | null
+  parent?: { id: string | number; title: string } | null
 }
 
 export default function DonationForm({ id, type }: DonationFormProps) {
@@ -120,11 +122,19 @@ export default function DonationForm({ id, type }: DonationFormProps) {
     useGetDonorsQuery({ query: donorSearch, page: 1, limit: 50 })
 
   const programOptions =
-    data?.data.donations?.map((p: ProgramDonationListItem) => ({
-      id: p.id,
-      nama: typeof p.title === "string" ? p.title : String(p.title ?? ""),
-      collectedAmount: p.collected_amount,
-    })) ?? []
+    data?.data.donations?.map((p: ProgramDonationListItem) => {
+      const title =
+        typeof p.title === "string" ? p.title : String(p.title ?? "")
+      const parentTitle = p.parent?.title
+      return {
+        id: p.id,
+        nama: title,
+        displayName:
+          p.parent_id && parentTitle ? `${parentTitle} › ${title}` : title,
+        parent_id: p.parent_id != null ? String(p.parent_id) : null,
+        collectedAmount: p.collected_amount,
+      }
+    }) ?? []
 
   const donorOptions =
     donorListResponse?.data?.donors?.map(

@@ -4,6 +4,7 @@ import {
   countProgramDonations,
   createProgramDonation,
   getProgramDonations,
+  ProgramDonationValidationError,
 } from "@/features/program/program.dal"
 import { programDonationSchema } from "@/features/program/program.schemas"
 import type { ApiResponse, ApiMeta } from "@/lib/response"
@@ -74,6 +75,14 @@ export async function POST(req: Request) {
     return NextResponse.json(resBody, { status: 201 })
   } catch (error) {
     console.error("[POST /api/program/program-donation]", error)
+    if (error instanceof ProgramDonationValidationError) {
+      const body: ApiResponse<never> = {
+        success: false,
+        message: error.message,
+        error: { code: "VALIDATION_ERROR", details: error.message },
+      }
+      return NextResponse.json(body, { status: 400 })
+    }
     const body: ApiResponse<never> = {
       success: false,
       message: "Failed to create program donation",

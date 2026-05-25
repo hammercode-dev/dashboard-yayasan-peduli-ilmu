@@ -38,6 +38,7 @@ import {
 import {
   useCreateProgramDonationMutation,
   useGetParentProgramsQuery,
+  useGetProgramCollectedAmountsQuery,
   useGetProgramDonationByIdQuery,
   useUpdateProgramDonationMutation,
 } from "../program.api"
@@ -66,6 +67,8 @@ export default function ProgramDonationForm({
   const descriptionRef = useRef<RichTextEditorRef>(null)
   const descriptionEnRef = useRef<RichTextEditorRef>(null)
   const descriptionArRef = useRef<RichTextEditorRef>(null)
+  
+  // Hooks
   const [createProgramDonation, { isLoading: isLoadingCreate }] =
     useCreateProgramDonationMutation()
   const [updateProgramDonation, { isLoading: isLoadingUpdate }] =
@@ -78,6 +81,12 @@ export default function ProgramDonationForm({
     refetchOnFocus: true,
     refetchOnMountOrArgChange: true,
   })
+  const { data: collectedAmountData } = useGetProgramCollectedAmountsQuery(
+    id ?? "",
+    { skip: type !== "edit" || !id }
+  )
+
+  console.log("collected amount", collectedAmountData)
 
   const { data: parentProgramsData } = useGetParentProgramsQuery(undefined, {
     skip: type === "edit" && isLoadingDetailProgramDonation,
@@ -119,8 +128,7 @@ export default function ProgramDonationForm({
   const isChildProgram =
     type === "edit" && detailProgramDonation?.parent_id != null
   const hasChildren =
-    type === "edit" &&
-    (detailProgramDonation?.children?.length ?? 0) > 0
+    type === "edit" && (detailProgramDonation?.children?.length ?? 0) > 0
   const isTypeLocked = type === "edit"
 
   const noParentsAvailable =
@@ -352,8 +360,7 @@ export default function ProgramDonationForm({
                   {programType === "child" && (
                     <Field>
                       <FieldLabel>
-                        Program Utama{" "}
-                        <span className="text-red-500">*</span>
+                        Program Utama <span className="text-red-500">*</span>
                       </FieldLabel>
                       <FieldContent>
                         <Controller
@@ -362,23 +369,23 @@ export default function ProgramDonationForm({
                           render={({ field }) => (
                             <Select
                               value={field.value ?? ""}
-                              onValueChange={val =>
-                                field.onChange(val || null)
-                              }
+                              onValueChange={val => field.onChange(val || null)}
                               disabled={noParentsAvailable}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Pilih program utama" />
                               </SelectTrigger>
                               <SelectContent>
-                                {parentOptions.map((parent: { id: string; title: string }) => (
-                                  <SelectItem
-                                    key={parent.id}
-                                    value={parent.id}
-                                  >
-                                    {parent.title}
-                                  </SelectItem>
-                                ))}
+                                {parentOptions.map(
+                                  (parent: { id: string; title: string }) => (
+                                    <SelectItem
+                                      key={parent.id}
+                                      value={parent.id}
+                                    >
+                                      {parent.title}
+                                    </SelectItem>
+                                  )
+                                )}
                               </SelectContent>
                             </Select>
                           )}

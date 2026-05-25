@@ -289,3 +289,15 @@ export const getAllProgramDonations = cache(async (query: string) => {
     },
   })
 })
+
+export const getProgramCollectedAmount = cache(async (programId: bigint) => {
+    await verifySession()
+
+    const result = await
+  prisma.donation_evidences.aggregate({
+      where: { program_id: programId },
+      _sum: { amount: true },
+    })
+
+    return result._sum.amount ?? 0
+  })

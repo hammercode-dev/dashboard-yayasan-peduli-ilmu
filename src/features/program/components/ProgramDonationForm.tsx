@@ -121,7 +121,8 @@ export default function ProgramDonationForm({
   const hasChildren =
     type === "edit" &&
     (detailProgramDonation?.children?.length ?? 0) > 0
-  const isTypeLocked = isChildProgram || hasChildren
+  const isTypeLocked = type === "edit"
+
   const noParentsAvailable =
     programType === "child" && parentOptions.length === 0
 

@@ -77,8 +77,7 @@ export function SearchProgram({
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  const getLabel = (program: Program) =>
-    program.displayName ?? program.nama
+  const getLabel = (program: Program) => program.displayName ?? program.nama
 
   return (
     <div className={cn("relative w-full", className)} ref={selectorRef}>
@@ -158,26 +157,39 @@ export function SearchProgram({
                 </div>
               )}
 
-              {sortedPrograms.map(program => (
-                <div
-                  key={program.id}
-                  onClick={() => handleSelectProgram(program.id)}
-                  className={cn(
-                    "relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none transition-colors",
-                    "hover:bg-accent hover:text-accent-foreground",
-                    program.parent_id && "pl-6",
-                    String(value) === String(program.id) &&
-                      "bg-accent text-accent-foreground font-semibold"
-                  )}
-                >
-                  {program.parent_id && (
-                    <span className="text-muted-foreground">
-                      <Dot />
-                    </span>
-                  )}
-                  <span className="truncate">{getLabel(program)}</span>
-                </div>
-              ))}
+              {sortedPrograms.map(program => {
+                const hasChildren = sortedPrograms.some(
+                  item => item.parent_id === program.id
+                )
+
+                return (
+                  <div
+                    key={program.id}
+                    onClick={() => {
+                      if (hasChildren) return
+
+                      handleSelectProgram(program.id)
+                    }}
+                    className={cn(
+                      "relative flex w-full select-none items-center rounded-sm px-2 py-2 text-sm outline-none transition-colors",
+                      hasChildren
+                        ? "cursor-not-allowed opacity-50"
+                        : "cursor-pointer hover:bg-accent hover:text-accent-foreground",
+                      program.parent_id && "pl-6",
+                      String(value) === String(program.id) &&
+                        "bg-accent/50 text-accent-foreground font-semibold"
+                    )}
+                  >
+                    {program.parent_id && (
+                      <span className="text-muted-foreground">
+                        <Dot />
+                      </span>
+                    )}
+
+                    <span className="truncate">{getLabel(program)}</span>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>

@@ -23,9 +23,7 @@ function buildListWhere(query: string, status: string) {
   return {
     parent_id: null,
     title: { contains: query || "", mode: "insensitive" as const },
-    ...(status && status !== "all"
-      ? { status: status as DonationStatus }
-      : {}),
+    ...(status && status !== "all" ? { status: status as DonationStatus } : {}),
   }
 }
 
@@ -84,7 +82,7 @@ export const getProgramDonations = cache(
 
     const offset = (currentPage - 1) * limit
 
-    return prisma.program_donation.findMany({
+    const programs = await prisma.program_donation.findMany({
       where: buildListWhere(query, status),
       take: limit,
       skip: offset,
@@ -94,9 +92,59 @@ export const getProgramDonations = cache(
           orderBy: { created_at: "desc" },
         },
         _count: {
-          select: { children: true },
+          select: {
+            children: true,
+          },
         },
       },
+    })
+
+    const allProgramIds = programs.flatMap(program => [
+      program.id,
+      ...program.children.map(child => child.id),
+    ])
+
+    const totals = await prisma.donation_evidences.groupBy({
+      by: ["program_id"],
+      where: {
+        program_id: {
+          in: allProgramIds,
+        },
+      },
+      _sum: {
+        amount: true,
+      },
+    })
+
+    const totalsMap = new Map(
+      totals.map(item => [
+        item?.program_id?.toString(),
+        Number(item._sum.amount ?? 0),
+      ])
+    )
+
+    return programs.map(program => {
+      const parentTotal = totalsMap.get(program.id.toString()) ?? 0
+
+      const childrenWithTotals = program.children.map(child => {
+        const childTotal = totalsMap.get(child.id.toString()) ?? 0
+
+        return {
+          ...child,
+          total_collected_amount: childTotal,
+        }
+      })
+
+      const childrenTotal = childrenWithTotals.reduce(
+        (acc, child) => acc + child.total_collected_amount,
+        0
+      )
+
+      return {
+        ...program,
+        children: childrenWithTotals,
+        total_collected_amount: parentTotal + childrenTotal,
+      }
     })
   }
 )
@@ -163,7 +211,7 @@ export async function createProgramDonation(input: ProgramDonationFormData) {
       location: input.location,
       image_url: input.image_url,
       target_amount: input.target_amount,
-      collected_amount: input.collected_amount,
+      // collected_amount: input.collected_amount,
       starts_at: new Date(input.starts_at),
       ends_at: new Date(input.ends_at),
       short_description: input.short_description,
@@ -291,13 +339,12 @@ export const getAllProgramDonations = cache(async (query: string) => {
 })
 
 export const getProgramCollectedAmount = cache(async (programId: bigint) => {
-    await verifySession()
+  await verifySession()
 
-    const result = await
-  prisma.donation_evidences.aggregate({
-      where: { program_id: programId },
-      _sum: { amount: true },
-    })
-
-    return result._sum.amount ?? 0
+  const result = await prisma.donation_evidences.aggregate({
+    where: { program_id: programId },
+    _sum: { amount: true },
   })
+
+  return result._sum.amount ?? 0
+})

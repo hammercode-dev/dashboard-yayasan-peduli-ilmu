@@ -23,7 +23,7 @@ const programDonationBaseSchema = z.object({
   location: z.string().min(1, "Location is required"),
   image_url: z.string().min(1, "Image URL is required"),
   target_amount: z.string().min(1, "Target amount is required"),
-  collected_amount: z.string().min(1, "Collected amount is required"),
+  // collected_amount: z.string().min(1, "Collected amount is required"),
   starts_at: z.string().min(1, "Start date is required"),
   ends_at: z.string().min(1, "End date is required"),
   short_description: z.string().min(1, "Short description is required"),

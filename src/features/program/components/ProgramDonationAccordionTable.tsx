@@ -143,7 +143,7 @@ function ProgramRow({
   const daysLeft = getDaysRemaining(row.ends_at, row.starts_at)
   const scheduleLabel = formatDateRange(row.starts_at ?? null, row.ends_at ?? null)
   const hasChildren = !isChild && childrenCount > 0
-
+  console.log("ini rowwww", row)
   return (
     <TableRow
       className={cn(
@@ -186,7 +186,7 @@ function ProgramRow({
       </TableCell>
       <TableCell>
         <ProgressCell
-          collected={Number(row.collected_amount) || 0}
+          collected={Number(row.total_collected_amount) || 0}
           target={Number(row.target_amount) || 0}
         />
       </TableCell>

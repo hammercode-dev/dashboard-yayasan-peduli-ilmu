@@ -67,7 +67,7 @@ export default function ProgramDonationForm({
   const descriptionRef = useRef<RichTextEditorRef>(null)
   const descriptionEnRef = useRef<RichTextEditorRef>(null)
   const descriptionArRef = useRef<RichTextEditorRef>(null)
-  
+
   // Hooks
   const [createProgramDonation, { isLoading: isLoadingCreate }] =
     useCreateProgramDonationMutation()
@@ -86,7 +86,7 @@ export default function ProgramDonationForm({
     { skip: type !== "edit" || !id }
   )
 
-  console.log("collected amount", collectedAmountData)
+  console.log("collected amount", collectedAmountData?.data?.total)
 
   const { data: parentProgramsData } = useGetParentProgramsQuery(undefined, {
     skip: type === "edit" && isLoadingDetailProgramDonation,
@@ -112,7 +112,7 @@ export default function ProgramDonationForm({
   } = methods
 
   const target_amount = watch("target_amount")
-  const collected_amount = watch("collected_amount")
+  // const collected_amount = watch("collected_amount")
   const starts_at = watch("starts_at") ? new Date(watch("starts_at")) : null
   const ends_at = watch("ends_at") ? new Date(watch("ends_at")) : null
   const programType = watch("program_type") ?? "parent"
@@ -193,8 +193,8 @@ export default function ProgramDonationForm({
         location: detailProgramDonation.location ?? "",
         image_url: detailProgramDonation.image_url ?? "",
         target_amount: detailProgramDonation.target_amount?.toString() ?? "",
-        collected_amount:
-          detailProgramDonation.collected_amount?.toString() ?? "",
+        // collected_amount:
+        //   detailProgramDonation.collected_amount?.toString() ?? "",
         starts_at: detailProgramDonation.starts_at
           ? format(new Date(detailProgramDonation.starts_at), "yyyy-MM-dd")
           : "",
@@ -645,34 +645,21 @@ export default function ProgramDonationForm({
                     </Field>
 
                     <Field>
-                      <FieldLabel>
-                        Dana Terkumpul <span className="text-red-500">*</span>
-                      </FieldLabel>
+                      <FieldLabel>Dana Terkumpul</FieldLabel>
                       <FieldContent>
-                        <Input
-                          type="number"
-                          {...register("collected_amount")}
-                          placeholder="Rp. "
-                          aria-invalid={!!errors.collected_amount}
-                        />
-                        {collected_amount && (
-                          <div className="text-xs text-gray-600">
-                            {formatRupiah(Number(collected_amount))}
-                          </div>
-                        )}
-                        <FieldError errors={[errors.collected_amount]} />
+                        <Input type="number" placeholder="Rp. " readOnly />
                       </FieldContent>
                     </Field>
                   </div>
                   {/* Progress Display */}
-                  {target_amount &&
+                  {/* {target_amount &&
                     collected_amount &&
                     Number(target_amount) > 0 && (
                       <FundingProgress
-                        collected_amount={collected_amount}
+                        collected_amount={20000}
                         target_amount={target_amount}
                       />
-                    )}
+                    )} */}
                 </CardContent>
               </Card>
 

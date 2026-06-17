@@ -141,7 +141,10 @@ function ProgramRow({
   onDelete?: (id: string, title: string) => void
 }) {
   const daysLeft = getDaysRemaining(row.ends_at, row.starts_at)
-  const scheduleLabel = formatDateRange(row.starts_at ?? null, row.ends_at ?? null)
+  const scheduleLabel = formatDateRange(
+    row.starts_at ?? null,
+    row.ends_at ?? null
+  )
   const hasChildren = !isChild && childrenCount > 0
 
   return (
@@ -181,9 +184,9 @@ function ProgramRow({
           </span>
         </div>
       </TableCell>
-      <TableCell>
+      {/* <TableCell>
         <ProgramTypeBadge type={isChild ? "child" : "parent"} />
-      </TableCell>
+      </TableCell> */}
       <TableCell>
         <ProgressCell
           collected={Number(row.collected_amount) || 0}
@@ -238,8 +241,8 @@ export function ProgramDonationAccordionTable({
           <TableHeader>
             <TableRow>
               <TableHead className="w-10" />
-              <TableHead>Nama Program</TableHead>
-              <TableHead className="w-40">Tipe</TableHead>
+              <TableHead className="min-w-24">Nama Program</TableHead>
+              {/* <TableHead className="w-40">Tipe</TableHead> */}
               <TableHead>Progress</TableHead>
               <TableHead>Pelaksanaan</TableHead>
               <TableHead>Status</TableHead>

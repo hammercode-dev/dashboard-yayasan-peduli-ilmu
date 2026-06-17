@@ -56,7 +56,7 @@ export const donationApi = createApi({
         method: "GET",
       }),
       transformResponse: (
-        response: ApiResponse<Prisma.PromiseReturnType<typeof getDonationById>>
+        response
       ) => {
         return response.data
       },

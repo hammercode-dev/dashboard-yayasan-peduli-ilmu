@@ -13,7 +13,6 @@ export interface ProgramDonationChildSummary {
   title: string
   status: DonationStatus | string | null
   target_amount?: number | string | null
-  collected_amount?: number | string | null
   slug?: string | null
   starts_at?: string
   ends_at?: string
@@ -23,8 +22,8 @@ export interface ProgramDonationChildSummary {
 export interface ProgramDonationListItem {
   id: string
   title: string
-  collected_amount: number
   target_amount: number
+  collected_amount: number
   starts_at: string
   ends_at: string
   status: DonationStatus
@@ -47,7 +46,6 @@ export interface Donation {
   description_ar: string
   image_url: string
   target_amount: number
-  collected_amount: number
   status: DonationStatus
   starts_at: Date
   ends_at: Date

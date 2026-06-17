@@ -19,12 +19,12 @@ export default function StatsCards() {
   const { data, isFetching } = useGetProgramDonationStatsQuery({})
 
   const STATS_CARDS = [
-    {
-      Icon: Wallet,
-      title: "Total Dana Terkumpul",
-      value: formatRupiah(data?.totalRevenues ?? 0),
-      iconColor: "bg-green-700",
-    },
+    // {
+    //   Icon: Wallet,
+    //   title: "Total Dana Terkumpul",
+    //   value: formatRupiah(data?.totalRevenues ?? 0),
+    //   iconColor: "bg-green-700",
+    // },
     {
       Icon: Users,
       title: "Total Donatur",

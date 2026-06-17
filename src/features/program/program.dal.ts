@@ -84,7 +84,7 @@ export const getProgramDonations = cache(
 
     const offset = (currentPage - 1) * limit
 
-    return prisma.program_donation.findMany({
+    const programs = await prisma.program_donation.findMany({
       where: buildListWhere(query, status),
       take: limit,
       skip: offset,
@@ -98,13 +98,54 @@ export const getProgramDonations = cache(
         },
       },
     })
+
+    const programIds = programs.flatMap(p => [
+      p.id,
+      ...p.children.map(c => c.id),
+    ])
+
+    console.log("program ids", programIds)
+    const collectedAmounts = await prisma.donation_evidences.groupBy({
+      by: ["program_id"],
+      where: {
+        program_id: { in: programIds },
+      },
+      _sum: {
+        amount: true,
+      },
+    })
+
+    const collectedMap = new Map(
+      collectedAmounts.map(c => [c.program_id, Number(c._sum.amount) || 0])
+    )
+    
+
+    return programs.map(program => {
+      const parentAmount = collectedMap.get(program.id) || 0
+    
+      const children = program.children.map(child => ({
+        ...child,
+        collected_amount: collectedMap.get(child.id) || 0,
+      }))
+    
+      const childrenAmount = children.reduce(
+        (sum, child) => sum + child.collected_amount,
+        0
+      )
+    
+      return {
+        ...program,
+        collected_amount: parentAmount + childrenAmount,
+        children,
+      }
+    })
   }
 )
 
 export const getProgramDonationById = cache(async (id: bigint) => {
   await verifySession()
 
-  return prisma.program_donation.findUnique({
+  const program = await prisma.program_donation.findUnique({
     where: { id },
     include: {
       program_timeline: { orderBy: { date: "asc" } },
@@ -117,13 +158,36 @@ export const getProgramDonationById = cache(async (id: bigint) => {
           title: true,
           status: true,
           target_amount: true,
-          collected_amount: true,
           slug: true,
+          created_at: true,
         },
         orderBy: { created_at: "desc" },
       },
     },
   })
+
+  if (!program) return null
+
+  const allIds = [program.id, ...program.children.map(c => c.id)]
+
+  const collectedAmounts = await prisma.donation_evidences.groupBy({
+    by: ["program_id"],
+    where: { program_id: { in: allIds } },
+    _sum: { amount: true },
+  })
+
+  const collectedMap = new Map(
+    collectedAmounts.map(c => [c.program_id, Number(c._sum.amount) || 0])
+  )
+
+  return {
+    ...program,
+    collected_amount: collectedMap.get(program.id) || 0,
+    children: program.children.map(child => ({
+      ...child,
+      collected_amount: collectedMap.get(child.id) || 0,
+    })),
+  }
 })
 
 export const countProgramDonations = cache(
@@ -139,14 +203,35 @@ export const countProgramDonations = cache(
 export const getParentProgramsOnly = cache(async (query?: string) => {
   await verifySession()
 
-  return prisma.program_donation.findMany({
+  const parents = await prisma.program_donation.findMany({
     where: {
       parent_id: null,
       title: { contains: query || "", mode: "insensitive" },
     },
-    select: { id: true, title: true },
+    select: {
+      id: true,
+      title: true,
+      target_amount: true,
+      children: {
+        select: {
+          id: true,
+          target_amount: true,
+        },
+      },
+    },
     orderBy: { title: "asc" },
   })
+
+  return parents.map(parent => ({
+    id: parent.id,
+    title: parent.title,
+    target_amount: parent.target_amount,
+    children_target_total: parent.children.reduce(
+      (sum, child) => sum + Number(child.target_amount || 0),
+      0
+    ),
+    children_count: parent.children.length,
+  }))
 })
 
 export async function createProgramDonation(input: ProgramDonationFormData) {
@@ -163,7 +248,6 @@ export async function createProgramDonation(input: ProgramDonationFormData) {
       location: input.location,
       image_url: input.image_url,
       target_amount: input.target_amount,
-      collected_amount: input.collected_amount,
       starts_at: new Date(input.starts_at),
       ends_at: new Date(input.ends_at),
       short_description: input.short_description,
@@ -282,7 +366,6 @@ export const getAllProgramDonations = cache(async (query: string) => {
       id: true,
       title: true,
       parent_id: true,
-      collected_amount: true,
       parent: {
         select: { id: true, title: true },
       },

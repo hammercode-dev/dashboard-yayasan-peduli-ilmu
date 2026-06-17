@@ -48,12 +48,6 @@ export const programApi = createApi({
           : [{ type: "ProgramDonation", id: "LIST" }]
       },
     }),
-    getProgramCollectedAmounts: builder.query({
-      query: (id: string) => ({
-        url: `/program/program-donation/${id}/collected-amount`,
-        method: "GET"
-      })
-    }),
     getParentPrograms: builder.query({
       query: (params?: { query?: string }) => {
         const searchParams = new URLSearchParams()
@@ -140,7 +134,6 @@ export const {
   useGetProgramDonationByIdQuery,
   useUpdateProgramDonationMutation,
   useGetAllProgramDonationsQuery,
-  useGetProgramCollectedAmountsQuery,
 } = programApi
 
 export type { ProgramDonationListItem }

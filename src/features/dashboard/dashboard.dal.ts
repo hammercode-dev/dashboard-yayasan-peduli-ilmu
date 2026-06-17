@@ -8,13 +8,12 @@ export const getProgramDonationStats = cache(async () => {
   const startOfToday = new Date()
   startOfToday.setHours(0, 0, 0, 0)
 
-  const [revenueAgg, activePrograms, totalPrograms, totalDonors, todayStats] =
+  const [activePrograms, totalPrograms, totalDonors, todayStats] =
     await Promise.all([
-      prisma.program_donation.aggregate({ _sum: { collected_amount: true } }),
+      // prisma.program_donation.aggregate({ _sum: { collected_amount: true } }),
       prisma.program_donation.count({ where: { status: "active" } }),
       prisma.program_donation.count(),
       prisma.donation_evidences.count(),
-
       prisma.donation_evidences.aggregate({
         where: { donation_upload_at: { gte: startOfToday } },
         _count: { id: true },
@@ -23,7 +22,7 @@ export const getProgramDonationStats = cache(async () => {
     ])
 
   return {
-    totalRevenues: Number(revenueAgg._sum.collected_amount ?? 0),
+    // totalRevenues: Number(revenueAgg._sum.collected_amount ?? 0),
     activePrograms,
     totalPrograms,
     totalDonatur: totalDonors,
@@ -36,12 +35,12 @@ export const getProgramTrendings = cache(async () => {
   await verifySession()
 
   const trendings = await prisma.program_donation.findMany({
-    orderBy: { collected_amount: "desc" },
+    // orderBy: { collected_amount: "desc" },
     take: 5,
     select: {
       id: true,
       title: true,
-      collected_amount: true,
+      // collected_amount: true,
       target_amount: true,
       starts_at: true,
       ends_at: true,
@@ -57,7 +56,7 @@ export const getProgramTrendings = cache(async () => {
   const serializedTrendings = trendings.map(trending => ({
     ...trending,
     id: trending.id.toString(),
-    collected_amount: Number(trending.collected_amount ?? 0),
+    // collected_amount: Number(trending.collected_amount ?? 0),
     target_amount: Number(trending.target_amount ?? 0),
     total_donatur: trending._count.donation_evidences,
     starts_at: trending.starts_at?.toISOString() ?? null,

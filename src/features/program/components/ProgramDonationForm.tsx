@@ -38,7 +38,6 @@ import {
 import {
   useCreateProgramDonationMutation,
   useGetParentProgramsQuery,
-  useGetProgramCollectedAmountsQuery,
   useGetProgramDonationByIdQuery,
   useUpdateProgramDonationMutation,
 } from "../program.api"
@@ -81,12 +80,6 @@ export default function ProgramDonationForm({
     refetchOnFocus: true,
     refetchOnMountOrArgChange: true,
   })
-  const { data: collectedAmountData } = useGetProgramCollectedAmountsQuery(
-    id ?? "",
-    { skip: type !== "edit" || !id }
-  )
-
-  console.log("collected amount", collectedAmountData)
 
   const { data: parentProgramsData } = useGetParentProgramsQuery(undefined, {
     skip: type === "edit" && isLoadingDetailProgramDonation,
@@ -112,7 +105,6 @@ export default function ProgramDonationForm({
   } = methods
 
   const target_amount = watch("target_amount")
-  const collected_amount = watch("collected_amount")
   const starts_at = watch("starts_at") ? new Date(watch("starts_at")) : null
   const ends_at = watch("ends_at") ? new Date(watch("ends_at")) : null
   const programType = watch("program_type") ?? "parent"
@@ -193,8 +185,6 @@ export default function ProgramDonationForm({
         location: detailProgramDonation.location ?? "",
         image_url: detailProgramDonation.image_url ?? "",
         target_amount: detailProgramDonation.target_amount?.toString() ?? "",
-        collected_amount:
-          detailProgramDonation.collected_amount?.toString() ?? "",
         starts_at: detailProgramDonation.starts_at
           ? format(new Date(detailProgramDonation.starts_at), "yyyy-MM-dd")
           : "",
@@ -260,14 +250,15 @@ export default function ProgramDonationForm({
       if (type === "edit" && id) {
         const changedData = getDirtyValues(dirtyFields, {
           ...data,
-          parent_id:
-            data.program_type === "child" ? (data.parent_id ?? null) : null,
         })
 
+        console.log("Parent ID : ",  data.program_type === "child" ? (data.parent_id ?? null)  : null)
+        console.log("change data :", changedData)
         await updateProgramDonation({
           id: id as string,
           ...changedData,
           program_type: data.program_type ?? "parent",
+          parent_id: data.program_type === "child" ? (data.parent_id ?? null)  : null
         }).unwrap()
 
         toast.success("Program donation updated successfully")
@@ -643,36 +634,7 @@ export default function ProgramDonationForm({
                         <FieldError errors={[errors.target_amount]} />
                       </FieldContent>
                     </Field>
-
-                    <Field>
-                      <FieldLabel>
-                        Dana Terkumpul <span className="text-red-500">*</span>
-                      </FieldLabel>
-                      <FieldContent>
-                        <Input
-                          type="number"
-                          {...register("collected_amount")}
-                          placeholder="Rp. "
-                          aria-invalid={!!errors.collected_amount}
-                        />
-                        {collected_amount && (
-                          <div className="text-xs text-gray-600">
-                            {formatRupiah(Number(collected_amount))}
-                          </div>
-                        )}
-                        <FieldError errors={[errors.collected_amount]} />
-                      </FieldContent>
-                    </Field>
                   </div>
-                  {/* Progress Display */}
-                  {target_amount &&
-                    collected_amount &&
-                    Number(target_amount) > 0 && (
-                      <FundingProgress
-                        collected_amount={collected_amount}
-                        target_amount={target_amount}
-                      />
-                    )}
                 </CardContent>
               </Card>
 

@@ -71,7 +71,6 @@ model program_donation {
   description          String?
   image_url            String?
   target_amount        Decimal?             @db.Decimal
-  collected_amount     Decimal?             @db.Decimal
   status               String?
   starts_at            DateTime?            @default(now()) @db.Timestamptz(6)
   ends_at              DateTime?            @db.Timestamptz(6)

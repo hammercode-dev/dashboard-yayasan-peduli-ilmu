@@ -16,18 +16,28 @@ CREATE TABLE "users" (
 CREATE TABLE "donation_evidences" (
     "id" BIGSERIAL NOT NULL,
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "full_name" TEXT,
     "evidence_url" TEXT,
     "program_id" BIGINT,
-    "phone_number" TEXT,
-    "email" TEXT,
     "amount" DECIMAL,
     "payment_method" TEXT,
     "description" TEXT,
     "updated_at" TIMESTAMPTZ(6),
     "donation_upload_at" TIMESTAMPTZ(6),
+    "donor_id" BIGINT NOT NULL,
 
     CONSTRAINT "donation_evidences_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "donors" (
+    "id" BIGSERIAL NOT NULL,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6),
+    "name" TEXT NOT NULL,
+    "phone_number" TEXT NOT NULL,
+    "email" TEXT,
+
+    CONSTRAINT "donors_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -38,6 +48,8 @@ CREATE TABLE "profiles" (
     "full_name" TEXT,
     "avatar_url" TEXT,
     "address" TEXT,
+    "phone_number" TEXT,
+    "role_id" BIGINT,
 
     CONSTRAINT "profiles_pkey" PRIMARY KEY ("id")
 );
@@ -83,11 +95,23 @@ CREATE TABLE "program_timeline" (
     CONSTRAINT "program_timeline_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "roles" (
+    "id" BIGSERIAL NOT NULL,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "name" VARCHAR,
+
+    CONSTRAINT "roles_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "donation_evidences_id_key" ON "donation_evidences"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "donors_phone_number_key" ON "donors"("phone_number");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "profiles_username_key" ON "profiles"("username");
@@ -98,6 +122,12 @@ CREATE UNIQUE INDEX "programs_title_key" ON "program_donation"("title");
 -- CreateIndex
 CREATE UNIQUE INDEX "program_donation_slug_key" ON "program_donation"("slug");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "roles_name_key" ON "roles"("name");
+
+-- AddForeignKey
+ALTER TABLE "donation_evidences" ADD CONSTRAINT "donation_evidences_donor_id_fkey" FOREIGN KEY ("donor_id") REFERENCES "donors"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
+
 -- AddForeignKey
 ALTER TABLE "donation_evidences" ADD CONSTRAINT "donation_evidences_program_id_fkey" FOREIGN KEY ("program_id") REFERENCES "program_donation"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
@@ -105,4 +135,8 @@ ALTER TABLE "donation_evidences" ADD CONSTRAINT "donation_evidences_program_id_f
 ALTER TABLE "profiles" ADD CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- AddForeignKey
+ALTER TABLE "profiles" ADD CONSTRAINT "profiles_role_id_fkey" FOREIGN KEY ("role_id") REFERENCES "roles"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+-- AddForeignKey
 ALTER TABLE "program_timeline" ADD CONSTRAINT "program_timeline_program_id_fkey" FOREIGN KEY ("program_id") REFERENCES "program_donation"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
+

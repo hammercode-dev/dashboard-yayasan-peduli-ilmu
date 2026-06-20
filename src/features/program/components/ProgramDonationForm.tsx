@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { format } from "date-fns"
@@ -23,22 +23,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import RichTextEditor from "@/components/common/rich-text-editor"
+import RichTextEditor, {
+  RichTextEditorRef,
+} from "@/components/common/rich-text-editor"
 import { CalendarPopover } from "@/components/common/calendar-popover"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 
 import {
   ProgramDonationFormData,
+  ProgramDonationFormInput,
   programDonationSchema,
 } from "../program.schemas"
 
 import {
   useCreateProgramDonationMutation,
+  useGetParentProgramsQuery,
   useGetProgramDonationByIdQuery,
   useUpdateProgramDonationMutation,
 } from "../program.api"
 
-import { STATUS_OPTIONS } from "../program.constants"
+import { PROGRAM_TYPE_OPTIONS, STATUS_OPTIONS } from "../program.constants"
 import { SkeletonForm } from "./SkeletonForm"
 
 import { formatRupiah } from "@/lib/format"
@@ -55,9 +59,15 @@ export default function ProgramDonationForm({
   type,
 }: ProgramDonationFormProps) {
   const router = useRouter()
+  const [isUploadPendingFile, setIsUploadPendingFile] = useState(false)
   const [description, setDescription] = useState("")
   const [descriptionEn, setDescriptionEn] = useState("")
   const [descriptionAr, setDescriptionAr] = useState("")
+  const descriptionRef = useRef<RichTextEditorRef>(null)
+  const descriptionEnRef = useRef<RichTextEditorRef>(null)
+  const descriptionArRef = useRef<RichTextEditorRef>(null)
+
+  // Hooks
   const [createProgramDonation, { isLoading: isLoadingCreate }] =
     useCreateProgramDonationMutation()
   const [updateProgramDonation, { isLoading: isLoadingUpdate }] =
@@ -71,10 +81,15 @@ export default function ProgramDonationForm({
     refetchOnMountOrArgChange: true,
   })
 
-  const methods = useForm<ProgramDonationFormData>({
+  const { data: parentProgramsData } = useGetParentProgramsQuery(undefined, {
+    skip: type === "edit" && isLoadingDetailProgramDonation,
+  })
+
+  const methods = useForm<ProgramDonationFormInput>({
     resolver: zodResolver(programDonationSchema),
     defaultValues: {
-      // program_timeline: [],
+      program_type: "parent",
+      parent_id: null,
     },
   })
 
@@ -89,11 +104,27 @@ export default function ProgramDonationForm({
     formState: { errors, dirtyFields },
   } = methods
 
-  // eslint-disable-next-line react-hooks/incompatible-library
   const target_amount = watch("target_amount")
-  const collected_amount = watch("collected_amount")
   const starts_at = watch("starts_at") ? new Date(watch("starts_at")) : null
   const ends_at = watch("ends_at") ? new Date(watch("ends_at")) : null
+  const programType = watch("program_type") ?? "parent"
+
+  const parentOptions =
+    parentProgramsData?.data?.parents
+      ?.map((p: { id: string | number; title: string }) => ({
+        id: String(p.id),
+        title: p.title,
+      }))
+      .filter((p: { id: string; title: string }) => p.id !== id) ?? []
+
+  const isChildProgram =
+    type === "edit" && detailProgramDonation?.parent_id != null
+  const hasChildren =
+    type === "edit" && (detailProgramDonation?.children?.length ?? 0) > 0
+  const isTypeLocked = type === "edit"
+
+  const noParentsAvailable =
+    programType === "child" && parentOptions.length === 0
 
   const generateSlug = useCallback((title: string) => {
     return title.toLowerCase().replace(/ /g, "-")
@@ -140,32 +171,12 @@ export default function ProgramDonationForm({
 
   useEffect(() => {
     if (detailProgramDonation) {
-      const rawTimeline =
-        (
-          detailProgramDonation as {
-            program_timeline?: Array<{
-              id?: string | number | bigint
-              date?: string | Date | null
-              activity?: string | null
-              activity_en?: string | null
-              activity_ar?: string | null
-              cost?: string | number | { toString: () => string } | null
-              description?: string | null
-            }>
-          }
-        ).program_timeline ?? []
-
-      const timelineRows = rawTimeline.map(row => ({
-        id: row.id != null ? String(row.id) : undefined,
-        date: row.date ? format(new Date(row.date), "yyyy-MM-dd") : "",
-        activity: row.activity ?? "",
-        activity_en: row.activity_en ?? "",
-        activity_ar: row.activity_ar ?? "",
-        cost: row.cost != null ? String(row.cost) : "",
-        description: row.description ?? "",
-      }))
-
+      const isChild = detailProgramDonation.parent_id != null
       reset({
+        program_type: isChild ? "child" : "parent",
+        parent_id: detailProgramDonation.parent_id
+          ? String(detailProgramDonation.parent_id)
+          : null,
         title: detailProgramDonation.title ?? "",
         title_en: detailProgramDonation.title_en ?? "",
         title_ar: detailProgramDonation.title_ar ?? "",
@@ -174,8 +185,6 @@ export default function ProgramDonationForm({
         location: detailProgramDonation.location ?? "",
         image_url: detailProgramDonation.image_url ?? "",
         target_amount: detailProgramDonation.target_amount?.toString() ?? "",
-        collected_amount:
-          detailProgramDonation.collected_amount?.toString() ?? "",
         starts_at: detailProgramDonation.starts_at
           ? format(new Date(detailProgramDonation.starts_at), "yyyy-MM-dd")
           : "",
@@ -188,29 +197,68 @@ export default function ProgramDonationForm({
         description: detailProgramDonation.description ?? "",
         description_en: detailProgramDonation.description_en ?? "",
         description_ar: detailProgramDonation.description_ar ?? "",
-        // program_timeline: timelineRows,
       })
       setDescription(detailProgramDonation.description ?? "")
       setDescriptionEn(detailProgramDonation.description_en ?? "")
       setDescriptionAr(detailProgramDonation.description_ar ?? "")
     }
-  }, [detailProgramDonation])
+  }, [detailProgramDonation, reset])
 
-  const onSubmit = async (data: ProgramDonationFormData) => {
+  const onSubmit = async (raw: ProgramDonationFormInput) => {
+    const data = programDonationSchema.parse(raw)
+    setIsUploadPendingFile(true)
     try {
+      const [descResult, descEnResult, descArResult] = await Promise.all([
+        descriptionRef.current?.uploadPendingFiles() ?? {
+          markdown: description,
+          success: true,
+        },
+        descriptionEnRef.current?.uploadPendingFiles() ?? {
+          markdown: descriptionEn,
+          success: true,
+        },
+        descriptionArRef.current?.uploadPendingFiles() ?? {
+          markdown: descriptionAr,
+          success: true,
+        },
+      ])
+
+      if (
+        !descResult.success ||
+        !descEnResult.success ||
+        !descArResult.success
+      ) {
+        toast.error("Gagal mengupload gambar, silakan coba lagi")
+        return
+      }
+
+      data.description = descResult.markdown
+      data.description_en = descEnResult.markdown
+      data.description_ar = descArResult.markdown
+
+      const payload: ProgramDonationFormData = {
+        ...data,
+        program_type: data.program_type ?? "parent",
+        parent_id:
+          data.program_type === "child" ? (data.parent_id ?? null) : null,
+      }
+
       if (type === "create") {
-        await createProgramDonation(data).unwrap()
+        await createProgramDonation(payload).unwrap()
         toast.success("Program donation created successfully")
       }
       if (type === "edit" && id) {
-        const changedData = getDirtyValues(dirtyFields, data)
-        // if (dirtyFields.program_timeline) {
-        //   changedData.program_timeline = data.program_timeline
-        // }
+        const changedData = getDirtyValues(dirtyFields, {
+          ...data,
+        })
 
+        console.log("Parent ID : ",  data.program_type === "child" ? (data.parent_id ?? null)  : null)
+        console.log("change data :", changedData)
         await updateProgramDonation({
           id: id as string,
           ...changedData,
+          program_type: data.program_type ?? "parent",
+          parent_id: data.program_type === "child" ? (data.parent_id ?? null)  : null
         }).unwrap()
 
         toast.success("Program donation updated successfully")
@@ -224,8 +272,12 @@ export default function ProgramDonationForm({
       }
       const message = apiError?.data?.message
       toast.error(message)
+    } finally {
+      setIsUploadPendingFile(false)
     }
   }
+
+  const isSaving = isUploadPendingFile || isLoadingCreate || isLoadingUpdate
 
   if (isLoadingDetailProgramDonation) {
     return <SkeletonForm />
@@ -234,14 +286,113 @@ export default function ProgramDonationForm({
   return (
     <FormProvider {...methods}>
       <form
-        onSubmit={handleSubmit(
-          data => onSubmit(data as ProgramDonationFormData),
-          () => toast.error("Periksa field yang wajib diisi")
+        onSubmit={handleSubmit(onSubmit, () =>
+          toast.error("Periksa field yang wajib diisi")
         )}
       >
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 lg:col-span-12">
             <div className="space-y-6">
+              <Card className="shadow-sm">
+                <CardHeader>
+                  <CardTitle>Tipe Program</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Field>
+                    <FieldContent>
+                      <div className="flex flex-wrap gap-2">
+                        {PROGRAM_TYPE_OPTIONS.map(option => (
+                          <Button
+                            key={option.value}
+                            type="button"
+                            variant={
+                              programType === option.value
+                                ? "default"
+                                : "outline"
+                            }
+                            disabled={isTypeLocked}
+                            onClick={() => {
+                              setValue("program_type", option.value, {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                              })
+                              if (option.value === "parent") {
+                                setValue("parent_id", null, {
+                                  shouldDirty: true,
+                                  shouldValidate: true,
+                                })
+                              }
+                            }}
+                          >
+                            {option.label}
+                          </Button>
+                        ))}
+                      </div>
+                      {isChildProgram && (
+                        <FieldDescription>
+                          Sub-program tidak dapat diubah menjadi program utama.
+                        </FieldDescription>
+                      )}
+                      {hasChildren && !isChildProgram && (
+                        <FieldDescription>
+                          Program utama yang memiliki sub-program tidak dapat
+                          diubah menjadi sub-program.
+                        </FieldDescription>
+                      )}
+                      {!isTypeLocked && programType === "child" && (
+                        <FieldDescription>
+                          Sub-program akan tampil di bawah program utama pada
+                          daftar program.
+                        </FieldDescription>
+                      )}
+                    </FieldContent>
+                  </Field>
+
+                  {programType === "child" && (
+                    <Field>
+                      <FieldLabel>
+                        Program Utama <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Controller
+                          name="parent_id"
+                          control={control}
+                          render={({ field }) => (
+                            <Select
+                              value={field.value ?? ""}
+                              onValueChange={val => field.onChange(val || null)}
+                              disabled={noParentsAvailable}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pilih program utama" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {parentOptions.map(
+                                  (parent: { id: string; title: string }) => (
+                                    <SelectItem
+                                      key={parent.id}
+                                      value={parent.id}
+                                    >
+                                      {parent.title}
+                                    </SelectItem>
+                                  )
+                                )}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                        <FieldError errors={[errors.parent_id]} />
+                        {noParentsAvailable && (
+                          <p className="text-sm text-destructive mt-1">
+                            Buat program utama terlebih dahulu.
+                          </p>
+                        )}
+                      </FieldContent>
+                    </Field>
+                  )}
+                </CardContent>
+              </Card>
+
               <Card className="shadow-sm">
                 <CardHeader>
                   <CardTitle>Judul Program</CardTitle>
@@ -374,10 +525,13 @@ export default function ProgramDonationForm({
                       </FieldLabel>
                       <FieldContent>
                         <RichTextEditor
+                          ref={descriptionRef}
                           value={description}
                           onChange={async markdown => {
                             setDescription(markdown)
-                            setValue("description", markdown)
+                            setValue("description", markdown, {
+                              shouldDirty: true,
+                            })
                             await trigger("description")
                           }}
                           placeholder="Masukkan deskripsi lengkap..."
@@ -394,10 +548,13 @@ export default function ProgramDonationForm({
                       </FieldLabel>
                       <FieldContent>
                         <RichTextEditor
+                          ref={descriptionEnRef}
                           value={descriptionEn}
                           onChange={async markdown => {
                             setDescriptionEn(markdown)
-                            setValue("description_en", markdown)
+                            setValue("description_en", markdown, {
+                              shouldDirty: true,
+                            })
                             await trigger("description_en")
                           }}
                           placeholder="Masukkan deskripsi lengkap dalam Bahasa Inggris..."
@@ -414,10 +571,13 @@ export default function ProgramDonationForm({
                       </FieldLabel>
                       <FieldContent>
                         <RichTextEditor
+                          ref={descriptionArRef}
                           value={descriptionAr}
                           onChange={async markdown => {
                             setDescriptionAr(markdown)
-                            setValue("description_ar", markdown)
+                            setValue("description_ar", markdown, {
+                              shouldDirty: true,
+                            })
                             await trigger("description_ar")
                           }}
                           placeholder="Masukkan deskripsi lengkap dalam Bahasa Arab..."
@@ -454,7 +614,7 @@ export default function ProgramDonationForm({
                       ))}
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2 mb-7">
+                  <div className="grid grid-cols-1 gap-5 mb-7">
                     <Field>
                       <FieldLabel>
                         Target Dana <span className="text-red-500">*</span>
@@ -474,36 +634,7 @@ export default function ProgramDonationForm({
                         <FieldError errors={[errors.target_amount]} />
                       </FieldContent>
                     </Field>
-
-                    <Field>
-                      <FieldLabel>
-                        Dana Terkumpul <span className="text-red-500">*</span>
-                      </FieldLabel>
-                      <FieldContent>
-                        <Input
-                          type="number"
-                          {...register("collected_amount")}
-                          placeholder="Rp. "
-                          aria-invalid={!!errors.collected_amount}
-                        />
-                        {collected_amount && (
-                          <div className="text-xs text-gray-600">
-                            {formatRupiah(Number(collected_amount))}
-                          </div>
-                        )}
-                        <FieldError errors={[errors.collected_amount]} />
-                      </FieldContent>
-                    </Field>
                   </div>
-                  {/* Progress Display */}
-                  {target_amount &&
-                    collected_amount &&
-                    Number(target_amount) > 0 && (
-                      <FundingProgress
-                        collected_amount={collected_amount}
-                        target_amount={target_amount}
-                      />
-                    )}
                 </CardContent>
               </Card>
 
@@ -685,13 +816,15 @@ export default function ProgramDonationForm({
             type="button"
             variant="outline"
             className="hover:cursor-pointer"
+            disabled={isSaving}
             onClick={() => router.back()}
           >
             Batal
           </Button>
           <Button
             type="submit"
-            loading={isLoadingCreate || isLoadingUpdate}
+            loading={isSaving}
+            disabled={isSaving || noParentsAvailable}
             className="hover:cursor-pointer font-bold"
           >
             {type === "create" ? "Buat Program" : "Perbarui Program"}

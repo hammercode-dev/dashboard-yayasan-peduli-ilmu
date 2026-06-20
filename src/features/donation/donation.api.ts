@@ -6,20 +6,21 @@ import { getDonationById, UpdateDonationEvidenceInput } from "./donation.dal"
 import { DonationStatsDataResponse } from "./donation.types"
 import { DonationFormData } from "./donation.schemas"
 
-const getAllParams = (params: { query?: string; page?: number }) => {
+const getAllParams = (params: { query?: string; page?: number; limit?: number }) => {
   const searchParams = new URLSearchParams()
   if (params.query != null) searchParams.set("query", params.query)
   if (params.page != null) searchParams.set("page", String(params.page))
+  if (params.limit != null) searchParams.set("limit", String(params.limit))
   return searchParams.toString()
 }
 
 export const donationApi = createApi({
   reducerPath: "donationApi",
   baseQuery: fetchBaseQuery({ baseUrl: "/api" }),
-  tagTypes: ["DonationEvidence"],
+  tagTypes: ["DonationEvidence", "DonationStats"],
   endpoints: builder => ({
     getDonationEvidences: builder.query({
-      query: (params: { query?: string; page?: number }) => {
+      query: (params: { query?: string; page?: number; limit?: number }) => {
         return { url: `/donation/donation-evidence?${getAllParams(params)}` }
       },
       providesTags: result => {
@@ -39,7 +40,7 @@ export const donationApi = createApi({
         url: `/donation/donation-evidence/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: [{ type: "DonationEvidence", id: "LIST" }],
+      invalidatesTags: [{ type: "DonationEvidence", id: "LIST" }, { type: "DonationStats", id: "STATS" }],
     }),
     createDonation: builder.mutation({
       query: (body: DonationFormData) => ({
@@ -47,7 +48,7 @@ export const donationApi = createApi({
         method: "POST",
         body,
       }),
-      invalidatesTags: [{ type: "DonationEvidence", id: "LIST" }],
+      invalidatesTags: [{ type: "DonationEvidence", id: "LIST" }, { type: "DonationStats", id: "STATS" }],
     }),
     getDonationById: builder.query({
       query: (id: string) => ({
@@ -55,7 +56,7 @@ export const donationApi = createApi({
         method: "GET",
       }),
       transformResponse: (
-        response: ApiResponse<Prisma.PromiseReturnType<typeof getDonationById>>
+        response
       ) => {
         return response.data
       },
@@ -66,10 +67,11 @@ export const donationApi = createApi({
         method: "PATCH",
         body,
       }),
-      invalidatesTags: [{ type: "DonationEvidence", id: "LIST" }],
+      invalidatesTags: [{ type: "DonationEvidence", id: "LIST" }, { type: "DonationStats", id: "STATS" }],
     }),
     getDonationStats: builder.query({
       query: () => "/donation/donation-evidence-stats",
+      providesTags: [{ type: "DonationStats", id: "STATS" }],
       transformResponse: (response: ApiResponse<DonationStatsDataResponse>) => {
         return response.data
       },

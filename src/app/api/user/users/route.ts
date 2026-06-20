@@ -16,16 +16,16 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const query = searchParams.get("query") ?? ""
     const page = Math.max(1, Number(searchParams.get("page")) || 1)
-
+    const limit = Math.max(1, Number(searchParams.get("limit")) || 10)
     const [users, total] = await Promise.all([
-      getUsers(query, page),
+      getUsers(query, page, limit),
       countUsers(query),
     ])
 
-    const totalPages = Math.ceil(total / TOTAL_USERS_PER_PAGE)
+    const totalPages = Math.ceil(total / limit)
     const meta: ApiMeta = {
       page,
-      limit: TOTAL_USERS_PER_PAGE,
+      limit,
       total,
       totalPages,
     }

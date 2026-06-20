@@ -16,14 +16,13 @@ import {
   useGetDonationEvidencesQuery,
 } from "../donation.api"
 
-import { useGetProgramDonationsQuery } from "@/features/program/program.api"
-
 import { getDonationColumns } from "../columns/donation-columns"
 
 export function DonationTable() {
   const { getParam, getNumberParam } = useQueryParams()
   const query = getParam("query")
   const page = getNumberParam("page", 1)
+  const limit = getNumberParam("limit", 10)
 
   const [showSuccess, setShowSuccess] = useState(false)
   const [lastDeletedDonation, setLastDeletedDonation] = useState("")
@@ -35,22 +34,10 @@ export function DonationTable() {
   const [deleteProgramDonation, { isLoading: isDeleting }] =
     useDeleteDonationEvidenceMutation()
 
-  const params = useMemo(
-    () => ({
-      query: "",
-      page: 1,
-      status: "all",
-    }),
-    []
-  )
-
-  const { refetch } = useGetProgramDonationsQuery(params, {
-    refetchOnMountOrArgChange: true,
-  })
-
   const { data, isFetching } = useGetDonationEvidencesQuery({
     query,
     page,
+    limit,
   })
   const totalPages = data?.meta?.totalPages ?? 0
 
@@ -71,7 +58,6 @@ export function DonationTable() {
     try {
       await deleteProgramDonation(deleteTarget.id).unwrap()
       setLastDeletedDonation(deleteTarget.fullName)
-      await refetch()
       setShowSuccess(true)
     } catch (err) {
       const apiError = err as {

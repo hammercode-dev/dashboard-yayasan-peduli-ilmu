@@ -114,11 +114,12 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
       await refetchPrograms()
 
       setStep("success")
-    } catch (error: any) {
-      console.log("Status:", error.status)
-      console.log("Data dari Server:", error.data)
+    } catch (error: unknown) {
+      const err = error as { status?: number; data?: { message?: string } }
+      console.log("Status:", err.status)
+      console.log("Data dari Server:", err.data)
 
-      const message = error?.data?.message || "Gagal mengimpor data"
+      const message = err?.data?.message ?? "Gagal mengimpor data"
       setErrorMessage(message)
       setStep("confirm")
     }

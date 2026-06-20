@@ -7,7 +7,14 @@ import Image from "@tiptap/extension-image"
 import Placeholder from "@tiptap/extension-placeholder"
 import Link from "@tiptap/extension-link"
 import TextAlign from "@tiptap/extension-text-align"
-import { useEffect, useRef, useCallback, useState } from "react"
+import {
+  useEffect,
+  useRef,
+  useCallback,
+  useState,
+  forwardRef,
+  useImperativeHandle,
+} from "react"
 import TurndownService from "turndown"
 import { marked } from "marked"
 import {
@@ -27,12 +34,25 @@ import {
   AlignCenter,
   AlignRight,
   AlignJustify,
+  Youtube as YoutubeIcon,
 } from "lucide-react"
 import { Button } from "../ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
+import {
+  validateProgramImageFile,
+  uploadProgramImage,
+  removeProgramImagesByPaths,
+  PROGRAM_IMAGE_UPLOAD_PREFIX,
+} from "@/lib/storage/program-images"
+import Youtube, { isValidYoutubeUrl } from "@tiptap/extension-youtube"
+
+export interface RichTextEditorRef {
+  uploadPendingFiles: () => Promise<{ markdown: string; success: boolean }>
+}
 
 interface RichTextEditorProps {
   value?: string
@@ -46,6 +66,51 @@ const turndownService = new TurndownService({
   headingStyle: "atx",
   codeBlockStyle: "fenced",
 })
+
+turndownService.addRule("image", {
+  filter: "img",
+  replacement: (_, node) => {
+    const el = node as HTMLImageElement
+    const alt = el.getAttribute("alt") ?? ""
+    const src = el.getAttribute("src") ?? ""
+    const storagePath = el.getAttribute("data-storage-path")
+
+    if (storagePath && storagePath !== "pending") {
+      return `![${alt}](${src} "storage:${storagePath}")`
+    }
+    return `![${alt}](${src})`
+  },
+})
+
+turndownService.addRule("youtubeEmbed", {
+  filter(node) {
+    return (
+      node.nodeName === "DIV" &&
+      (node as HTMLElement).hasAttribute("data-youtube-video")
+    )
+  },
+  replacement(_content, node) {
+    return `\n\n${(node as HTMLElement).outerHTML}\n\n`
+  },
+})
+
+function collectBucketPathsFromHtml(html: string): Set<string> {
+  const doc = new DOMParser().parseFromString(html, "text/html")
+  const paths = new Set<string>()
+  doc.querySelectorAll("img").forEach(img => {
+    let p = img.getAttribute("data-storage-path")
+    if (!p || p === "pending") {
+      const title = img.getAttribute("title")
+      if (title?.startsWith("storage:")) {
+        p = title.slice("storage:".length)
+      }
+    }
+    if (p && p !== "pending" && p.startsWith(PROGRAM_IMAGE_UPLOAD_PREFIX)) {
+      paths.add(p)
+    }
+  })
+  return paths
+}
 
 const ToolbarButton = ({
   onClick,
@@ -103,47 +168,61 @@ const ToolbarGroupPopover = ({
   </Popover>
 )
 
-const Toolbar = ({ editor }: { editor: Editor | null }) => {
+const Toolbar = ({
+  editor,
+  setPendingImages,
+}: {
+  editor: Editor | null
+  setPendingImages: React.Dispatch<
+    React.SetStateAction<Map<string, { file: File; blobUrl: string }>>
+  >
+}) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [linkPopoverOpen, setLinkPopoverOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState("")
+  const [youtubePopoverOpen, setYoutubePopoverOpen] = useState(false)
+  const [youtubeUrl, setYoutubeUrl] = useState("")
 
-  if (!editor) return null
+  const handleYoutubeOpen = useCallback(() => {
+    if (!editor) return
+    const previous = editor.getAttributes("youtube").src || ""
+    setYoutubeUrl(previous)
+    setYoutubePopoverOpen(true)
+  }, [editor])
 
-  // Helper function to check text align active state
-  const isTextAlignActive = (alignment: string) => {
-    const { textAlign } = editor.getAttributes("textAlign")
-    return textAlign === alignment
-  }
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = () => {
-      const base64 = reader.result as string
-      editor.chain().focus().setImage({ src: base64 }).run()
+  const handleYoutubeSubmit = useCallback(() => {
+    if (!editor) return
+    const trimmed = youtubeUrl.trim()
+    if (trimmed === "") {
+      setYoutubePopoverOpen(false)
+      setYoutubeUrl("")
+      return
     }
-    reader.readAsDataURL(file)
-
-    // Reset input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
+    const url =
+      trimmed.startsWith("http://") || trimmed.startsWith("https://")
+        ? trimmed
+        : `https://${trimmed}`
+    if (!isValidYoutubeUrl(url)) {
+      toast.error("URL YouTube tidak valid.")
+      return
     }
-  }
+    editor.chain().focus().setYoutubeVideo({ src: url }).run()
+    setYoutubePopoverOpen(false)
+    setYoutubeUrl("")
+  }, [editor, youtubeUrl])
 
   const handleLinkOpen = useCallback(() => {
+    if (!editor) return
     const previousUrl = editor.getAttributes("link").href || ""
     setLinkUrl(previousUrl)
     setLinkPopoverOpen(true)
   }, [editor])
 
   const handleLinkSubmit = useCallback(() => {
+    if (!editor) return
     if (linkUrl === "") {
       editor.chain().focus().extendMarkRange("link").unsetLink().run()
     } else {
-      // Add https:// if no protocol is present
       const url =
         linkUrl.startsWith("http://") || linkUrl.startsWith("https://")
           ? linkUrl
@@ -161,10 +240,50 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
   }, [editor, linkUrl])
 
   const handleLinkRemove = useCallback(() => {
+    if (!editor) return
     editor.chain().focus().extendMarkRange("link").unsetLink().run()
     setLinkPopoverOpen(false)
     setLinkUrl("")
   }, [editor])
+
+  if (!editor) return null
+
+  const isTextAlignActive = (alignment: string) => {
+    const { textAlign } = editor.getAttributes("textAlign")
+    return textAlign === alignment
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const validation = validateProgramImageFile(file)
+    if (!validation.ok) {
+      toast.error(validation.message)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+      return
+    }
+
+    const blobUrl = URL.createObjectURL(file)
+
+    editor
+      .chain()
+      .focus()
+      .setImage({
+        src: blobUrl,
+        "data-storage-path": "pending",
+        "data-pending-id": blobUrl,
+      } as { src: string; "data-storage-path": string; "data-pending-id": string })
+      .run()
+
+    setPendingImages(prev => new Map(prev).set(blobUrl, { file, blobUrl }))
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
 
   const formatButtons = (
     <>
@@ -334,9 +453,62 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
     </Popover>
   )
 
+  const insertYoutubeButton = (
+    <Popover open={youtubePopoverOpen} onOpenChange={setYoutubePopoverOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          onClick={handleYoutubeOpen}
+          className={cn(
+            "p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed",
+            editor.isActive("youtube")
+              ? "bg-primary text-primary-foreground"
+              : "hover:bg-gray-100"
+          )}
+          title="Sisipkan video YouTube"
+        >
+          <YoutubeIcon size={18} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80" align="start">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="youtube-url">URL YouTube</Label>
+            <Input
+              id="youtube-url"
+              type="url"
+              placeholder="https://www.youtube.com/watch?v=..."
+              value={youtubeUrl}
+              onChange={e => setYoutubeUrl(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  handleYoutubeSubmit()
+                }
+                if (e.key === "Escape") {
+                  setYoutubePopoverOpen(false)
+                }
+              }}
+              autoFocus
+            />
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleYoutubeSubmit}
+            className="w-full"
+          >
+            Sisipkan
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+
   const insertImageButton = (
     <>
       {insertLinkButton}
+      {insertYoutubeButton}
       <ToolbarButton
         onClick={() => fileInputRef.current?.click()}
         title="Insert Image"
@@ -416,85 +588,236 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
   )
 }
 
-const RichTextEditor = ({
-  value = "",
-  onChange,
-  placeholder = "Start typing...",
-  "aria-invalid": ariaInvalid,
-  textAlign = "left",
-}: RichTextEditorProps) => {
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Underline,
-      Image.configure({
-        inline: true,
-        allowBase64: true,
-      }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: "text-blue-500 underline cursor-pointer",
+const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>(
+  (
+    {
+      value = "",
+      onChange,
+      placeholder = "Start typing...",
+      "aria-invalid": ariaInvalid,
+      textAlign = "left",
+    },
+    ref
+  ) => {
+    const [pendingImages, setPendingImages] = useState<
+      Map<string, { file: File; blobUrl: string }>
+    >(new Map())
+    const pendingImagesRef = useRef(pendingImages)
+    const previousBucketPathsRef = useRef<Set<string>>(new Set())
+
+    useEffect(() => {
+      pendingImagesRef.current = pendingImages
+    }, [pendingImages])
+
+    useEffect(() => {
+      return () => {
+        pendingImagesRef.current.forEach(({ blobUrl }) =>
+          URL.revokeObjectURL(blobUrl)
+        )
+      }
+    }, [])
+
+    const editor = useEditor({
+      extensions: [
+        StarterKit,
+        Underline,
+        Youtube.configure({
+          controls: false,
+          nocookie: true,
+          HTMLAttributes: {
+            loading: "eager",
+          },
+        }),
+        Image.extend({
+          addAttributes() {
+            return {
+              ...this.parent?.(),
+              "data-storage-path": {
+                default: null,
+                parseHTML: element => {
+                  const fromAttr = element.getAttribute("data-storage-path")
+                  if (fromAttr) return fromAttr
+                  const title = element.getAttribute("title")
+                  if (title?.startsWith("storage:")) {
+                    return title.slice("storage:".length)
+                  }
+                  return null
+                },
+                renderHTML: attributes => {
+                  if (!attributes["data-storage-path"]) return {}
+                  return {
+                    "data-storage-path": attributes["data-storage-path"],
+                  }
+                },
+              },
+              "data-pending-id": {
+                default: null,
+                parseHTML: element => element.getAttribute("data-pending-id"),
+                renderHTML: attributes => {
+                  if (!attributes["data-pending-id"]) return {}
+                  return { "data-pending-id": attributes["data-pending-id"] }
+                },
+              },
+            }
+          },
+        }).configure({
+          inline: true,
+          allowBase64: true,
+        }),
+        Link.configure({
+          openOnClick: false,
+          HTMLAttributes: {
+            class: "text-blue-500 underline cursor-pointer",
+          },
+        }),
+        TextAlign.configure({
+          types: ["heading", "paragraph"],
+          defaultAlignment: textAlign || "left",
+        }),
+        Placeholder.configure({
+          placeholder,
+          emptyEditorClass: "is-editor-empty",
+        }),
+      ],
+      content: "",
+      // Don't render immediately on the server to avoid SSR issues
+      immediatelyRender: false,
+      onUpdate: ({ editor }) => {
+        const html = editor.getHTML()
+        const markdown = turndownService.turndown(html)
+        onChange?.(markdown)
+
+        const currentBucketPaths = collectBucketPathsFromHtml(html)
+        const prevBucketPaths = previousBucketPathsRef.current
+        const removedFromBucket = [...prevBucketPaths].filter(
+          p => !currentBucketPaths.has(p)
+        )
+        if (removedFromBucket.length > 0) {
+          void removeProgramImagesByPaths(removedFromBucket)
+        }
+        previousBucketPathsRef.current = new Set(currentBucketPaths)
+
+        const currentBlobSrcs = new Set<string>()
+        const doc = new DOMParser().parseFromString(html, "text/html")
+        doc.querySelectorAll("img").forEach(img => {
+          const s = img.getAttribute("src") ?? ""
+          if (s.startsWith("blob:")) currentBlobSrcs.add(s)
+        })
+
+        setPendingImages(prev => {
+          let next = prev
+          let changed = false
+          for (const [blobUrl, entry] of prev) {
+            if (!currentBlobSrcs.has(blobUrl)) {
+              if (!changed) {
+                next = new Map(prev)
+                changed = true
+              }
+              URL.revokeObjectURL(entry.blobUrl)
+              next.delete(blobUrl)
+            }
+          }
+          return changed ? next : prev
+        })
+      },
+    })
+
+    useEffect(() => {
+      if (editor && value !== undefined) {
+        const currentMarkdown = turndownService.turndown(editor.getHTML())
+
+        if (currentMarkdown !== value) {
+          const html = marked.parse(value, { async: false }) as string
+          editor.commands.setContent(html, { emitUpdate: false })
+          previousBucketPathsRef.current = collectBucketPathsFromHtml(
+            editor.getHTML()
+          )
+        }
+      }
+    }, [editor, value])
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        uploadPendingFiles: async () => {
+          if (!editor) {
+            return { markdown: "", success: true }
+          }
+
+          const snapshot = new Map(pendingImagesRef.current)
+          const rawHtml = editor.getHTML()
+          const doc = new DOMParser().parseFromString(rawHtml, "text/html")
+
+          try {
+            for (const img of doc.querySelectorAll("img")) {
+              const src = img.getAttribute("src") ?? ""
+              if (!src.startsWith("blob:")) continue
+              const pending = snapshot.get(src)
+              if (!pending) continue
+
+              const result = await uploadProgramImage(pending.file)
+              if (!result.ok) {
+                toast.error(result.message)
+                return { markdown: "", success: false }
+              }
+              img.setAttribute("src", result.publicUrl)
+              img.setAttribute("data-storage-path", result.path)
+              img.removeAttribute("data-pending-id")
+              URL.revokeObjectURL(pending.blobUrl)
+              snapshot.delete(src)
+            }
+
+            snapshot.forEach(({ blobUrl }) => URL.revokeObjectURL(blobUrl))
+            setPendingImages(new Map())
+
+            const finalHtml = doc.body.innerHTML
+            const markdown = turndownService.turndown(finalHtml)
+
+            editor.commands.setContent(finalHtml, { emitUpdate: false })
+            onChange?.(markdown)
+            previousBucketPathsRef.current = collectBucketPathsFromHtml(
+              editor.getHTML()
+            )
+
+            return { markdown, success: true }
+          } catch {
+            return { markdown: "", success: false }
+          }
         },
       }),
-      TextAlign.configure({
-        types: ["heading", "paragraph"],
-        defaultAlignment: textAlign || "left",
-      }),
-      Placeholder.configure({
-        placeholder,
-        emptyEditorClass: "is-editor-empty",
-      }),
-    ],
-    content: "",
-    // Don't render immediately on the server to avoid SSR issues
-    immediatelyRender: false,
-    onUpdate: ({ editor }) => {
-      const html = editor.getHTML()
-      const markdown = turndownService.turndown(html)
-      onChange?.(markdown)
-    },
-  })
-
-  useEffect(() => {
-    if (editor && value !== undefined) {
-      const currentMarkdown = turndownService.turndown(editor.getHTML())
-
-      if (currentMarkdown !== value) {
-        const html = marked.parse(value, { async: false }) as string
-        editor.commands.setContent(html, { emitUpdate: false })
-      }
+      [editor, onChange]
+    )
+    if (!editor) {
+      return (
+        <div className="border border-gray-200 rounded-md p-4 animate-pulse">
+          <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+        </div>
+      )
     }
-  }, [editor, value])
 
-  if (!editor) {
     return (
-      <div className="border border-gray-200 rounded-md p-4 animate-pulse">
-        <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
-        <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+      <div
+        role="textbox"
+        aria-invalid={ariaInvalid}
+        className={cn(
+          "border rounded-md overflow-hidden transition-[border-color] outline-none",
+          "border-input focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
+          "aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40"
+        )}
+      >
+        <Toolbar editor={editor} setPendingImages={setPendingImages} />
+        <div className="overflow-y-auto h-[300px] px-4">
+          <div className="prose prose-sm max-w-none min-h-[200px] prose-p:my-2 prose-headings:font-semibold prose-headings:mt-2 prose-headings:mb-2 prose-h1:text-2xl prose-h2:text-xl prose-ul:list-disc prose-li:my-1 prose-a:text-blue-500 hover:prose-a:underline [&_[data-youtube-video]]:w-full [&_[data-youtube-video]_iframe]:block [&_[data-youtube-video]_iframe]:aspect-video [&_[data-youtube-video]_iframe]:h-auto [&_[data-youtube-video]_iframe]:w-full **:focus:outline-none">
+            <EditorContent editor={editor} />
+          </div>
+        </div>
       </div>
     )
   }
+)
 
-  return (
-    <div
-      role="textbox"
-      aria-invalid={ariaInvalid}
-      className={cn(
-        "border rounded-md overflow-hidden transition-[border-color] outline-none",
-        "border-input focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
-        "aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40"
-      )}
-    >
-      <Toolbar editor={editor} />
-      <div className="overflow-y-auto h-[300px] px-4">
-        <div className="prose prose-sm max-w-none min-h-[200px] prose-p:my-2 prose-headings:font-semibold prose-headings:mt-2 prose-headings:mb-2 prose-h1:text-2xl prose-h2:text-xl prose-ul:list-disc prose-li:my-1 prose-a:text-blue-500 hover:prose-a:underline [&_*]:focus:outline-none">
-          <EditorContent editor={editor} />
-        </div>
-      </div>
-    </div>
-  )
-}
+RichTextEditor.displayName = "RichTextEditor"
 
 export default RichTextEditor

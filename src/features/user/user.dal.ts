@@ -6,13 +6,12 @@ import { prisma } from "@/lib/client"
 import { verifySession } from "@/lib/session"
 import { requireSuperAdmin } from "@/lib/authorization"
 
-import { TOTAL_USERS_PER_PAGE } from "@/constants/data"
 import { CreateUserFormData, UpdateUserFormData } from "./user.schemas"
 
-export const getUsers = cache(async (query: string, currentPage: number) => {
+export const getUsers = cache(async (query: string, currentPage: number, limit: number) => {
   await verifySession()
 
-  const offset = (currentPage - 1) * TOTAL_USERS_PER_PAGE
+  const offset = (currentPage - 1) * limit
   const normalizedQuery = query.trim()
   const where =
     normalizedQuery.length > 0
@@ -56,7 +55,7 @@ export const getUsers = cache(async (query: string, currentPage: number) => {
       },
     },
 
-    take: TOTAL_USERS_PER_PAGE,
+    take: limit,
     skip: offset,
     orderBy: { created_at: "desc" },
   })

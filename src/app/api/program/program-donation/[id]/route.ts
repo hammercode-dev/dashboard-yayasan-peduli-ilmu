@@ -1,6 +1,7 @@
 import {
   deleteProgramDonation,
   getProgramDonationById,
+  ProgramDonationValidationError,
   updateProgramDonation,
 } from "@/features/program/program.dal"
 import { updateProgramDonationSchema } from "@/features/program/program.schemas"
@@ -50,6 +51,14 @@ export async function DELETE(
     return NextResponse.json(body, { status: 200 })
   } catch (err) {
     console.error("[DELETE /api/program/program-donation]", err)
+    if (err instanceof ProgramDonationValidationError) {
+      const body: ApiResponse<void> = {
+        success: false,
+        message: err.message,
+        error: { code: "VALIDATION_ERROR", details: err.message },
+      }
+      return NextResponse.json(body, { status: 400 })
+    }
     const body: ApiResponse<void> = {
       success: false,
       message: "Failed to delete program donation",
@@ -91,6 +100,14 @@ export async function PATCH(
     return NextResponse.json(resBody, { status: 200 })
   } catch (err) {
     console.error("[PATCH /api/program/program-donation]", err)
+    if (err instanceof ProgramDonationValidationError) {
+      const body: ApiResponse<void> = {
+        success: false,
+        message: err.message,
+        error: { code: "VALIDATION_ERROR", details: err.message },
+      }
+      return NextResponse.json(body, { status: 400 })
+    }
     const body: ApiResponse<void> = {
       success: false,
       message: "Failed to update program donation",

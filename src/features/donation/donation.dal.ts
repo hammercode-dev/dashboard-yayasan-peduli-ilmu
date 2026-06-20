@@ -1,48 +1,76 @@
 import "server-only"
 import { cache } from "react"
 
+import type { Prisma } from "@/generated/prisma"
 import { prisma } from "@/lib/client"
 import { verifySession } from "@/lib/session"
 
-import { TOTAL_DONATIONS_PER_PAGE } from "@/constants/data"
-
 import {
-  DonationEvidenceFormData,
+  DonationEvidenceBulkRowData,
+  CreateDonationEvidenceFormData,
   UpdateDonationFormData,
 } from "./donation.schemas"
+import {
+  normalizePhone,
+  resolveDonorIdForDonation,
+} from "@/features/donor/donor.dal"
 
 export interface UpdateDonationEvidenceInput extends Partial<UpdateDonationFormData> {
   id: string
 }
 
+const DONOR_LIST_SELECT = {
+  id: true,
+  name: true,
+  phone_number: true,
+  email: true,
+} satisfies Prisma.donorsSelect
+
+function buildDonationEvidenceWhere(
+  query: string
+): Prisma.donation_evidencesWhereInput {
+  const q = query.trim()
+  if (q.length === 0) return {}
+  return {
+    OR: [
+      {
+        donors: {
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { phone_number: { contains: q, mode: "insensitive" } },
+            { email: { contains: q, mode: "insensitive" } },
+          ],
+        },
+      },
+      {
+        program_donation: {
+          title: { contains: q, mode: "insensitive" },
+        },
+      },
+    ],
+  }
+}
+
 export const getDonationEvidences = cache(
-  async (query: string, currentPage: number) => {
+  async (query: string, currentPage: number, limit: number) => {
     await verifySession()
 
-    const offset = (currentPage - 1) * TOTAL_DONATIONS_PER_PAGE
+    const offset = (currentPage - 1) * limit
 
     return prisma.donation_evidences.findMany({
-      where: {
-        OR: [
-          { full_name: { contains: query || "", mode: "insensitive" } },
-          {
-            program_donation: {
-              title: { contains: query || "", mode: "insensitive" },
-            },
-          },
-        ],
-      },
+      where: buildDonationEvidenceWhere(query),
       include: {
+        donors: { select: DONOR_LIST_SELECT },
         program_donation: {
           select: {
             id: true,
             title: true,
-            collected_amount: true,
+            // collected_amount: true,
           },
         },
       },
 
-      take: TOTAL_DONATIONS_PER_PAGE,
+      take: limit,
       skip: offset,
       orderBy: { created_at: "desc" },
     })
@@ -53,9 +81,7 @@ export const countDonationEvidences = cache(async (query: string) => {
   await verifySession()
 
   return prisma.donation_evidences.count({
-    where: {
-      full_name: { contains: query || "", mode: "insensitive" },
-    },
+    where: buildDonationEvidenceWhere(query),
   })
 })
 
@@ -79,9 +105,9 @@ export async function deleteDonationEvidence(id: bigint) {
       await tx.program_donation.update({
         where: { id: donation.program_id },
         data: {
-          collected_amount: {
-            decrement: donation.amount,
-          },
+          // collected_amount: {
+          //   decrement: donation.amount,
+          // },
         },
       })
     }
@@ -90,7 +116,9 @@ export async function deleteDonationEvidence(id: bigint) {
   })
 }
 
-export async function createDonationEvidence(input: DonationEvidenceFormData) {
+export async function createDonationEvidence(
+  input: CreateDonationEvidenceFormData
+) {
   await verifySession()
 
   return await prisma.$transaction(async tx => {
@@ -112,22 +140,30 @@ export async function createDonationEvidence(input: DonationEvidenceFormData) {
     await tx.program_donation.update({
       where: { id: programId },
       data: {
-        collected_amount: {
-          increment: amount,
-        },
+        // collected_amount: {
+        //   increment: amount,
+        // },
       },
     })
 
+    const donorId = BigInt(input.donor_id)
+    const donor = await tx.donors.findUnique({
+      where: { id: donorId },
+      select: { id: true },
+    })
+    if (!donor) {
+      throw new Error("Donor not found")
+    }
+
     const donation = await tx.donation_evidences.create({
       data: {
-        full_name: input.full_name,
-        phone_number: input.phone_number,
         payment_method: input.payment_method,
         amount: amount,
         donation_upload_at: new Date(input.donation_upload_at),
         program_id: programId,
         evidence_url: input.evidence_url,
         description: input.description,
+        donor_id: donorId,
       },
     })
 
@@ -141,11 +177,12 @@ export const getDonationById = cache(async (id: bigint) => {
   return prisma.donation_evidences.findUnique({
     where: { id },
     include: {
+      donors: { select: DONOR_LIST_SELECT },
       program_donation: {
         select: {
           id: true,
           title: true,
-          collected_amount: true,
+          // collected_amount: true,
         },
       },
     },
@@ -158,17 +195,75 @@ export async function updateDonationEvidence(
   await verifySession()
 
   const { id, ...fields } = input
+  const idBig = BigInt(id)
 
-  return prisma.donation_evidences.update({
-    where: { id: BigInt(id) },
-    data: {
-      ...fields,
-      ...(fields.donation_upload_at
-        ? { donation_upload_at: new Date(fields.donation_upload_at) }
-        : {}),
-      program_id: Number(fields.program_id),
-      updated_at: new Date(),
-    },
+  return prisma.$transaction(async tx => {
+    const existing = await tx.donation_evidences.findUnique({
+      where: { id: idBig },
+      include: { donors: true },
+    })
+    if (!existing || !existing.donors) {
+      throw new Error("Donation evidence not found")
+    }
+
+    let donorId = existing.donor_id
+    const linkedDonor = existing.donors
+
+    const phoneChanged =
+      fields.phone_number !== undefined &&
+      normalizePhone(fields.phone_number) !==
+        normalizePhone(linkedDonor.phone_number)
+
+    if (phoneChanged) {
+      donorId = await resolveDonorIdForDonation(tx, {
+        name: fields.full_name ?? linkedDonor.name ?? "",
+        phone_number: fields.phone_number!,
+        email: fields.email !== undefined ? fields.email : linkedDonor.email,
+      })
+    } else {
+      const donorUpdate: Pick<Prisma.donorsUpdateInput, "name" | "email"> = {}
+      if (fields.full_name !== undefined) {
+        donorUpdate.name = fields.full_name
+      }
+      if (fields.email !== undefined) {
+        const t = fields.email?.trim()
+        donorUpdate.email = t && t.length > 0 ? t : null
+      }
+      if (Object.keys(donorUpdate).length > 0) {
+        await tx.donors.update({
+          where: { id: existing.donor_id },
+          data: donorUpdate,
+        })
+      }
+    }
+
+    return tx.donation_evidences.update({
+      where: { id: idBig },
+      data: {
+        ...(fields.payment_method !== undefined
+          ? { payment_method: fields.payment_method }
+          : {}),
+        ...(fields.amount !== undefined
+          ? { amount: Number(fields.amount) }
+          : {}),
+        ...(fields.evidence_url !== undefined
+          ? { evidence_url: fields.evidence_url }
+          : {}),
+        ...(fields.description !== undefined
+          ? { description: fields.description }
+          : {}),
+        ...(fields.donation_upload_at !== undefined
+          ? {
+              donation_upload_at: new Date(fields.donation_upload_at),
+            }
+          : {}),
+        ...(fields.program_id !== undefined
+          ? { program_id: Number(fields.program_id) }
+          : {}),
+        donor_id: donorId,
+        updated_at: new Date(),
+      },
+    })
   })
 }
 
@@ -192,7 +287,9 @@ export const getDonationEvidenceStats = cache(async () => {
   }
 })
 
-export async function bulkCreateDonationEvidence(rows: DonationEvidenceFormData[]) {
+export async function bulkCreateDonationEvidence(
+  rows: DonationEvidenceBulkRowData[]
+) {
   if (rows.length === 0) throw new Error("File kosong")
 
   const donationsData = rows.map((row, index) => {
@@ -200,23 +297,46 @@ export async function bulkCreateDonationEvidence(rows: DonationEvidenceFormData[
     if (isNaN(amount) || amount <= 0) {
       throw new Error(`Baris ${index + 1}: amount tidak valid`)
     }
+    const emailTrim = row.email?.trim()
     return {
       full_name: row.full_name,
-      phone_number: row.phone_number,
+      phone_number: normalizePhone(row.phone_number),
       payment_method: row.payment_method,
       amount,
       donation_upload_at: new Date(),
       program_id: Number(row.program_id),
       evidence_url: row.evidence_url,
       description: row.description,
+      email: emailTrim && emailTrim.length > 0 ? emailTrim : null,
     }
   })
 
   return await prisma.$transaction(
     async tx => {
-      // check if program IDs exist
+      const donorIdByPhone = new Map<string, bigint>()
+      for (const row of donationsData) {
+        const key = row.phone_number
+        if (donorIdByPhone.has(key)) continue
+        const id = await resolveDonorIdForDonation(tx, {
+          name: row.full_name,
+          phone_number: row.phone_number,
+          email: row.email,
+        })
+        donorIdByPhone.set(key, id)
+      }
+
+      const rowsWithDonor = donationsData.map(d => ({
+        donor_id: donorIdByPhone.get(d.phone_number)!,
+        payment_method: d.payment_method,
+        amount: d.amount,
+        donation_upload_at: d.donation_upload_at,
+        program_id: d.program_id,
+        evidence_url: d.evidence_url ?? null,
+        description: d.description ?? null,
+      }))
+
       const uniqueProgramIds = [
-        ...new Set(donationsData.map(d => d.program_id)),
+        ...new Set(rowsWithDonor.map(d => d.program_id)),
       ]
       const programs = await tx.program_donation.findMany({
         where: { id: { in: uniqueProgramIds } },
@@ -227,8 +347,7 @@ export async function bulkCreateDonationEvidence(rows: DonationEvidenceFormData[
         throw new Error("Beberapa Program ID tidak ditemukan di database")
       }
 
-      // calculate total amount per program
-      const programTotals = donationsData.reduce(
+      const programTotals = rowsWithDonor.reduce(
         (acc, curr) => {
           acc[curr.program_id] = (acc[curr.program_id] || 0) + curr.amount
           return acc
@@ -236,24 +355,24 @@ export async function bulkCreateDonationEvidence(rows: DonationEvidenceFormData[
         {} as Record<number, number>
       )
 
-      // update collected_amount untuk setiap program
       const sortedIds = uniqueProgramIds.sort((a, b) => a - b)
       for (const id of sortedIds) {
         await tx.program_donation.update({
           where: { id },
-          data: { collected_amount: { increment: programTotals[id] } },
+          data: {
+            // collected_amount: { increment: programTotals[id] },
+          },
         })
       }
 
-      // bulk insert donation evidences
       const result = await tx.donation_evidences.createMany({
-        data: donationsData,
+        data: rowsWithDonor,
       })
 
       return { inserted: result.count }
     },
     {
-      timeout: 10000, // set timeout might be needed for large files
+      timeout: 10000,
     }
   )
 }

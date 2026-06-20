@@ -189,7 +189,7 @@ function ProgramRow({
       </TableCell> */}
       <TableCell>
         <ProgressCell
-          collected={Number(row.total_collected_amount) || 0}
+          collected={Number(row.collected_amount) || 0}
           target={Number(row.target_amount) || 0}
         />
       </TableCell>

@@ -23,9 +23,7 @@ function buildListWhere(query: string, status: string) {
   return {
     parent_id: null,
     title: { contains: query || "", mode: "insensitive" as const },
-    ...(status && status !== "all"
-      ? { status: status as DonationStatus }
-      : {}),
+    ...(status && status !== "all" ? { status: status as DonationStatus } : {}),
   }
 }
 
@@ -118,21 +116,20 @@ export const getProgramDonations = cache(
     const collectedMap = new Map(
       collectedAmounts.map(c => [c.program_id, Number(c._sum.amount) || 0])
     )
-    
 
     return programs.map(program => {
       const parentAmount = collectedMap.get(program.id) || 0
-    
+
       const children = program.children.map(child => ({
         ...child,
         collected_amount: collectedMap.get(child.id) || 0,
       }))
-    
+
       const childrenAmount = children.reduce(
         (sum, child) => sum + child.collected_amount,
         0
       )
-    
+
       return {
         ...program,
         collected_amount: parentAmount + childrenAmount,
@@ -180,13 +177,59 @@ export const getProgramDonationById = cache(async (id: bigint) => {
     collectedAmounts.map(c => [c.program_id, Number(c._sum.amount) || 0])
   )
 
+  const children = program.children.map(child => ({
+    ...child,
+    collected_amount: collectedMap.get(child.id) || 0,
+  }))
+
+  const donorTotals = await prisma.donation_evidences.groupBy({
+    by: ["donor_id"],
+    where: { program_id: { in: allIds } },
+    _sum: { amount: true },
+    _count: { id: true },
+  })
+
+  const donorIds = donorTotals.map(d => d.donor_id)
+  const donors = await prisma.donors.findMany({
+    where: { id: { in: donorIds } },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone_number: true,
+    },
+  })
+
+  const donorMap = new Map(donors.map(d => [d.id, d]))
+
+  const donorsWithTotals = donorTotals.map(d => {
+    const donor = donorMap.get(d.donor_id)
+    return {
+      donor_id: d.donor_id,
+      total_amount: Number(d._sum.amount) || 0,
+      donation_count: d._count.id,
+      donor: donor
+        ? {
+            id: donor.id,
+            name: donor.name,
+            email: donor.email,
+            phone_number: donor.phone_number,
+          }
+        : null,
+    }
+  })
+
+  donorsWithTotals.sort((a, b) => b.total_amount - a.total_amount)
+
+  const collected_amount =
+    (collectedMap.get(program.id) || 0) +
+    children.reduce((total, child) => total + child.collected_amount, 0)
+
   return {
     ...program,
-    collected_amount: collectedMap.get(program.id) || 0,
-    children: program.children.map(child => ({
-      ...child,
-      collected_amount: collectedMap.get(child.id) || 0,
-    })),
+    collected_amount,
+    children,
+    donors: donorsWithTotals,
   }
 })
 
@@ -374,13 +417,12 @@ export const getAllProgramDonations = cache(async (query: string) => {
 })
 
 export const getProgramCollectedAmount = cache(async (programId: bigint) => {
-    await verifySession()
+  await verifySession()
 
-    const result = await
-  prisma.donation_evidences.aggregate({
-      where: { program_id: programId },
-      _sum: { amount: true },
-    })
-
-    return result._sum.amount ?? 0
+  const result = await prisma.donation_evidences.aggregate({
+    where: { program_id: programId },
+    _sum: { amount: true },
   })
+
+  return result._sum.amount ?? 0
+})

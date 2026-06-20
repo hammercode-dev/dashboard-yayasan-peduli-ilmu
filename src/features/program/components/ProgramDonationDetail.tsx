@@ -24,6 +24,9 @@ import {
   Users,
   Edit,
   Link as LinkIcon,
+  Mail,
+  Phone,
+  Dot,
 } from "lucide-react"
 
 import { StatusBadge } from "./StatusBadge"
@@ -197,7 +200,9 @@ export default function ProgramDonationDetail({ id }: { id: string }) {
                           </Link>
                           <div className="mt-1">
                             <StatusBadge
-                              status={(child.status as DonationStatus) ?? "draft"}
+                              status={
+                                (child.status as DonationStatus) ?? "draft"
+                              }
                             />
                           </div>
                         </div>
@@ -273,7 +278,53 @@ export default function ProgramDonationDetail({ id }: { id: string }) {
                 </TabsContent>
 
                 <TabsContent value="donatur" className="p-5">
-                  <EmptyState label="Belum ada donatur" />
+                  {data?.donors && data.donors.length > 0 ? (
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium text-zinc-500">
+                        {data.donors.length} donatur
+                      </p>
+                      <ul className="divide-y">
+                        {data.donors.map(item => (
+                          <li
+                            key={String(item.donor_id)}
+                            className="flex items-start gap-4 py-4 first:pt-0 last:pb-0"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="font-medium text-zinc-800 truncate">
+                                  {item.donor?.name || "Anonim"}
+                                </p>
+                                <p className="font-bold text-emerald-600 whitespace-nowrap">
+                                  {formatRupiah(item.total_amount)}
+                                </p>
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
+                                {item.donor?.email && (
+                                  <span className="inline-flex items-center gap-1 text-xs text-zinc-400">
+                                    <Mail className="size-3" />
+                                    {item.donor.email}
+                                  </span>
+                                )}
+                                {item.donor?.phone_number && (
+                                  <span className="inline-flex items-center gap-1 text-xs text-zinc-400">
+                                    <Phone className="size-3" />
+                                    {item.donor.phone_number}
+                                  </span>
+                                )}
+                                <span className="inline-flex items-center gap-1 text-xs text-zinc-400">
+                                  <Dot className="size-3" />
+                                  {item.donation_count}x donasi
+                                </span>
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <EmptyState label="Belum ada donatur" />
+                  )}
                 </TabsContent>
               </Tabs>
             </div>

@@ -19,6 +19,20 @@ export interface ProgramDonationChildSummary {
   created_at?: string
 }
 
+export interface DonorInfo {
+  id: string
+  name: string
+  email: string | null
+  phone_number: string
+}
+
+export interface ProgramDonorItem {
+  donor_id: string
+  total_amount: number
+  donation_count: number
+  donor: DonorInfo | null
+}
+
 export interface ProgramDonationListItem {
   id: string
   title: string

@@ -4,9 +4,9 @@ import {
   countProgramDonations,
   createProgramDonation,
   getProgramDonations,
+  ProgramDonationValidationError,
 } from "@/features/program/program.dal"
 import { programDonationSchema } from "@/features/program/program.schemas"
-import { TOTAL_PROGRAMS_PER_PAGE } from "@/constants/data"
 import type { ApiResponse, ApiMeta } from "@/lib/response"
 import { serializeBigInt } from "@/lib/serialize"
 
@@ -15,17 +15,18 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const query = searchParams.get("query") ?? ""
     const page = Math.max(1, Number(searchParams.get("page")) || 1)
+    const limit = Math.max(1, Number(searchParams.get("limit")) || 10)
     const status = searchParams.get("status") ?? "all"
 
     const [donations, total] = await Promise.all([
-      getProgramDonations(query, page, status),
+      getProgramDonations(query, page, limit, status),
       countProgramDonations(query, status),
     ])
 
-    const totalPages = Math.ceil(total / TOTAL_PROGRAMS_PER_PAGE)
+    const totalPages = Math.ceil(total / limit)
     const meta: ApiMeta = {
       page,
-      limit: TOTAL_PROGRAMS_PER_PAGE,
+      limit,
       total,
       totalPages,
     }
@@ -74,6 +75,14 @@ export async function POST(req: Request) {
     return NextResponse.json(resBody, { status: 201 })
   } catch (error) {
     console.error("[POST /api/program/program-donation]", error)
+    if (error instanceof ProgramDonationValidationError) {
+      const body: ApiResponse<never> = {
+        success: false,
+        message: error.message,
+        error: { code: "VALIDATION_ERROR", details: error.message },
+      }
+      return NextResponse.json(body, { status: 400 })
+    }
     const body: ApiResponse<never> = {
       success: false,
       message: "Failed to create program donation",

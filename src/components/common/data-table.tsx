@@ -1,5 +1,6 @@
 "use client"
 
+import { Fragment } from "react"
 import {
   ColumnDef,
   flexRender,
@@ -22,17 +23,24 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   isLoading?: boolean
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getSubRows?: (row: any) => any[]
+  getRowCanExpand?: () => boolean
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   isLoading,
+  getSubRows,
+  getRowCanExpand,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getSubRows: getRowCanExpand ? (row: any) => getSubRows?.(row) : undefined,
   })
 
   return (
@@ -72,19 +80,32 @@ export function DataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map(row => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
+                <Fragment key={row.id}>
+                  <TableRow data-state={row.getIsSelected() && "selected"}>
+                    {row.getVisibleCells().map(cell => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  {row.getIsExpanded() &&
+                    row.subRows.length > 0 &&
+                    row.subRows.map(subRow => (
+                      <TableRow key={subRow.id} className="bg-muted/30">
+                        {subRow.getVisibleCells().map(cell => (
+                          <TableCell key={cell.id}>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                </Fragment>
               ))
             ) : (
               <TableRow>

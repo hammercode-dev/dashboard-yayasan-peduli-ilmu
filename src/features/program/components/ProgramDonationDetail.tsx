@@ -24,9 +24,13 @@ import {
   Users,
   Edit,
   Link as LinkIcon,
+  Mail,
+  Phone,
+  Dot,
 } from "lucide-react"
 
 import { StatusBadge } from "./StatusBadge"
+import { ProgramTypeBadge } from "./ProgramTypeBadge"
 import SkeletonDetail from "./SkeletonDetail"
 import { DonationStatus } from "../types/programDonation"
 
@@ -62,19 +66,35 @@ export default function ProgramDonationDetail({ id }: { id: string }) {
 
   if (isFetching) return <SkeletonDetail />
 
+  const isChild = data?.parent_id != null
+  const children = data?.children ?? []
+
   return (
     <section className="min-h-screen bg-zinc-50/60">
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 space-y-6">
         <div className="flex flex-col md:flex-row md:justify-between gap-4 border-b pb-5">
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <StatusBadge status={data?.status as DonationStatus} />
+              <ProgramTypeBadge type={isChild ? "child" : "parent"} />
               <span className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 font-mono text-[11px] text-zinc-500">
                 ID : {data?.id}
               </span>
             </div>
 
             <h1 className="text-xl md:text-2xl font-bold">{data?.title}</h1>
+
+            {isChild && data?.parent && (
+              <p className="text-sm text-zinc-600">
+                Sub-program dari{" "}
+                <Link
+                  href={`/dashboard/program/${data.parent.id}`}
+                  className="font-medium text-primary hover:underline"
+                >
+                  {data.parent.title}
+                </Link>
+              </p>
+            )}
 
             <div className="flex flex-wrap items-center gap-4">
               <MetaChip
@@ -153,6 +173,58 @@ export default function ProgramDonationDetail({ id }: { id: string }) {
               </Tabs>
             </div>
 
+            {!isChild && children.length > 0 && (
+              <div className="rounded-xl border bg-white p-5 space-y-4">
+                <h3 className="text-sm font-bold uppercase text-zinc-400">
+                  Sub-program ({children.length})
+                </h3>
+                <ul className="divide-y">
+                  {children.map(child => {
+                    const childTarget = Number(child.target_amount || 0)
+                    const childCollected = Number(child.collected_amount || 0)
+                    const childPct =
+                      childTarget > 0
+                        ? Math.min((childCollected / childTarget) * 100, 100)
+                        : 0
+                    return (
+                      <li
+                        key={String(child.id)}
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-3 first:pt-0 last:pb-0"
+                      >
+                        <div>
+                          <Link
+                            href={`/dashboard/program/${child.id}`}
+                            className="font-medium hover:underline"
+                          >
+                            {child.title}
+                          </Link>
+                          <div className="mt-1">
+                            <StatusBadge
+                              status={
+                                (child.status as DonationStatus) ?? "draft"
+                              }
+                            />
+                          </div>
+                        </div>
+                        <div className="text-sm text-zinc-500 text-right">
+                          <p>
+                            {formatRupiah(childCollected)} /{" "}
+                            {formatRupiah(childTarget)}
+                          </p>
+                          <p className="text-xs">{childPct.toFixed(0)}%</p>
+                        </div>
+                        <Link href={`/dashboard/program/${child.id}/edit`}>
+                          <Button variant="outline" size="sm">
+                            Ubah
+                          </Button>
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            )}
+
             <div className="rounded-xl border bg-white">
               <Tabs defaultValue="timeline">
                 <TabsList className=" px-auto w-max mx-4 mt-4">
@@ -206,7 +278,53 @@ export default function ProgramDonationDetail({ id }: { id: string }) {
                 </TabsContent>
 
                 <TabsContent value="donatur" className="p-5">
-                  <EmptyState label="Belum ada donatur" />
+                  {data?.donors && data.donors.length > 0 ? (
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium text-zinc-500">
+                        {data.donors.length} donatur
+                      </p>
+                      <ul className="divide-y">
+                        {data.donors.map(item => (
+                          <li
+                            key={String(item.donor_id)}
+                            className="flex items-start gap-4 py-4 first:pt-0 last:pb-0"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="font-medium text-zinc-800 truncate">
+                                  {item.donor?.name || "Anonim"}
+                                </p>
+                                <p className="font-bold text-emerald-600 whitespace-nowrap">
+                                  {formatRupiah(item.total_amount)}
+                                </p>
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
+                                {item.donor?.email && (
+                                  <span className="inline-flex items-center gap-1 text-xs text-zinc-400">
+                                    <Mail className="size-3" />
+                                    {item.donor.email}
+                                  </span>
+                                )}
+                                {item.donor?.phone_number && (
+                                  <span className="inline-flex items-center gap-1 text-xs text-zinc-400">
+                                    <Phone className="size-3" />
+                                    {item.donor.phone_number}
+                                  </span>
+                                )}
+                                <span className="inline-flex items-center gap-1 text-xs text-zinc-400">
+                                  <Dot className="size-3" />
+                                  {item.donation_count}x donasi
+                                </span>
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <EmptyState label="Belum ada donatur" />
+                  )}
                 </TabsContent>
               </Tabs>
             </div>

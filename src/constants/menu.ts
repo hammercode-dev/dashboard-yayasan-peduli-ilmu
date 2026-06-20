@@ -1,4 +1,4 @@
-import { BookOpen, Clock, Home, ScrollText, Users } from "lucide-react"
+import { BookOpen, Clock, Heart, Home, ScrollText, Users } from "lucide-react"
 
 export const MAIN_MENU_ITEMS = [
   {
@@ -15,6 +15,11 @@ export const MAIN_MENU_ITEMS = [
     title: "Donasi",
     url: "/dashboard/donation",
     icon: ScrollText,
+  },
+  {
+    title: "Donatur",
+    url: "/dashboard/donor",
+    icon: Heart,
   },
   {
     title: "Timeline",

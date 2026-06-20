@@ -12,7 +12,8 @@ function getPageTitle(pathname: string): string {
   if (menuItem) return menuItem.title
 
   if (pathname.startsWith('/dashboard/program')) return 'Program'
-  if (pathname.startsWith('/dashboard/users')) return 'Pengguna'
+  if (pathname.startsWith('/dashboard/donor')) return 'Donatur'
+  if (pathname.startsWith('/dashboard/user')) return 'Pengguna'
   if (pathname.startsWith('/dashboard/settings')) return 'Pengaturan'
 
   return 'Dashboard'

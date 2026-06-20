@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 import Papa from "papaparse"
 
 import { bulkCreateDonationEvidence } from "@/features/donation/donation.dal"
-import { donationEvidenceSchema } from "@/features/donation/donation.schemas"
+import { donationEvidenceBulkRowSchema } from "@/features/donation/donation.schemas"
 import { ApiResponse } from "@/lib/response"
 
 export async function POST(req: Request) {
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     })
 
     // validation with zod
-    const parsed = donationEvidenceSchema.array().safeParse(rawRows)
+    const parsed = donationEvidenceBulkRowSchema.array().safeParse(rawRows)
 
     if (!parsed.success) {
       const resBody: ApiResponse<never> = {

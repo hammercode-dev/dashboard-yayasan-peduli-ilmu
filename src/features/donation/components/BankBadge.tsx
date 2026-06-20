@@ -1,13 +1,18 @@
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 
-type BankChannel = "bsi" | "swift"
+type BankChannel = "cash" | "bsi" | "swift"
 
 interface BankBadgeProps extends React.ComponentProps<typeof Badge> {
   channel?: string | null
 }
 
 const bankConfig: Record<BankChannel, { label: string; className: string }> = {
+  cash: {
+    label: "Cash / Tunai",
+    className:
+      "bg-blue-500 text-white hover:bg-blue-600",
+  },
   bsi: {
     label: "Bank BSI",
     className:

@@ -1,13 +1,15 @@
 "use client"
 
 import { Input } from "@/components/ui/input"
-import { ChevronDown, Loader2, Search, X } from "lucide-react"
+import { ChevronDown, Dot, Loader2, Search, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useEffect, useRef, useState, useMemo } from "react"
 
 interface Program {
   id: string | number
   nama: string
+  displayName?: string
+  parent_id?: string | null
 }
 
 interface SearchProgramProps {
@@ -31,6 +33,26 @@ export function SearchProgram({
   const [searchQuery, setSearchQuery] = useState("")
   const selectorRef = useRef<HTMLDivElement>(null)
 
+  const sortedPrograms = useMemo(() => {
+    const parents = programs.filter(p => !p.parent_id)
+    const children = programs.filter(p => p.parent_id)
+    const ordered: Program[] = []
+
+    for (const parent of parents) {
+      ordered.push(parent)
+      children
+        .filter(c => String(c.parent_id) === String(parent.id))
+        .forEach(child => ordered.push(child))
+    }
+
+    const listedIds = new Set(ordered.map(p => String(p.id)))
+    programs.forEach(p => {
+      if (!listedIds.has(String(p.id))) ordered.push(p)
+    })
+
+    return ordered
+  }, [programs])
+
   const selectedProgram = useMemo(
     () => programs.find(p => String(p.id) === String(value)),
     [programs, value]
@@ -42,7 +64,6 @@ export function SearchProgram({
     setSearchQuery("")
   }
 
-  // Close the dropdown when click outside from area component
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -55,6 +76,8 @@ export function SearchProgram({
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
+
+  const getLabel = (program: Program) => program.displayName ?? program.nama
 
   return (
     <div className={cn("relative w-full", className)} ref={selectorRef}>
@@ -73,7 +96,9 @@ export function SearchProgram({
             !selectedProgram && "text-muted-foreground"
           )}
         >
-          {selectedProgram ? selectedProgram.nama : "Pilih program tujuan..."}
+          {selectedProgram
+            ? getLabel(selectedProgram)
+            : "Pilih program tujuan..."}
         </span>
         <div className="flex items-center gap-2">
           {isFetching && (
@@ -88,7 +113,6 @@ export function SearchProgram({
         </div>
       </button>
 
-      {/* Dropdown Menu */}
       {isOpen && (
         <div className="absolute top-[calc(100%+5px)] left-0 right-0 z-50 rounded-md border bg-popover text-popover-foreground shadow-lg animate-in fade-in-0 zoom-in-95 exit-out">
           <div className="p-2">
@@ -107,6 +131,7 @@ export function SearchProgram({
               />
               {searchQuery && (
                 <button
+                  type="button"
                   onClick={() => {
                     setSearchQuery("")
                     onSearch?.("")
@@ -132,20 +157,39 @@ export function SearchProgram({
                 </div>
               )}
 
-              {programs.map(program => (
-                <div
-                  key={program.id}
-                  onClick={() => handleSelectProgram(program.id)}
-                  className={cn(
-                    "relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none transition-colors",
-                    "hover:bg-accent hover:text-accent-foreground",
-                    String(value) === String(program.id) &&
-                      "bg-accent text-accent-foreground font-semibold"
-                  )}
-                >
-                  <span className="truncate">{program.nama}</span>
-                </div>
-              ))}
+              {sortedPrograms.map(program => {
+                const hasChildren = sortedPrograms.some(
+                  item => item.parent_id === program.id
+                )
+
+                return (
+                  <div
+                    key={program.id}
+                    onClick={() => {
+                      if (hasChildren) return
+
+                      handleSelectProgram(program.id)
+                    }}
+                    className={cn(
+                      "relative flex w-full select-none items-center rounded-sm px-2 py-2 text-sm outline-none transition-colors",
+                      hasChildren
+                        ? "cursor-not-allowed opacity-50"
+                        : "cursor-pointer hover:bg-accent hover:text-accent-foreground",
+                      program.parent_id && "pl-6",
+                      String(value) === String(program.id) &&
+                        "bg-accent/50 text-accent-foreground font-semibold"
+                    )}
+                  >
+                    {program.parent_id && (
+                      <span className="text-muted-foreground">
+                        <Dot />
+                      </span>
+                    )}
+
+                    <span className="truncate">{getLabel(program)}</span>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>

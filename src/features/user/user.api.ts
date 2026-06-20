@@ -4,10 +4,11 @@ import { ApiResponse } from "@/lib/response"
 import { getUserById } from "./user.dal"
 import type { CreateUserFormData, UpdateUserFormData } from "./user.schemas"
 
-const getAllParams = (params: { query?: string; page?: number }) => {
+const getAllParams = (params: { query?: string; page?: number; limit?: number }) => {
   const searchParams = new URLSearchParams()
   if (params.query != null) searchParams.set("query", params.query)
   if (params.page != null) searchParams.set("page", String(params.page))
+  if (params.limit != null) searchParams.set("limit", String(params.limit))
   return searchParams.toString()
 }
 
@@ -17,7 +18,7 @@ export const userApi = createApi({
   tagTypes: ["User", "Role"],
   endpoints: builder => ({
     getUsers: builder.query({
-      query: (params: { query?: string; page?: number }) => {
+      query: (params: { query?: string; page?: number; limit?: number }) => {
         return { url: `/user/users?${getAllParams(params)}` }
       },
       providesTags: result => {

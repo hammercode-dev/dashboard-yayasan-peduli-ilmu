@@ -22,17 +22,28 @@ model users {
 model donation_evidences {
   id                 BigInt            @id @unique @default(autoincrement())
   created_at         DateTime          @default(now()) @db.Timestamptz(6)
-  full_name          String?
   evidence_url       String?
   program_id         BigInt?
-  phone_number       String?
-  email              String?
   amount             Decimal?          @db.Decimal
   payment_method     String?
   description        String?
   updated_at         DateTime?         @db.Timestamptz(6)
   donation_upload_at DateTime?         @db.Timestamptz(6)
+  donor_id           BigInt
+  donors             donors            @relation(fields: [donor_id], references: [id], onUpdate: NoAction)
   program_donation   program_donation? @relation(fields: [program_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+model donors {
+  id                 BigInt               @id @default(autoincrement())
+  created_at         DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime?            @updatedAt @db.Timestamptz(6)
+  name               String
+  phone_number       String               @unique
+  email              String?
+  donation_evidences donation_evidences[]
 
   @@schema("public")
 }
@@ -60,7 +71,6 @@ model program_donation {
   description          String?
   image_url            String?
   target_amount        Decimal?             @db.Decimal
-  collected_amount     Decimal?             @db.Decimal
   status               String?
   starts_at            DateTime?            @default(now()) @db.Timestamptz(6)
   ends_at              DateTime?            @db.Timestamptz(6)
@@ -73,6 +83,11 @@ model program_donation {
   title_ar             String?
   description_ar       String?
   short_description_ar String?
+
+  parent_id            BigInt?
+  parent               program_donation?    @relation("ProgramDonationHierarchy", fields: [parent_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  children             program_donation[]   @relation("ProgramDonationHierarchy")
+
   donation_evidences   donation_evidences[]
   program_timeline     program_timeline[]
 

@@ -18,6 +18,8 @@ export function ProgramTrendingTable() {
         columns={columns}
         data={data?.trendings || []}
         isLoading={isFetching}
+        getSubRows={(row) => row.children}
+        getRowCanExpand={() => true}
       />
     </div>
   )

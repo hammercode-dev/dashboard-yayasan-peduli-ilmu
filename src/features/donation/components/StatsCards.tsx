@@ -32,7 +32,7 @@ export default function StatsCards() {
   if (isFetching) {
     return (
       <div className="w-full">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
           {STATS_CARDS.map((stat, idx) => (
             <Card key={idx} className="animate-pulse">
               <CardHeader className="flex flex-row items-center justify-between">
@@ -52,7 +52,7 @@ export default function StatsCards() {
   }
   return (
     <div className="w-full">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
         {STATS_CARDS.map((stat, idx) => (
           <Card key={idx} className="">
             <CardHeader className="flex flex-row items-center justify-between">

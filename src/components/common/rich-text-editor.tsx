@@ -34,6 +34,7 @@ import {
   AlignCenter,
   AlignRight,
   AlignJustify,
+  Youtube as YoutubeIcon,
 } from "lucide-react"
 import { Button } from "../ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
@@ -47,6 +48,7 @@ import {
   removeProgramImagesByPaths,
   PROGRAM_IMAGE_UPLOAD_PREFIX,
 } from "@/lib/storage/program-images"
+import Youtube, { isValidYoutubeUrl } from "@tiptap/extension-youtube"
 
 export interface RichTextEditorRef {
   uploadPendingFiles: () => Promise<{ markdown: string; success: boolean }>
@@ -77,6 +79,18 @@ turndownService.addRule("image", {
       return `![${alt}](${src} "storage:${storagePath}")`
     }
     return `![${alt}](${src})`
+  },
+})
+
+turndownService.addRule("youtubeEmbed", {
+  filter(node) {
+    return (
+      node.nodeName === "DIV" &&
+      (node as HTMLElement).hasAttribute("data-youtube-video")
+    )
+  },
+  replacement(_content, node) {
+    return `\n\n${(node as HTMLElement).outerHTML}\n\n`
   },
 })
 
@@ -166,6 +180,36 @@ const Toolbar = ({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [linkPopoverOpen, setLinkPopoverOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState("")
+  const [youtubePopoverOpen, setYoutubePopoverOpen] = useState(false)
+  const [youtubeUrl, setYoutubeUrl] = useState("")
+
+  const handleYoutubeOpen = useCallback(() => {
+    if (!editor) return
+    const previous = editor.getAttributes("youtube").src || ""
+    setYoutubeUrl(previous)
+    setYoutubePopoverOpen(true)
+  }, [editor])
+
+  const handleYoutubeSubmit = useCallback(() => {
+    if (!editor) return
+    const trimmed = youtubeUrl.trim()
+    if (trimmed === "") {
+      setYoutubePopoverOpen(false)
+      setYoutubeUrl("")
+      return
+    }
+    const url =
+      trimmed.startsWith("http://") || trimmed.startsWith("https://")
+        ? trimmed
+        : `https://${trimmed}`
+    if (!isValidYoutubeUrl(url)) {
+      toast.error("URL YouTube tidak valid.")
+      return
+    }
+    editor.chain().focus().setYoutubeVideo({ src: url }).run()
+    setYoutubePopoverOpen(false)
+    setYoutubeUrl("")
+  }, [editor, youtubeUrl])
 
   const handleLinkOpen = useCallback(() => {
     if (!editor) return
@@ -409,9 +453,62 @@ const Toolbar = ({
     </Popover>
   )
 
+  const insertYoutubeButton = (
+    <Popover open={youtubePopoverOpen} onOpenChange={setYoutubePopoverOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          onClick={handleYoutubeOpen}
+          className={cn(
+            "p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed",
+            editor.isActive("youtube")
+              ? "bg-primary text-primary-foreground"
+              : "hover:bg-gray-100"
+          )}
+          title="Sisipkan video YouTube"
+        >
+          <YoutubeIcon size={18} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80" align="start">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="youtube-url">URL YouTube</Label>
+            <Input
+              id="youtube-url"
+              type="url"
+              placeholder="https://www.youtube.com/watch?v=..."
+              value={youtubeUrl}
+              onChange={e => setYoutubeUrl(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  handleYoutubeSubmit()
+                }
+                if (e.key === "Escape") {
+                  setYoutubePopoverOpen(false)
+                }
+              }}
+              autoFocus
+            />
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleYoutubeSubmit}
+            className="w-full"
+          >
+            Sisipkan
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+
   const insertImageButton = (
     <>
       {insertLinkButton}
+      {insertYoutubeButton}
       <ToolbarButton
         onClick={() => fileInputRef.current?.click()}
         title="Insert Image"
@@ -524,6 +621,13 @@ const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>(
       extensions: [
         StarterKit,
         Underline,
+        Youtube.configure({
+          controls: false,
+          nocookie: true,
+          HTMLAttributes: {
+            loading: "eager",
+          },
+        }),
         Image.extend({
           addAttributes() {
             return {
@@ -705,7 +809,7 @@ const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>(
       >
         <Toolbar editor={editor} setPendingImages={setPendingImages} />
         <div className="overflow-y-auto h-[300px] px-4">
-          <div className="prose prose-sm max-w-none min-h-[200px] prose-p:my-2 prose-headings:font-semibold prose-headings:mt-2 prose-headings:mb-2 prose-h1:text-2xl prose-h2:text-xl prose-ul:list-disc prose-li:my-1 prose-a:text-blue-500 hover:prose-a:underline **:focus:outline-none">
+          <div className="prose prose-sm max-w-none min-h-[200px] prose-p:my-2 prose-headings:font-semibold prose-headings:mt-2 prose-headings:mb-2 prose-h1:text-2xl prose-h2:text-xl prose-ul:list-disc prose-li:my-1 prose-a:text-blue-500 hover:prose-a:underline [&_[data-youtube-video]]:w-full [&_[data-youtube-video]_iframe]:block [&_[data-youtube-video]_iframe]:aspect-video [&_[data-youtube-video]_iframe]:h-auto [&_[data-youtube-video]_iframe]:w-full **:focus:outline-none">
             <EditorContent editor={editor} />
           </div>
         </div>

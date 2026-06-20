@@ -8,9 +8,9 @@ export const getProgramDonationStats = cache(async () => {
   const startOfToday = new Date()
   startOfToday.setHours(0, 0, 0, 0)
 
-  const [activePrograms, totalPrograms, totalDonors, todayStats] =
+  const [revenueAgg, activePrograms, totalPrograms, totalDonors, todayStats] =
     await Promise.all([
-      // prisma.program_donation.aggregate({ _sum: { collected_amount: true } }),
+      prisma.donation_evidences.aggregate({ _sum: { amount: true } }),
       prisma.program_donation.count({ where: { status: "active" } }),
       prisma.program_donation.count(),
       prisma.donation_evidences.count(),
@@ -22,7 +22,7 @@ export const getProgramDonationStats = cache(async () => {
     ])
 
   return {
-    // totalRevenues: Number(revenueAgg._sum.collected_amount ?? 0),
+    totalRevenues: Number(revenueAgg._sum.amount ?? 0),
     activePrograms,
     totalPrograms,
     totalDonatur: totalDonors,

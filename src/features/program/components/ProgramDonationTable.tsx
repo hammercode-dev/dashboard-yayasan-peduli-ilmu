@@ -16,9 +16,7 @@ import { ProgramDonationAccordionTable } from "./ProgramDonationAccordionTable"
 import type { ProgramDonationListItem } from "../types/programDonation"
 import type { DonationStatus } from "../types/programDonation"
 
-function mapChildRow(
-  child: Record<string, unknown>
-): ProgramDonationListItem {
+function mapChildRow(child: Record<string, unknown>): ProgramDonationListItem {
   return {
     id: String(child.id),
     title: String(child.title),
@@ -28,8 +26,8 @@ function mapChildRow(
     ends_at: child.ends_at != null ? String(child.ends_at) : "",
     status: (child.status as DonationStatus) ?? "draft",
     created_at: child.created_at != null ? String(child.created_at) : "",
-    parent_id:
-      child.parent_id != null ? String(child.parent_id) : null,
+    parent_id: child.parent_id != null ? String(child.parent_id) : null,
+    total_collected_amount: Number(child.total_collected_amount),
   }
 }
 
@@ -49,6 +47,7 @@ function mapParentRow(d: Record<string, unknown>): ProgramDonationListItem {
     parent_id: null,
     children: childrenRaw.map(mapChildRow),
     childrenCount: countObj?.children ?? childrenRaw.length,
+    total_collected_amount: Number(d.total_collected_amount),
   }
 }
 

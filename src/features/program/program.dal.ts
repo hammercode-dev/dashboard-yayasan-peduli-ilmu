@@ -92,7 +92,9 @@ export const getProgramDonations = cache(
           orderBy: { created_at: "desc" },
         },
         _count: {
-          select: { children: true },
+          select: {
+            children: true,
+          },
         },
       },
     })

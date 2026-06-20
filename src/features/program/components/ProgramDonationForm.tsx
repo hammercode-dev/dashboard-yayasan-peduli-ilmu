@@ -66,7 +66,7 @@ export default function ProgramDonationForm({
   const descriptionRef = useRef<RichTextEditorRef>(null)
   const descriptionEnRef = useRef<RichTextEditorRef>(null)
   const descriptionArRef = useRef<RichTextEditorRef>(null)
-  
+
   // Hooks
   const [createProgramDonation, { isLoading: isLoadingCreate }] =
     useCreateProgramDonationMutation()

@@ -46,6 +46,7 @@ export interface ProgramDonationListItem {
   children?: ProgramDonationListItem[]
   childrenCount?: number
   parent?: ProgramDonationParentRef | null
+  total_collected_amount?: number
 }
 
 export interface Donation {

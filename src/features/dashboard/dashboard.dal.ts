@@ -35,33 +35,79 @@ export const getProgramTrendings = cache(async () => {
   await verifySession()
 
   const trendings = await prisma.program_donation.findMany({
-    // orderBy: { collected_amount: "desc" },
-    take: 5,
+    where: { parent_id: null },
+    take: 10,
     select: {
       id: true,
       title: true,
-      // collected_amount: true,
       target_amount: true,
       starts_at: true,
       ends_at: true,
-
-      _count: {
+      children: {
         select: {
-          donation_evidences: true,
+          id: true,
+          title: true,
+          target_amount: true,
+          status: true,
         },
       },
     },
   })
 
-  const serializedTrendings = trendings.map(trending => ({
-    ...trending,
-    id: trending.id.toString(),
-    // collected_amount: Number(trending.collected_amount ?? 0),
-    target_amount: Number(trending.target_amount ?? 0),
-    total_donatur: trending._count.donation_evidences,
-    starts_at: trending.starts_at?.toISOString() ?? null,
-    ends_at: trending.ends_at?.toISOString() ?? null,
-  }))
+  const allProgramIds = trendings.flatMap(p => [p.id, ...p.children.map(c => c.id)])
 
-  return { trendings: serializedTrendings }
+  const aggregatedData = await prisma.donation_evidences.groupBy({
+    by: ["program_id"],
+    where: { program_id: { in: allProgramIds } },
+    _sum: { amount: true },
+  })
+
+  const uniqueDonors = await prisma.donation_evidences.groupBy({
+    by: ["program_id", "donor_id"],
+    where: { program_id: { in: allProgramIds } },
+  })
+
+  const uniqueDonorCountMap = new Map<string, number>()
+  for (const row of uniqueDonors) {
+    if (row.program_id !== null) {
+      const pid = row.program_id.toString()
+      uniqueDonorCountMap.set(pid, (uniqueDonorCountMap.get(pid) ?? 0) + 1)
+    }
+  }
+
+  const dataMap = new Map(
+    aggregatedData.map(d => [d.program_id, d])
+  )
+
+  const serializedTrendings = trendings.map(parent => {
+    const parentCollected = Number(dataMap.get(parent.id)?._sum.amount ?? 0)
+
+    const children = parent.children.map(child => ({
+      id: child.id.toString(),
+      title: child.title,
+      target_amount: Number(child.target_amount ?? 0),
+      status: child.status,
+      collected_amount: Number(dataMap.get(child.id)?._sum.amount ?? 0),
+      total_donatur: uniqueDonorCountMap.get(child.id.toString()) ?? 0,
+    }))
+
+    const childrenCollected = children.reduce((sum, c) => sum + c.collected_amount, 0)
+    const childrenDonatur = children.reduce((sum, c) => sum + c.total_donatur, 0)
+
+    return {
+      id: parent.id.toString(),
+      title: parent.title,
+      target_amount: Number(parent.target_amount ?? 0),
+      collected_amount: parentCollected + childrenCollected,
+      total_donatur: uniqueDonorCountMap.get(parent.id.toString()) ?? 0 + childrenDonatur,
+      starts_at: parent.starts_at?.toISOString() ?? null,
+      ends_at: parent.ends_at?.toISOString() ?? null,
+      children,
+    }
+  })
+
+  serializedTrendings.sort((a, b) => b.collected_amount - a.collected_amount)
+  const top5 = serializedTrendings.slice(0, 5)
+
+  return { trendings: top5 }
 })

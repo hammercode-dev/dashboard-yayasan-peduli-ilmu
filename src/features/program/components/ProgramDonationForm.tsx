@@ -614,7 +614,7 @@ export default function ProgramDonationForm({
                       ))}
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2 mb-7">
+                  <div className="grid grid-cols-1 gap-5 mb-7">
                     <Field>
                       <FieldLabel>
                         Target Dana <span className="text-red-500">*</span>
